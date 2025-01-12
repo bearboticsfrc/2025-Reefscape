@@ -1,0 +1,28 @@
+{
+    "fileName": "bearlib.json",
+    "name": "bearlib",
+    "version": "2025.1.0",
+    "frcYear": "2025",
+    "uuid": "7a5077f9-339e-48cc-9ab0-f48433311280",
+    "mavenUrls": [
+        "https://bearboticsfrc.github.io/bearlib"
+    ],
+    "jsonUrl": "https://bearboticsfrc.github.io/bearlib/bearlib.json",
+    "javaDependencies": [
+        {
+            "groupId": "frc4068.bearlib",
+            "artifactId": "bearlib",
+            "version": "2025.1.0"
+        }
+    ],
+    "requires": [
+        {
+            "uuid": "3f48eb8c-50fe-43a6-9cb7-44c86353c4cb",
+            "errorMessage": "REVLib is required!",
+            "offlineFileName": "REVLib-2025.0.0.json",
+            "onlineUrl": "https://software-metadata.revrobotics.com/REVLib-2025.json"
+        }
+    ],
+    "cppDependencies": [],
+    "jniDependencies": []
+}
