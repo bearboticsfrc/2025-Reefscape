@@ -8,6 +8,9 @@ import bearlib.util.ProcessedJoystick;
 import bearlib.util.ProcessedJoystick.JoystickAxis;
 import bearlib.util.ProcessedJoystick.ThrottleProfile;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -24,8 +27,11 @@ public class RobotContainer {
 
   public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
+  private SendableChooser<Command> autoChooser = null;
+
   public RobotContainer() {
     configureBindings();
+    configureAutoBuilder();
   }
 
   private void configureBindings() {
@@ -52,6 +58,11 @@ public class RobotContainer {
         .withRotationalRate(processedJoystick.get(JoystickAxis.Rx));
   }
 
+  private void configureAutoBuilder() {
+    autoChooser = AutoBuilder.buildAutoChooser("Tests");
+    SmartDashboard.putData("Auto Mode", autoChooser);
+  }
+
   /**
    * Sets the throttle profile for the robot.
    *
@@ -71,6 +82,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    return autoChooser.getSelected();
   }
 }
