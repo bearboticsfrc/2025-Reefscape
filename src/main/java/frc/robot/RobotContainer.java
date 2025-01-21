@@ -27,7 +27,7 @@ public class RobotContainer {
 
   public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-  private SendableChooser<Command> autoChooser = null;
+  private SendableChooser<Command> autoChooser;
 
   public RobotContainer() {
     configureBindings();
@@ -35,11 +35,16 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    driverJoystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+    driverJoystick.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
     driverJoystick
         .rightStick()
         .onTrue(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.TURBO)))
+        .onFalse(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.NORMAL)));
+
+    driverJoystick
+        .leftStick()
+        .onTrue(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.TURTLE)))
         .onFalse(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.NORMAL)));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
