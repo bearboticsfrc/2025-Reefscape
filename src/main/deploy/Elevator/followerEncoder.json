@@ -1,0 +1,10 @@
+
+{
+    "type": "relative",
+    "inverted": true,
+    "initial_position": 0,
+    "conversion_factor": {
+      "position": 1.25,
+      "velocity": 7.5
+    }
+  }

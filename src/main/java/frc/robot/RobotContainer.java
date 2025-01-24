@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.ElevatorSubsystem;
 
 public class RobotContainer {
   private final CommandXboxController driverJoystick = new CommandXboxController(0);
@@ -26,6 +27,7 @@ public class RobotContainer {
 
   public RobotContainer() {
     configureBindings();
+    ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem();
   }
 
   private void configureBindings() {

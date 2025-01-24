@@ -1,0 +1,17 @@
+{
+    "type": "max",
+    "id": 2,
+    "inverted": true,
+    "idle_mode": "brake",
+    "current_limit": 30,
+    "soft_limits": [
+        {
+        "direction": "forward",
+        "limit": 100
+        },
+        {
+        "direction": "reverse",
+        "limit": 0
+        }
+    ]
+}
