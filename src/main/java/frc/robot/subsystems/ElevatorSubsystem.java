@@ -1,28 +1,31 @@
 package frc.robot.subsystems;
 
-import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.deserializer.MotorParser;
-import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkMax;
+import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.constants.ElevatorConstants;
 import java.io.File;
 import java.io.IOException;
 
-//TODO: ask kellen about how to configure absolute encoders
 public class ElevatorSubsystem extends SubsystemBase {
 
+  private ElevatorFeedforward elevatorFeedforward =
+      new ElevatorFeedforward(ElevatorConstants.KS, ElevatorConstants.KG, ElevatorConstants.KS, ElevatorConstants.KV);
   private ShuffleboardTab elevatorTab;
   private SparkBase leaderMotor;
   private RelativeEncoder leaderRelativeEncoder;
-  private AbsoluteEncoder leaderAbsoluteEncoder;
+  private SparkClosedLoopController elevatorPIDController;
   private SparkBase followerMotor;
   private RelativeEncoder followerRelativeEncoder;
-  private AbsoluteEncoder followerAbsoluteEncoder;
-  private ElevatorState elevatorState = ElevatorState.Home;
+  private double elevatorState = ElevatorConstants.HOME;
   private final boolean SHUFFLEBOARD_ENABLED = true;
 
   public ElevatorSubsystem() {
@@ -36,48 +39,71 @@ public class ElevatorSubsystem extends SubsystemBase {
   private void configureMotors() {
     File directory = new File(Filesystem.getDeployDirectory(), "Elevator");
 
-       try {
-    MotorParser elevatorLeaderMotorParser =
-        new MotorParser(directory)
-            .withMotor("leaderMotor.json")
-            .withEncoder("leaderEncoder.json")
-            .withPidf("leaderPidf.json");
+    try {
+      MotorParser elevatorLeaderMotorParser =
+          new MotorParser(directory)
+              .withMotor("leaderMotor.json")
+              .withEncoder("leaderEncoder.json")
+              .withPidf("leaderPidf.json");
 
-    ConfiguredMotor configuredLeaderMotor = elevatorLeaderMotorParser.configure();
+      leaderMotor = elevatorLeaderMotorParser.configure().getSpark();
 
-    // TODO: Configure SparkMax objects and assign it to LeaderMotor instead of SparkBase
-    leaderMotor = configuredLeaderMotor.getSpark();
+      MotorParser elevatorFollowerMotorParser =
+          new MotorParser(directory)
+              .withMotor("followerMotor.json")
+              .withEncoder("followerEncoder.json")
+              .withPidf("followerPidf.json");
 
-    MotorParser elevatorFollowerMotorParser =
-        new MotorParser(directory)
-            .withMotor("followerMotor.json")
-            .withEncoder("followerEncoder.json")
-            .withPidf("followerPidf.json");
+      followerMotor = elevatorFollowerMotorParser.configure().getSpark(); 
 
-    ConfiguredMotor configuredFollowerMotor = elevatorFollowerMotorParser.configure();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
 
-    // TODO: Configure SparkMax objects and assign it to FollowerMotor instead of SparkBase
-    followerMotor = configuredFollowerMotor.getSpark();
-
-     } catch (IOException e) {
-        e.printStackTrace();
-      }
-
-    leaderAbsoluteEncoder = leaderMotor.getAbsoluteEncoder();
     leaderRelativeEncoder = leaderMotor.getEncoder();
-    followerAbsoluteEncoder = followerMotor.getAbsoluteEncoder();
     followerRelativeEncoder = followerMotor.getEncoder();
+    elevatorPIDController = leaderMotor.getClosedLoopController();
   }
 
   private void setupShuffleboardTab() {
-    elevatorTab.add("four", 4.0);
+    elevatorTab.add("position", elevatorState);
+    elevatorTab.addDouble("leader encoder position", leaderRelativeEncoder::getPosition);
+    elevatorTab.addDouble("follower encoder position", followerRelativeEncoder::getPosition);
   }
 
-  enum ElevatorState {
-    Home,
-    L1,
-    L2,
-    L3,
-    L4;
+  public void setElevatorReference() {
+    elevatorPIDController.setReference(elevatorState, SparkBase.ControlType.kPosition, ClosedLoopSlot.kSlot0, elevatorFeedforward.calculate(ElevatorConstants.MAX_VELOCITY,ElevatorConstants.MAX_ACCELERATION));
+
   }
+
+  public void setElevatorHome() {
+    elevatorState = ElevatorConstants.HOME;
+    setElevatorReference();
+  
+  }
+
+  public void setElevatorL1() {
+    elevatorState = ElevatorConstants.L1;
+    setElevatorReference();
+  
+  }
+
+  public void setElevatorL2() {
+    elevatorState = ElevatorConstants.L2;
+    setElevatorReference();
+
+  }
+
+  public void setElevatorL3() {
+    elevatorState = ElevatorConstants.L3;
+    setElevatorReference();
+
+  }
+
+  public void setElevatorL4() {
+    elevatorState = ElevatorConstants.L4;
+    setElevatorReference();
+  
+  }
+
 }
