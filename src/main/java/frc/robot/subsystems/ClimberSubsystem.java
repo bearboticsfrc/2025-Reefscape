@@ -15,7 +15,7 @@ public class ClimberSubsystem extends SubsystemBase {
     ConfiguredMotor configuredMotor;
 
     try {
-      File directory = new File(Filesystem.getDeployDirectory(), "climber");
+      File directory = new File(Filesystem.getDeployDirectory(), "motors/climber");
 
       configuredMotor = new MotorParser(directory).withMotor("motor.json").configure();
     } catch (IOException exception) {
