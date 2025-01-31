@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import bearlib.motor.ConfiguredMotor;
+import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -31,23 +32,7 @@ public class AlgaeSubsystem extends SubsystemBase {
    * @param speed The speed to run at.
    * @return The intake run command.
    */
-  public Command runIntake(IntakeSpeed speed) {
+  public Command runIntake(MotorSpeed speed) {
     return runOnce(() -> intake.set(speed.getSpeed()));
-  }
-
-  public enum IntakeSpeed {
-    REVERSE(-1),
-    OFF(0),
-    FULL(1);
-
-    private double speed;
-
-    private IntakeSpeed(double speed) {
-      this.speed = speed;
-    }
-
-    public double getSpeed() {
-      return speed;
-    }
   }
 }
