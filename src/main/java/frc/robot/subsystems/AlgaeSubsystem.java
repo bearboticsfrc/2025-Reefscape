@@ -4,34 +4,35 @@ import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.io.File;
 import java.io.IOException;
 
 public class AlgaeSubsystem extends SubsystemBase {
-  private final SparkBase motor;
+  private final SparkBase intake;
 
   public AlgaeSubsystem() {
-    ConfiguredMotor configuredMotor;
+    File directory = new File(Filesystem.getDeployDirectory(), "motors/algae");
 
     try {
-      File directory = new File(Filesystem.getDeployDirectory(), "motors/algae");
+      ConfiguredMotor configuredMotor =
+          new MotorParser(directory).withMotor("motor.json").configure();
 
-      configuredMotor = new MotorParser(directory).withMotor("motor.json").configure();
+      intake = configuredMotor.getSpark();
     } catch (IOException exception) {
-      throw new RuntimeException("Exception configuring AlgaeSubsystem: " + exception);
+      throw new RuntimeException("Exception configuring AlgaeSubsystem motor(s)", exception);
     }
-
-    this.motor = configuredMotor.getSpark();
   }
 
   /**
    * Run the algae intake at the supplied speed.
    *
    * @param speed The speed to run at.
+   * @return The intake run command.
    */
-  public void run(IntakeSpeed speed) {
-    motor.set(speed.getSpeed());
+  public Command runIntake(IntakeSpeed speed) {
+    return runOnce(() -> intake.set(speed.getSpeed()));
   }
 
   public enum IntakeSpeed {
