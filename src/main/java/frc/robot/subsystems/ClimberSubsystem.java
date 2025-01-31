@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import bearlib.motor.ConfiguredMotor;
+import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -31,22 +32,7 @@ public class ClimberSubsystem extends SubsystemBase {
    * @param speed The speed to run the winch at.
    * @return The command to run the winch.
    */
-  public Command runWinch(WinchSpeed speed) {
+  public Command runWinch(MotorSpeed speed) {
     return runOnce(() -> winch.set(speed.getSpeed()));
-  }
-
-  public enum WinchSpeed {
-    OFF(0),
-    FULL(1);
-
-    private double speed;
-
-    private WinchSpeed(double speed) {
-      this.speed = speed;
-    }
-
-    public double getSpeed() {
-      return speed;
-    }
   }
 }
