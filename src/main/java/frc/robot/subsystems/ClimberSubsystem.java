@@ -4,6 +4,7 @@ import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.io.File;
 import java.io.IOException;
@@ -12,26 +13,26 @@ public class ClimberSubsystem extends SubsystemBase {
   private final SparkBase winch;
 
   public ClimberSubsystem() {
-    ConfiguredMotor configuredMotor;
+    File directory = new File(Filesystem.getDeployDirectory(), "motors/climber");
 
     try {
-      File directory = new File(Filesystem.getDeployDirectory(), "motors/climber");
+      ConfiguredMotor configuredMotor =
+          new MotorParser(directory).withMotor("motor.json").configure();
 
-      configuredMotor = new MotorParser(directory).withMotor("motor.json").configure();
+      winch = configuredMotor.getSpark();
     } catch (IOException exception) {
-      throw new RuntimeException("Exception configuring ClimberSubsytem: " + exception);
+      throw new RuntimeException("Exception configuring ClimberSubsytem motor(s)", exception);
     }
-
-    this.winch = configuredMotor.getSpark();
   }
 
   /**
-   * Run the winch at the supplied speed.
+   * Returns a command to run the winch.
    *
    * @param speed The speed to run the winch at.
+   * @return The command to run the winch.
    */
-  public void runWinch(WinchSpeed speed) {
-    winch.set(speed.getSpeed());
+  public Command runWinch(WinchSpeed speed) {
+    return runOnce(() -> winch.set(speed.getSpeed()));
   }
 
   public enum WinchSpeed {
