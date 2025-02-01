@@ -32,8 +32,12 @@ public class CoralSubsystem extends SubsystemBase {
   private void configureMotors() {
     File directory = new File(Filesystem.getDeployDirectory(), "Elevator");
     try {
-      intakeParser = new MotorParser(directory).withMotor("intakeMotor.json");
-      this.intake = this.intakeParser.configure().getSpark();
+      ConfiguredMotor configuredMotor = 
+          new MotorParser(directory)
+              .withMotor("motor.json")
+              .configure();
+              
+      this.intake = configuredMotor.getSpark();
     } catch (IOException e) {
       throw new RuntimeException("Failed to configure motors: " + e.getCause().toString());
     }
