@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import bearlib.motor.ConfiguredMotor;
+import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -11,7 +13,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class CoralSubsystem extends SubsystemBase {
-  private MotorParser intakeParser;
+
   private SparkBase intake;
   private DigitalInput intakeSensor = new DigitalInput(0);
 
@@ -32,11 +34,9 @@ public class CoralSubsystem extends SubsystemBase {
   private void configureMotors() {
     File directory = new File(Filesystem.getDeployDirectory(), "motors/coral");
     try {
-      ConfiguredMotor configuredMotor = 
-          new MotorParser(directory)
-              .withMotor("motor.json")
-              .configure();
-              
+      ConfiguredMotor configuredMotor =
+          new MotorParser(directory).withMotor("motor.json").configure();
+
       this.intake = configuredMotor.getSpark();
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure coral motor!", exception);
@@ -48,7 +48,7 @@ public class CoralSubsystem extends SubsystemBase {
    *     proximity sensor
    */
   public boolean isCoralIn() {
-    return this.intakeSensor.get();
+    return intakeSensor.get();
   }
 
   /**
@@ -57,12 +57,12 @@ public class CoralSubsystem extends SubsystemBase {
    * @return Coral Grab Command
    */
   public Command getCoralGrabCommand() {
-    return getCoralIntakeRunCommand(CoralIntakeSpeed.FULL)
-        .andThen(Commands.waitUntil(this::isCoralIn))
-        .andThen(Commands.waitUntil(() -> !this.isCoralIn()))
-        .andThen(getCoralIntakeRunCommand(CoralIntakeSpeed.TENTH_R))
-        .andThen(Commands.waitUntil(this::isCoralIn))
-        .andThen(getCoralIntakeRunCommand(CoralIntakeSpeed.OFF));
+    return getCoralIntakeRunCommand(MotorSpeed.FULL)
+        .andThen(Commands.waitUntil(() -> isCoralIn()))
+        .andThen(Commands.waitUntil(() -> !isCoralIn()))
+        .andThen(getCoralIntakeRunCommand(MotorSpeed.REVERSE_TENTH))
+        .andThen(Commands.waitUntil(() -> isCoralIn()))
+        .andThen(getCoralIntakeRunCommand(MotorSpeed.OFF));
   }
 
   /**
@@ -70,38 +70,7 @@ public class CoralSubsystem extends SubsystemBase {
    *     motor the abs of the double is the speed coefficient out of 1 negative is reverse
    * @return Coral Intake Run Command
    */
-  public Command getCoralIntakeRunCommand(CoralIntakeSpeed speed) {
+  public Command getCoralIntakeRunCommand(MotorSpeed speed) {
     return this.runOnce(() -> this.intake.set(speed.getSpeed()));
-  }
-
-  /** Enum representing different intake speeds. */
-  public enum CoralSpeed {
-    REVERSE(-1),
-    TENTH_REVERSE(-0.1),
-    OFF(0),
-    TENTH(0.1),
-    QUARTER(0.25),
-    HALF(0.5),
-    FULL(1);
-
-    private final double speed;
-
-    /**
-     * Constructor for IntakeSpeed.
-     *
-     * @param speed The speed value associated with the intake speed.
-     */
-    private CoralIntakeSpeed(double speed) {
-      this.speed = speed;
-    }
-
-    /**
-     * Get the speed value associated with the intake speed.
-     *
-     * @return The speed value.
-     */
-    public double getSpeed() {
-      return speed;
-    }
   }
 }
