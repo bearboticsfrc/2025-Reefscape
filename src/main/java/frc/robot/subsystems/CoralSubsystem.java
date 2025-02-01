@@ -15,58 +15,55 @@ import java.io.IOException;
 public class CoralSubsystem extends SubsystemBase {
   private final int INTAKE_SENSOR_PORT = 0;
 
-  private SparkBase intake;
-  private DigitalInput intakeSensor = new DigitalInput(INTAKE_SENSOR_PORT);
+  private final SparkBase intake;
+  private final DigitalInput intakeSensor = new DigitalInput(INTAKE_SENSOR_PORT);
 
   /**
-   * Constructs a CoralSubsystem. Coral Subsystem fully develops the low level architecture for the
-   * Coral Intake. Coral Subsystem also provides functionality for full high level control over the
-   * Intake
+   * Constructs a CoralSubsystem.
    *
-   * <p>pulls the Json motor files and passes them into the motor wrapper/parser
-   *
-   * @throws RuntimeException if the motor configuration fails
+   * @throws RuntimeException If the motor configuration fails.
    */
   public CoralSubsystem() {
     File directory = new File(Filesystem.getDeployDirectory(), "motors/coral");
+
     try {
       ConfiguredMotor configuredMotor =
           new MotorParser(directory).withMotor("motor.json").configure();
 
-      this.intake = configuredMotor.getSpark();
+      intake = configuredMotor.getSpark();
     } catch (IOException exception) {
-      throw new RuntimeException("Failed to configure coral motor!", exception);
+      throw new RuntimeException("Failed to configure coral motor(s)!", exception);
     }
   }
 
   /**
-   * @return true if the coral is blocking the coral intake sensor Digital/Binary NPM banner
-   *     proximity sensor
+   * @return true if the coral is blocking the coral intake sensor.
    */
-  public boolean isCoralIn() {
+  public boolean isCoralInIntake() {
     return intakeSensor.get();
   }
 
   /**
-   * runs intake fast then backs it up slow into the robot
+   * Smart coral intake command.
    *
-   * @return Coral Grab Command
+   * @return A {@link Command} intaking the coral.
    */
-  public Command getCoralGrabCommand() {
-    return getCoralIntakeRunCommand(MotorSpeed.FULL)
-        .andThen(Commands.waitUntil(() -> isCoralIn()))
-        .andThen(Commands.waitUntil(() -> !isCoralIn()))
-        .andThen(getCoralIntakeRunCommand(MotorSpeed.REVERSE_TENTH))
-        .andThen(Commands.waitUntil(() -> isCoralIn()))
-        .andThen(getCoralIntakeRunCommand(MotorSpeed.OFF));
+  public Command intakeCoral() {
+    return runIntake(MotorSpeed.FULL)
+        .andThen(Commands.waitUntil(this::isCoralInIntake))
+        .andThen(Commands.waitUntil(() -> !isCoralInIntake()))
+        .andThen(runIntake(MotorSpeed.REVERSE_TENTH))
+        .andThen(Commands.waitUntil(this::isCoralInIntake))
+        .andThen(runIntake(MotorSpeed.OFF));
   }
 
   /**
-   * @param speed enum of discrete set of doubles in dom [-1, 1] Sets the speed of the coral intake
-   *     motor the abs of the double is the speed coefficient out of 1 negative is reverse
-   * @return Coral Intake Run Command
+   * Run the coral intake at the supplied speed.
+   *
+   * @param speed {@link MotorSpeed} describing the desired intake motor speed.
+   * @return A {@link Command} running the coral intake.
    */
-  public Command getCoralIntakeRunCommand(MotorSpeed speed) {
-    return this.runOnce(() -> this.intake.set(speed.getSpeed()));
+  public Command runIntake(MotorSpeed speed) {
+    return this.runOnce(() -> intake.set(speed.getSpeed()));
   }
 }
