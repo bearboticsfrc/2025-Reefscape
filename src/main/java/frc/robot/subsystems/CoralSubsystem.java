@@ -75,7 +75,7 @@ public class CoralSubsystem extends SubsystemBase {
   }
 
   /** Enum representing different intake speeds. */
-  public enum CoralIntakeSpeed {
+  public enum CoralSpeed {
     REVERSE(-1),
     TENTH_REVERSE(-0.1),
     OFF(0),
