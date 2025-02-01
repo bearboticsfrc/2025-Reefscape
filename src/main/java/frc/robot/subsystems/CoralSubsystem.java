@@ -38,8 +38,8 @@ public class CoralSubsystem extends SubsystemBase {
               .configure();
               
       this.intake = configuredMotor.getSpark();
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to configure motors: " + e.getCause().toString());
+    } catch (IOException exception) {
+      throw new RuntimeException("Failed to configure coral motor!", exception);
     }
   }
 
