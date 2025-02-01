@@ -9,7 +9,10 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.commands.LinearControlEffLogCmd;
 import frc.robot.constants.ElevatorConstants;
 import java.io.File;
 import java.io.IOException;
@@ -91,7 +94,8 @@ public class ElevatorSubsystem extends SubsystemBase {
         SparkBase.ControlType.kPosition,
         ClosedLoopSlot.kSlot0,
         elevatorFeedforward.calculate(
-            ElevatorConstants.MAX_VELOCITY, ElevatorConstants.MAX_ACCELERATION));
+            elevatorFeedforward.maxAchievableVelocity(
+                ElevatorConstants.MAX_VOLTAGE, ElevatorConstants.MAX_ACCELERATION)));
   }
 
   /*
@@ -132,5 +136,16 @@ public class ElevatorSubsystem extends SubsystemBase {
   public void setElevatorL4() {
     setElevatorReference(ElevatorConstants.L4);
     currentElevatorState = ElevatorConstants.L4;
+  }
+
+  /**
+   * @param elevatorCommand a command run on the elevator logs the data from the command. Work done
+   *     by motor, avg power pulled, Theoretical Work requirement
+   */
+  public Command logElevatorCommandData(Command elevatorCommand, String commandName) {
+    LinearControlEffLogCmd loggingCmd =
+        new LinearControlEffLogCmd(new SparkBase[] {leaderMotor, followerMotor});
+
+    return new ParallelRaceGroup(elevatorCommand, loggingCmd);
   }
 }

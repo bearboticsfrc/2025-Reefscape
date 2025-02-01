@@ -11,6 +11,7 @@ public class ElevatorConstants {
 
   public static final double MAX_VELOCITY = 0.0;
   public static final double MAX_ACCELERATION = 0.0;
+  public static final double MAX_VOLTAGE = 0.0;
 
   // TODO: Add constants for elevator feedforward
   public static final double KA = -1.0;
