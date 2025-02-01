@@ -30,7 +30,7 @@ public class CoralSubsystem extends SubsystemBase {
    * @throws RuntimeException if the motor configuration fails
    */
   private void configureMotors() {
-    File directory = new File(Filesystem.getDeployDirectory(), "Elevator");
+    File directory = new File(Filesystem.getDeployDirectory(), "motors/coral");
     try {
       ConfiguredMotor configuredMotor = 
           new MotorParser(directory)
