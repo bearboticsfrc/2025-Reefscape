@@ -7,16 +7,24 @@ package frc.robot;
 import bearlib.util.ProcessedJoystick;
 import bearlib.util.ProcessedJoystick.JoystickAxis;
 import bearlib.util.ProcessedJoystick.ThrottleProfile;
+
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
+
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.constants.DriveConstants;
+import frc.robot.constants.ReefAutoAlignZone;
+import frc.robot.constants.ReefAutoAlignZones;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import java.util.Optional;
 
 public class RobotContainer {
   private final CommandXboxController driverJoystick = new CommandXboxController(0);
@@ -26,7 +34,7 @@ public class RobotContainer {
   private ThrottleProfile throttleProfile = ThrottleProfile.NORMAL;
 
   public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-
+  
   private SendableChooser<Command> autoChooser;
 
   public RobotContainer() {
@@ -47,8 +55,24 @@ public class RobotContainer {
         .onTrue(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.TURTLE)))
         .onFalse(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.NORMAL)));
 
+    driverJoystick.rightBumper().whileTrue(reefOrientedDriveRequestCommand());
+
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
+  }
+
+  public void periodic() {
+    logZone();
+  }
+
+  private void logZone() {
+    Translation2d robotPosition = drivetrain.getState().Pose.getTranslation();
+    Optional<ReefAutoAlignZone> zone = ReefAutoAlignZones.inZone(robotPosition);
+    double degrees = 0;
+    if (zone.isPresent()) {
+      degrees = zone.get().angle.getDegrees();
+    } 
+    SmartDashboard.putNumber("Zone", degrees);
   }
 
   /**
@@ -61,6 +85,23 @@ public class RobotContainer {
         .withVelocityX(processedJoystick.get(JoystickAxis.Ly))
         .withVelocityY(processedJoystick.get(JoystickAxis.Lx))
         .withRotationalRate(processedJoystick.get(JoystickAxis.Rx));
+  }
+
+  private double getReefOrientationDegrees() {
+    Translation2d robotPosition = drivetrain.getState().Pose.getTranslation();
+    Optional<ReefAutoAlignZone> zone = ReefAutoAlignZones.inZone(robotPosition);
+    double degrees = 0;
+    if (zone.isPresent()) {
+      degrees = zone.get().angle.getDegrees();
+    } 
+    return degrees;
+  }
+
+  private Command reefOrientedDriveRequestCommand() {
+    return drivetrain.applyRequest(() -> DriveConstants.REEF_ORIENTED_SWERVE_REQUEST
+                .withVelocityX(processedJoystick.get(JoystickAxis.Ly))
+                .withVelocityY(processedJoystick.get(JoystickAxis.Lx))
+                .withTargetDirection(Rotation2d.fromDegrees(getReefOrientationDegrees())));
   }
 
   private void configureAutoBuilder() {

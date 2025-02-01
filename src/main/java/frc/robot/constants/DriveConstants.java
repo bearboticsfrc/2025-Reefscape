@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.utility.PhoenixPIDController;
+
 import frc.robot.Telemetry;
 import frc.robot.generated.TunerConstants;
 
@@ -24,6 +26,15 @@ public class DriveConstants {
           .withDeadband(LINEAR_DEADBAND)
           .withRotationalDeadband(ROTATIONAL_DEADBAND)
           .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+       
+  public static final SwerveRequest.FieldCentricFacingAngle REEF_ORIENTED_SWERVE_REQUEST = new SwerveRequest.FieldCentricFacingAngle()
+        .withDeadband(LINEAR_DEADBAND)
+        .withDriveRequestType(DriveRequestType.Velocity);
+
+  static {
+    REEF_ORIENTED_SWERVE_REQUEST.HeadingController = new PhoenixPIDController(10, 0., 0.);
+    REEF_ORIENTED_SWERVE_REQUEST.HeadingController.enableContinuousInput(-Math.PI, Math.PI);
+  }
 
   public static final Telemetry TELEMETRY = new Telemetry(MAX_VELOCITY);
 }

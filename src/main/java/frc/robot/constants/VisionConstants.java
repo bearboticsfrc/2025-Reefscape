@@ -21,8 +21,10 @@ public class VisionConstants {
   private static final Transform3d ROBOT_TO_FRONT_RIGHT_CAMERA =
       new Transform3d(new Translation3d(.095, -0.295, 0.31), new Rotation3d());
 
-  public static final VisionCamera FRONT_LEFT_CAMERA = new VisionCamera(FRONT_LEFT_CAMERA_NAME, ROBOT_TO_FRONT_LEFT_CAMERA);
-  public static final VisionCamera FRONT_RIGHT_CAMERA = new VisionCamera(FRONT_RIGHT_CAMERA_NAME, ROBOT_TO_FRONT_RIGHT_CAMERA);
+  public static final VisionCamera FRONT_LEFT_CAMERA =
+      new VisionCamera(FRONT_LEFT_CAMERA_NAME, ROBOT_TO_FRONT_LEFT_CAMERA);
+  public static final VisionCamera FRONT_RIGHT_CAMERA =
+      new VisionCamera(FRONT_RIGHT_CAMERA_NAME, ROBOT_TO_FRONT_RIGHT_CAMERA);
 
   // The standard deviations of our vision estimated poses, which affect correction rate
   public static final Matrix<N3, N1> SINGLE_TAG_STD_DEVS =
