@@ -13,25 +13,21 @@ import java.io.File;
 import java.io.IOException;
 
 public class CoralSubsystem extends SubsystemBase {
+  private final int INTAKE_SENSOR_PORT = 0;
 
   private SparkBase intake;
-  private DigitalInput intakeSensor = new DigitalInput(0);
+  private DigitalInput intakeSensor = new DigitalInput(INTAKE_SENSOR_PORT);
 
   /**
    * Constructs a CoralSubsystem. Coral Subsystem fully develops the low level architecture for the
    * Coral Intake. Coral Subsystem also provides functionality for full high level control over the
    * Intake
-   */
-  public CoralSubsystem() {
-    configureMotors();
-  }
-
-  /**
-   * pulls the Json motor files and passes them into the motor wrapper/parser
+   *
+   * <p>pulls the Json motor files and passes them into the motor wrapper/parser
    *
    * @throws RuntimeException if the motor configuration fails
    */
-  private void configureMotors() {
+  public CoralSubsystem() {
     File directory = new File(Filesystem.getDeployDirectory(), "motors/coral");
     try {
       ConfiguredMotor configuredMotor =
