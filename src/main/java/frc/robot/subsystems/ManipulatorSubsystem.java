@@ -6,6 +6,6 @@ public class ManipulatorSubsystem extends SubsystemBase {
   private final CoralSubsystem coral;
 
   public ManipulatorSubsystem() {
-    this.coral = new CoralSubsystem();
+    coral = new CoralSubsystem();
   }
 }
