@@ -7,11 +7,8 @@ package frc.robot;
 import bearlib.util.ProcessedJoystick;
 import bearlib.util.ProcessedJoystick.JoystickAxis;
 import bearlib.util.ProcessedJoystick.ThrottleProfile;
-
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -34,7 +31,7 @@ public class RobotContainer {
   private ThrottleProfile throttleProfile = ThrottleProfile.NORMAL;
 
   public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-  
+
   private SendableChooser<Command> autoChooser;
 
   public RobotContainer() {
@@ -71,7 +68,7 @@ public class RobotContainer {
     double degrees = 0;
     if (zone.isPresent()) {
       degrees = zone.get().angle.getDegrees();
-    } 
+    }
     SmartDashboard.putNumber("Zone", degrees);
   }
 
@@ -93,12 +90,14 @@ public class RobotContainer {
     double degrees = 0;
     if (zone.isPresent()) {
       degrees = zone.get().angle.getDegrees();
-    } 
+    }
     return degrees;
   }
 
   private Command reefOrientedDriveRequestCommand() {
-    return drivetrain.applyRequest(() -> DriveConstants.REEF_ORIENTED_SWERVE_REQUEST
+    return drivetrain.applyRequest(
+        () ->
+            DriveConstants.REEF_ORIENTED_SWERVE_REQUEST
                 .withVelocityX(processedJoystick.get(JoystickAxis.Ly))
                 .withVelocityY(processedJoystick.get(JoystickAxis.Lx))
                 .withTargetDirection(Rotation2d.fromDegrees(getReefOrientationDegrees())));
