@@ -22,11 +22,13 @@
  * SOFTWARE.
  */
 
-package frc.robot;
+package frc.robot.vision;
 
 import static frc.robot.constants.VisionConstants.*;
 
-import frc.robot.utils.VisionCamera;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -35,10 +37,16 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class Vision {
   private final List<PhotonCamera> cameras = new ArrayList<>();
   private final List<PhotonPoseEstimator> photonEstimators = new ArrayList<>();
+
+  private final StructArrayPublisher<Pose2d> targetPoses =
+      NetworkTableInstance.getDefault()
+          .getStructArrayTopic("Vision Targets", Pose2d.struct)
+          .publish();
 
   public Vision(List<VisionCamera> visionCameras) {
     for (VisionCamera visionCamera : visionCameras) {
@@ -87,16 +95,23 @@ public class Vision {
     }
 
     List<EstimatedRobotPose> estimatedPoses = new ArrayList<>();
+    targetPoses.set(new Pose2d[0]);
 
     for (int i = 0; i < photonEstimators.size(); i++) {
-      Optional<PhotonPipelineResult> result = results.get(i);
+      Optional<PhotonPipelineResult> maybeResult = results.get(i);
 
-      if (result.isEmpty()) {
+      if (maybeResult.isEmpty()) {
+        continue;
+      }
+
+      PhotonPipelineResult result = maybeResult.get();
+
+      if (!result.hasTargets() || isTooFar(result) || isTooAmbiguous(result)) {
         continue;
       }
 
       PhotonPoseEstimator photonEstimator = photonEstimators.get(i);
-      Optional<EstimatedRobotPose> estimatedPose = photonEstimator.update(result.get());
+      Optional<EstimatedRobotPose> estimatedPose = photonEstimator.update(maybeResult.get());
 
       if (estimatedPose.isEmpty()) {
         continue;
@@ -105,6 +120,32 @@ public class Vision {
       estimatedPoses.add(estimatedPose.get());
     }
 
+    appendTargetsToNT(estimatedPoses);
+
     return estimatedPoses;
+  }
+
+  private void appendTargetsToNT(List<EstimatedRobotPose> estimatedRobotPoses) {
+    List<Pose2d> poses = new ArrayList<>();
+
+    for (EstimatedRobotPose estimatedRobotPose : estimatedRobotPoses) {
+      for (PhotonTrackedTarget target : estimatedRobotPose.targetsUsed) {
+        poses.add(getTagPose2d(target.getFiducialId()));
+      }
+    }
+
+    targetPoses.set(poses.toArray(new Pose2d[0]));
+  }
+
+  private Pose2d getTagPose2d(int fiducialId) {
+    return APRIL_TAG_FIELD_LAYOUT.getTagPose(fiducialId).get().toPose2d();
+  }
+
+  private boolean isTooFar(PhotonPipelineResult result) {
+    return result.getBestTarget().bestCameraToTarget.getMeasureX().gt(CULLING_DISTANCE);
+  }
+
+  private boolean isTooAmbiguous(PhotonPipelineResult result) {
+    return result.getBestTarget().poseAmbiguity > CULLING_AMBIGUITY;
   }
 }

@@ -19,7 +19,8 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class RobotContainer {
-  private final CommandXboxController driverJoystick = new CommandXboxController(0);
+  private final CommandXboxController driverJoystick =
+      new CommandXboxController(DriveConstants.DRIVER_JOYSTICK_PORT);
 
   private final ProcessedJoystick processedJoystick =
       new ProcessedJoystick(driverJoystick, this::getThrottleProfile, DriveConstants.MAX_VELOCITY);
@@ -34,6 +35,7 @@ public class RobotContainer {
     configureAutoBuilder();
   }
 
+  /** Configure the button bindings. */
   private void configureBindings() {
     driverJoystick.leftBumper().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
@@ -52,7 +54,7 @@ public class RobotContainer {
   }
 
   /**
-   * Gets the default drive request using field centric mode..
+   * Gets the default drive request using field centric mode.
    *
    * @return The default drive request.
    */
@@ -63,9 +65,10 @@ public class RobotContainer {
         .withRotationalRate(processedJoystick.get(JoystickAxis.Rx));
   }
 
+  /** Configures the PathPlanner autobuilder for publishing on NT. */
   private void configureAutoBuilder() {
-    autoChooser = AutoBuilder.buildAutoChooser("Tests");
-    SmartDashboard.putData("Auto Mode", autoChooser);
+    autoChooser = AutoBuilder.buildAutoChooser();
+    SmartDashboard.putData("Auto Path", autoChooser);
   }
 
   /**
@@ -86,6 +89,11 @@ public class RobotContainer {
     return throttleProfile;
   }
 
+  /**
+   * Get the currently selected autonomous command.
+   *
+   * @return The command.
+   */
   public Command getAutonomousCommand() {
     return autoChooser.getSelected();
   }
