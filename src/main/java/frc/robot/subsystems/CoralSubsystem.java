@@ -1,9 +1,12 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Seconds;
+
 import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.spark.SparkBase;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -14,6 +17,7 @@ import java.io.IOException;
 
 public class CoralSubsystem extends SubsystemBase {
   private final int INTAKE_SENSOR_PORT = 0;
+  private final Time INTAKE_SLOWDOWN = Seconds.of(5);
 
   private final SparkBase intake;
   private final DigitalInput intakeSensor = new DigitalInput(INTAKE_SENSOR_PORT);
@@ -51,9 +55,8 @@ public class CoralSubsystem extends SubsystemBase {
   public Command intakeCoral() {
     return runIntake(MotorSpeed.FULL)
         .andThen(Commands.waitUntil(this::isCoralInIntake))
-        .andThen(Commands.waitUntil(() -> !isCoralInIntake()))
-        .andThen(runIntake(MotorSpeed.REVERSE_TENTH))
-        .andThen(Commands.waitUntil(this::isCoralInIntake))
+        .andThen(runIntake(MotorSpeed.QUARTER))
+        .andThen(Commands.waitTime(INTAKE_SLOWDOWN))
         .andThen(runIntake(MotorSpeed.OFF));
   }
 
