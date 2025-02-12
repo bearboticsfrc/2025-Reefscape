@@ -1,151 +1,150 @@
 package frc.robot.subsystems;
 
+import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.deserializer.MotorParser;
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
-import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkBase.ControlType;
+import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.commands.LinearControlEffLogCmd;
-import frc.robot.constants.ElevatorConstants;
 import java.io.File;
 import java.io.IOException;
 
 public class ElevatorSubsystem extends SubsystemBase {
+  // Time step for trapezoidal profile calculations (in seconds)
+  private static final double DT = 0.02;
 
-  private ElevatorFeedforward elevatorFeedforward =
-      new ElevatorFeedforward(
-          ElevatorConstants.KS, ElevatorConstants.KG, ElevatorConstants.KS, ElevatorConstants.KV);
-  private ShuffleboardTab elevatorTab;
-  private SparkBase leaderMotor;
-  private RelativeEncoder leaderRelativeEncoder;
-  private SparkClosedLoopController elevatorPIDController;
-  private SparkBase followerMotor;
-  private RelativeEncoder followerRelativeEncoder;
-  private double currentElevatorState = ElevatorConstants.HOME;
-  private final boolean SHUFFLEBOARD_ENABLED = true;
+  // Feedforward gains and motion parameters
+  private static final double A = 0.41;
+  private static final double S = 0.0;
+  private static final double G = 2.26;
+  private static final double V = 3.08;
 
-  /*
-   * constructor for the elevator subsystem
-   */
+  public final double MAX_ACCELERATION = 0.3;
+  public final double MAX_VOLTAGE = 0.0;
+
+  // Trapezoidal motion profile constraints and instance
+  private final TrapezoidProfile.Constraints trapezoidConstraints =
+      new TrapezoidProfile.Constraints(V, A);
+  private final TrapezoidProfile trapezoidProfile = new TrapezoidProfile(trapezoidConstraints);
+
+  // Elevator feedforward controller
+  private final ElevatorFeedforward feedforward = new ElevatorFeedforward(A, G, S, V);
+
+  // Spark motor controller instance
+  private final SparkBase motor;
+
+  @Logged(importance = Importance.DEBUG)
+  private TrapezoidProfile.State targetState = new TrapezoidProfile.State(0, 0);
+
+  @Logged(importance = Importance.DEBUG)
+  private TrapezoidProfile.State currentState = new TrapezoidProfile.State(0, 0);
+
+  /** Constructs a new ElevatorSubsystem by configuring the leader and follower motors. */
   public ElevatorSubsystem() {
-    elevatorTab = Shuffleboard.getTab("Elevator");
-    configureMotors();
-    if (SHUFFLEBOARD_ENABLED) {
-      setupShuffleboardTab();
-    }
-  }
-
-  /*
-   * configures the both  of motors for the elevator subsystem
-   * along with their pid controllers and encoders
-   */
-  private void configureMotors() {
-    File directory = new File(Filesystem.getDeployDirectory(), "Elevator");
+    File baseDirectory = new File(Filesystem.getDeployDirectory(), "motors/elevator");
+    File leaderDirectory = new File(baseDirectory, "leader");
+    File followerDirectory = new File(baseDirectory, "follower");
 
     try {
-      MotorParser elevatorLeaderMotorParser =
-          new MotorParser(directory)
-              .withMotor("leaderMotor.json")
-              .withEncoder("leaderEncoder.json")
-              .withPidf("leaderPidf.json", 0);
+      ConfiguredMotor configuredLeaderMotor =
+          new MotorParser(leaderDirectory)
+              .withMotor("motor.json")
+              .withEncoder("encoder.json")
+              .withPidf("pidf.json")
+              .configure();
 
-      leaderMotor = elevatorLeaderMotorParser.configure().getSpark();
+      new MotorParser(followerDirectory).withMotor("motor.json").configure();
 
-      MotorParser elevatorFollowerMotorParser =
-          new MotorParser(directory)
-              .withMotor("followerMotor.json")
-              .withEncoder("followerEncoder.json")
-              .withPidf("followerPidf.json", 0);
-
-      followerMotor = elevatorFollowerMotorParser.configure().getSpark();
-
-    } catch (IOException e) {
-      e.printStackTrace();
+      motor = configuredLeaderMotor.getSpark();
+    } catch (IOException exception) {
+      throw new RuntimeException("Failed to configure elevator motor(s)!", exception);
     }
-
-    leaderRelativeEncoder = leaderMotor.getEncoder();
-    followerRelativeEncoder = followerMotor.getEncoder();
-    elevatorPIDController = leaderMotor.getClosedLoopController();
-  }
-
-  /*
-   * configures the shuffleboard tab for the elevator subsystem and adds some values to it
-   */
-  private void setupShuffleboardTab() {
-    elevatorTab.add("position", currentElevatorState);
-    elevatorTab.addDouble("leader encoder position", leaderRelativeEncoder::getPosition);
-    elevatorTab.addDouble("follower encoder position", followerRelativeEncoder::getPosition);
-  }
-
-  /*
-   * sets the elevator reference to a target state
-   * @param TargetElevatorState the target state for the elevator
-   */
-  public void setElevatorReference(double TargetElevatorState) {
-    elevatorPIDController.setReference(
-        TargetElevatorState,
-        SparkBase.ControlType.kPosition,
-        ClosedLoopSlot.kSlot0,
-        elevatorFeedforward.calculate(
-            elevatorFeedforward.maxAchievableVelocity(
-                ElevatorConstants.MAX_VOLTAGE, ElevatorConstants.MAX_ACCELERATION)));
-  }
-
-  /*
-   * sets the elevator to the home position
-   */
-  public void setElevatorHome() {
-    setElevatorReference(ElevatorConstants.HOME);
-    currentElevatorState = ElevatorConstants.HOME;
-  }
-
-  /*
-   * sets the elevator to the reef level one position
-   */
-  public void setElevatorL1() {
-    setElevatorReference(ElevatorConstants.L1);
-    currentElevatorState = ElevatorConstants.L1;
-  }
-
-  /*
-   * sets the elevator to the reef level two position
-   */
-  public void setElevatorL2() {
-    setElevatorReference(ElevatorConstants.L2);
-    currentElevatorState = ElevatorConstants.L2;
-  }
-
-  /*
-   * sets the elevator to the reef level three position
-   */
-  public void setElevatorL3() {
-    setElevatorReference(ElevatorConstants.L3);
-    currentElevatorState = ElevatorConstants.L3;
-  }
-
-  /*
-   * sets the elevator to the reef level four position
-   */
-  public void setElevatorL4() {
-    setElevatorReference(ElevatorConstants.L4);
-    currentElevatorState = ElevatorConstants.L4;
   }
 
   /**
-   * @param elevatorCommand a command run on the elevator logs the data from the command. Work done
-   *     by motor, avg power pulled, Theoretical Work requirement
+   * Sets the target elevator position and updates the motor controller reference.
+   *
+   * @param position The desired elevator position.
    */
-  public Command logElevatorCommandData(Command elevatorCommand, String commandName) {
-    LinearControlEffLogCmd loggingCmd =
-        new LinearControlEffLogCmd(new SparkBase[] {leaderMotor, followerMotor});
+  private void set(ElevatorPosition position) {
+    targetState = new TrapezoidProfile.State(position.getPosition(), 0);
+    currentState = calculateState(targetState);
 
-    return new ParallelRaceGroup(elevatorCommand, loggingCmd);
+    motor
+        .getClosedLoopController()
+        .setReference(
+            currentState.position,
+            ControlType.kPosition,
+            ClosedLoopSlot.kSlot0,
+            calculateFeedForward());
+  }
+
+  /**
+   * Calculates the trapezoidal profile state based on the current encoder position and target
+   * state.
+   *
+   * @param targetState The target state for the motion profile.
+   * @return The updated trapezoidal profile state.
+   */
+  private TrapezoidProfile.State calculateState(TrapezoidProfile.State targetState) {
+    double currentPosition = motor.getAbsoluteEncoder().getPosition();
+    return trapezoidProfile.calculate(
+        DT, new TrapezoidProfile.State(currentPosition, currentState.velocity), targetState);
+  }
+
+  /**
+   * Calculates the feedforward value using the current encoder position and velocity.
+   *
+   * @return The computed feedforward value.
+   */
+  private double calculateFeedForward() {
+    double currentPosition = motor.getAbsoluteEncoder().getPosition();
+    return feedforward.calculate(currentPosition, currentState.velocity);
+  }
+
+  @Override
+  public void periodic() {
+    currentState = trapezoidProfile.calculate(DT, currentState, targetState);
+    double feedForwardValue = feedforward.calculate(currentState.position, currentState.velocity);
+
+    motor
+        .getClosedLoopController()
+        .setReference(
+            currentState.position, ControlType.kPosition, ClosedLoopSlot.kSlot0, feedForwardValue);
+  }
+
+  /**
+   * Creates a command to run the elevator to a specified position.
+   *
+   * @param position The target elevator position.
+   * @return A command that moves the elevator.
+   */
+  private Command runElevatorTo(ElevatorPosition position) {
+    return runOnce(() -> set(position));
+  }
+
+  /** Enum representing preset elevator positions. */
+  public enum ElevatorPosition {
+    L4(0),
+    L3(0),
+    L2(0),
+    L1(0),
+    HOME(0);
+
+    private final double position;
+
+    ElevatorPosition(double position) {
+      this.position = position;
+    }
+
+    public double getPosition() {
+      return position;
+    }
   }
 }

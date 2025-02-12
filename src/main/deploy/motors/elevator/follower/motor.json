@@ -1,0 +1,8 @@
+{
+    "type": "max",
+    "id": 1,
+    "leader": {
+        "id": 2,
+        "follow_inverted": true
+    }
+}
