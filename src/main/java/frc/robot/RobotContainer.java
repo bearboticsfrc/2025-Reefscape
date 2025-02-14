@@ -9,18 +9,23 @@ import bearlib.util.ProcessedJoystick.JoystickAxis;
 import bearlib.util.ProcessedJoystick.ThrottleProfile;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.commands.DriveToPose;
 import frc.robot.constants.DriveConstants;
-import frc.robot.constants.ReefAutoAlignZone;
-import frc.robot.constants.ReefAutoAlignZones;
+import frc.robot.field.ReefAutoAlignZone;
+import frc.robot.field.ReefAutoAlignZones;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.utils.AllianceFlipUtil;
 import java.util.Optional;
 
 public class RobotContainer {
@@ -52,7 +57,8 @@ public class RobotContainer {
         .onTrue(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.TURTLE)))
         .onFalse(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.NORMAL)));
 
-    driverJoystick.rightBumper().whileTrue(reefOrientedDriveRequestCommand());
+    //    driverJoystick.rightBumper().whileTrue(reefOrientedDriveRequestCommand());
+    driverJoystick.rightBumper().whileTrue(driveToNearestBranchCommand());
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
@@ -94,6 +100,16 @@ public class RobotContainer {
     return degrees;
   }
 
+  private Pose2d getNearestBranchPose() {
+    Translation2d robotPosition = drivetrain.getState().Pose.getTranslation();
+    Optional<ReefAutoAlignZone> zone = ReefAutoAlignZones.inZone(robotPosition);
+    Pose2d pose = new Pose2d();
+    if (zone.isPresent()) {
+      pose = zone.get().getScorePose();
+    }
+    return AllianceFlipUtil.apply(pose);
+  }
+
   private Command reefOrientedDriveRequestCommand() {
     return drivetrain.applyRequest(
         () ->
@@ -101,6 +117,14 @@ public class RobotContainer {
                 .withVelocityX(processedJoystick.get(JoystickAxis.Ly))
                 .withVelocityY(processedJoystick.get(JoystickAxis.Lx))
                 .withTargetDirection(Rotation2d.fromDegrees(getReefOrientationDegrees())));
+  }
+
+  private Command driveToNearestBranchCommand() {
+    return new DriveToPose(
+        drivetrain,
+        this::getNearestBranchPose,
+        new Transform2d(
+            Units.inchesToMeters(1.0), Units.inchesToMeters(1.0), Rotation2d.fromDegrees(1.0)));
   }
 
   private void configureAutoBuilder() {

@@ -4,7 +4,7 @@
 // license that can be found in the LICENSE file at
 // the root directory of this project.
 
-package frc.robot.constants;
+package frc.robot.field;
 
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
@@ -117,15 +117,28 @@ public class ReefAutoAlignZones {
     Translation2d point = new Translation2d(5.2, 6);
     for (ReefAutoAlignZone zone : ReefAutoAlignZones.zones) {
 
-      // System.out.println("point1 " + zone.getPoint1() + " point2 " + zone.getPoint2());
+      // System.out.println("center " +zone.getCenter()+ "point1 " + zone.getPoint1() + " point2 " +
+      // zone.getPoint2());
       System.out.println(
-          "ScorePose "
-              + zone.getScorePose()
-              + " point "
-              + point
-              + " in zone "
-              + zone.containsPoint(point));
-
+          zone.getCenter().getX()
+              + ","
+              + zone.getCenter().getY()
+              + ","
+              + zone.getPoint1().getX()
+              + ","
+              + zone.getPoint1().getY()
+              + ","
+              + zone.getPoint2().getX()
+              + ","
+              + zone.getPoint2().getY());
+      /*System.out.println(
+                "ScorePose "
+                    + zone.getScorePose()
+                    + " point "
+                    + point
+                    + " in zone "
+                    + zone.containsPoint(point));
+      */
       /*      Pose2d branch = Reef.branchPositions.get(i).get(ReefHeight.L2).toPose2d();
            Pose2d scorePose =
                Reef.branchPositions

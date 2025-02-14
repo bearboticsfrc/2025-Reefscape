@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.ctre.phoenix6.swerve.utility.PhoenixPIDController;
 import frc.robot.Telemetry;
 import frc.robot.generated.TunerConstants;
@@ -24,6 +25,11 @@ public class DriveConstants {
       new SwerveRequest.FieldCentric()
           .withDeadband(LINEAR_DEADBAND)
           .withRotationalDeadband(ROTATIONAL_DEADBAND)
+          .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+
+  public static final SwerveRequest.FieldCentric DRIVE_TO_POSE_SWERVE_REQUEST =
+      new SwerveRequest.FieldCentric()
+          .withForwardPerspective(ForwardPerspectiveValue.OperatorPerspective)
           .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
   public static final SwerveRequest.FieldCentricFacingAngle REEF_ORIENTED_SWERVE_REQUEST =

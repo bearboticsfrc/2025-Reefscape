@@ -24,21 +24,31 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Meters;
 import static frc.robot.constants.VisionConstants.*;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import frc.robot.utils.VisionCamera;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class Vision {
   private final List<PhotonCamera> cameras = new ArrayList<>();
   private final List<PhotonPoseEstimator> photonEstimators = new ArrayList<>();
+  private final NetworkTableInstance inst = NetworkTableInstance.getDefault();
+
+  private final StructArrayPublisher<Pose2d> targetPoses =
+      inst.getStructArrayTopic("Targets", Pose2d.struct).publish();
 
   public Vision(List<VisionCamera> visionCameras) {
     for (VisionCamera visionCamera : visionCameras) {
@@ -87,6 +97,7 @@ public class Vision {
     }
 
     List<EstimatedRobotPose> estimatedPoses = new ArrayList<>();
+    ArrayList<Pose2d> targetPosesArray = new ArrayList<>();
 
     for (int i = 0; i < photonEstimators.size(); i++) {
       Optional<PhotonPipelineResult> result = results.get(i);
@@ -101,8 +112,22 @@ public class Vision {
       if (estimatedPose.isEmpty()) {
         continue;
       }
-
-      estimatedPoses.add(estimatedPose.get());
+      List<PhotonTrackedTarget> targets = estimatedPose.get().targetsUsed;
+      for (PhotonTrackedTarget target : targets) {
+        try {
+          if (target.getBestCameraToTarget().getMeasureX().lt(Meters.of(2))) {
+            targetPosesArray.add(
+                APRIL_TAG_FIELD_LAYOUT.getTagPose(target.getFiducialId()).orElseThrow().toPose2d());
+            estimatedPoses.add(estimatedPose.get());
+          }
+        } catch (NoSuchElementException ex) {
+          // skip this tag
+        }
+      }
+    }
+    if (!targetPosesArray.isEmpty()) {
+      Pose2d[] poseArray = new Pose2d[targetPosesArray.size()];
+      targetPoses.set(targetPosesArray.toArray(poseArray));
     }
 
     return estimatedPoses;
