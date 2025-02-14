@@ -12,22 +12,14 @@ package frc.robot.commands;
 import static edu.wpi.first.units.Units.*;
 // import static frc.robot.constants.*;
 
-import bearlib.fms.AllianceColor;
-import bearlib.util.TunableNumber;
+import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentric;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.constants.DriveConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.utils.TunableNumberUtil;
 import java.util.function.Supplier;
 
 /**
@@ -43,67 +35,38 @@ import java.util.function.Supplier;
  * <p>At End: stops the drivetrain
  */
 public class DriveToPose extends Command {
-  private final double LOOP_PERIOD_SECS = 0.02;
-  private final CommandSwerveDrivetrain drivetrain;
-  private final Supplier<Pose2d> poseSupplier;
-  private Pose2d targetPose;
-  private Transform2d targetTolerance;
+  private final double TRANSLATION_K = 6;
+  private final double THETA_K = 10;
 
-  private boolean running = false;
-  private Timer timer;
+  private final double TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(3).in(MetersPerSecond);
+  private final double TRANSLATION_MAX_ACCELERATION =
+      MetersPerSecondPerSecond.of(6.0).in(MetersPerSecondPerSecond);
 
-  private static final TunableNumber driveKp = new TunableNumber("DriveToPose/DriveKp", 1.0);
-  private static final TunableNumber driveKd = new TunableNumber("DriveToPose/DriveKd", 0.0);
-  private static final TunableNumber driveKi = new TunableNumber("DriveToPose/DriveKi", 0);
-  private static final TunableNumber thetaKp = new TunableNumber("DriveToPose/ThetaKp", 10.0);
-  private static final TunableNumber thetaKd = new TunableNumber("DriveToPose/ThetaKd", 0.0);
-  private static final TunableNumber thetaKi = new TunableNumber("DriveToPose/ThetaKi", 0.0);
-  private static final TunableNumber driveMaxVelocity =
-      new TunableNumber(
-          "DriveToPose/DriveMaxVelocityMetersPerSecond",
-          MetersPerSecond.of(3.0).in(MetersPerSecond));
-  private static final TunableNumber driveMaxAcceleration =
-      new TunableNumber(
-          "DriveToPose/DriveMaxAccelerationMetersPerSecondPerSecond",
-          MetersPerSecondPerSecond.of(6.0).in(MetersPerSecondPerSecond));
-  private static final TunableNumber thetaMaxVelocity =
-      new TunableNumber(
-          "DriveToPose/ThetaMaxVelocityRadiansPerSecond",
-          RadiansPerSecond.of(2 * Math.PI).in(RadiansPerSecond));
-  private static final TunableNumber thetaMaxAcceleration =
-      new TunableNumber(
-          "DriveToPose/ThetaMaxAccelerationRadiansPerSecondPerSecond",
-          RadiansPerSecondPerSecond.of(2 * Math.PI).in(RadiansPerSecondPerSecond));
-  private static final TunableNumber driveTolerance =
-      new TunableNumber("DriveToPose/DriveToleranceMeters", Meters.of(0.01).in(Meters));
-  private static final TunableNumber thetaTolerance =
-      new TunableNumber("DriveToPose/ThetaToleranceRadians", Radians.of(0.017).in(Radians));
-  private static final TunableNumber timeout = new TunableNumber("DriveToPose/timeout", 5.0);
+  private final double THETA_MAX_VELOCITY = RadiansPerSecond.of(2 * Math.PI).in(RadiansPerSecond);
+  private final double THETA_MAX_ACCELERATION =
+      RadiansPerSecondPerSecond.of(2 * Math.PI).in(RadiansPerSecondPerSecond);
 
-  private StructPublisher<Pose3d> scorePosePublisher =
-      NetworkTableInstance.getDefault().getStructTopic("ScorePose", Pose3d.struct).publish();
+  private final double POSITION_TOLERANCE = Inches.of(3).in(Meters);
+  private final double ROTATIONS_TOLERANCE = Radians.of(0.017).in(Radians);
+
+  private final TrapezoidProfile.Constraints TRANSLATION_CONSTRAINTS =
+      new TrapezoidProfile.Constraints(TRANSLATION_MAX_VELOCITY, TRANSLATION_MAX_ACCELERATION);
+  private final TrapezoidProfile.Constraints THETA_CONSTRAINTS =
+      new TrapezoidProfile.Constraints(THETA_MAX_VELOCITY, THETA_MAX_ACCELERATION);
+
+  private final SwerveRequest.FieldCentric DRIVE_TO_POSE = new FieldCentric();
 
   private final ProfiledPIDController xController =
-      new ProfiledPIDController(
-          driveKp.get(),
-          driveKi.get(),
-          driveKd.get(),
-          new TrapezoidProfile.Constraints(driveMaxVelocity.get(), driveMaxAcceleration.get()),
-          LOOP_PERIOD_SECS);
+      new ProfiledPIDController(TRANSLATION_K, 0, 0, TRANSLATION_CONSTRAINTS);
   private final ProfiledPIDController yController =
-      new ProfiledPIDController(
-          driveKp.get(),
-          driveKi.get(),
-          driveKd.get(),
-          new TrapezoidProfile.Constraints(driveMaxVelocity.get(), driveMaxAcceleration.get()),
-          LOOP_PERIOD_SECS);
+      new ProfiledPIDController(TRANSLATION_K, 0, 0, TRANSLATION_CONSTRAINTS);
   private final ProfiledPIDController thetaController =
-      new ProfiledPIDController(
-          thetaKp.get(),
-          thetaKi.get(),
-          thetaKd.get(),
-          new TrapezoidProfile.Constraints(thetaMaxVelocity.get(), thetaMaxAcceleration.get()),
-          LOOP_PERIOD_SECS);
+      new ProfiledPIDController(THETA_K, 0, 0, THETA_CONSTRAINTS);
+
+  private final CommandSwerveDrivetrain drivetrain;
+  private final Supplier<Pose2d> poseSupplier;
+
+  private Pose2d targetPose;
 
   /**
    * Constructs a new DriveToPose command that drives the robot in a straight line to the specified
@@ -113,14 +76,17 @@ public class DriveToPose extends Command {
    * @param drivetrain the drivetrain subsystem required by this command
    * @param poseSupplier a supplier that returns the pose to drive to
    */
-  public DriveToPose(
-      CommandSwerveDrivetrain drivetrain, Supplier<Pose2d> poseSupplier, Transform2d tolerance) {
+  public DriveToPose(CommandSwerveDrivetrain drivetrain, Supplier<Pose2d> poseSupplier) {
     this.drivetrain = drivetrain;
     this.poseSupplier = poseSupplier;
-    this.targetTolerance = tolerance;
-    this.timer = new Timer();
-    addRequirements(drivetrain);
+
+    xController.setTolerance(POSITION_TOLERANCE);
+    yController.setTolerance(POSITION_TOLERANCE);
+    thetaController.setTolerance(ROTATIONS_TOLERANCE);
+
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+    addRequirements(drivetrain);
   }
 
   /**
@@ -132,22 +98,17 @@ public class DriveToPose extends Command {
    */
   @Override
   public void initialize() {
-    // Reset all controllers
+    targetPose = poseSupplier.get();
+
+    xController.setGoal(targetPose.getX());
+    yController.setGoal(targetPose.getY());
+    thetaController.setGoal(targetPose.getRotation().getRadians());
+
     Pose2d currentPose = drivetrain.getPose();
+
     xController.reset(currentPose.getX());
     yController.reset(currentPose.getY());
     thetaController.reset(currentPose.getRotation().getRadians());
-    xController.setTolerance(driveTolerance.get());
-    yController.setTolerance(driveTolerance.get());
-    thetaController.setTolerance(thetaTolerance.get());
-    this.targetPose = poseSupplier.get();
-    scorePosePublisher.set(new Pose3d(targetPose));
-
-    // drivetrain.enableAccelerationLimiting();
-    // Logger.recordOutput("DriveToPose/targetPose", targetPose);
-
-    this.timer.restart();
-    System.out.println("Drive to pose started for " + targetPose.toString());
   }
 
   /**
@@ -157,92 +118,14 @@ public class DriveToPose extends Command {
    */
   @Override
   public void execute() {
-    // set running to true in this method to capture that the calculate method has been invoked on
-    // the PID controllers. This is important since these controllers will return true for atGoal if
-    // the calculate method has not yet been invoked.
-    running = true;
-
-    // Update from tunable numbers
-    TunableNumberUtil.ifChanged(
-        hashCode(),
-        pid -> {
-          xController.setPID(pid[0], pid[1], pid[2]);
-          yController.setPID(pid[0], pid[1], pid[2]);
-        },
-        driveKp,
-        driveKi,
-        driveKd);
-    TunableNumberUtil.ifChanged(
-        hashCode(),
-        max -> {
-          xController.setConstraints(new TrapezoidProfile.Constraints(max[0], max[1]));
-          yController.setConstraints(new TrapezoidProfile.Constraints(max[0], max[1]));
-        },
-        driveMaxVelocity,
-        driveMaxAcceleration);
-    TunableNumberUtil.ifChanged(
-        hashCode(),
-        tolerance -> {
-          xController.setTolerance(tolerance[0]);
-          yController.setTolerance(tolerance[0]);
-        },
-        driveTolerance);
-
-    TunableNumberUtil.ifChanged(
-        hashCode(),
-        pid -> thetaController.setPID(pid[0], pid[1], pid[2]),
-        thetaKp,
-        thetaKi,
-        thetaKd);
-    TunableNumberUtil.ifChanged(
-        hashCode(),
-        max -> thetaController.setConstraints(new TrapezoidProfile.Constraints(max[0], max[1])),
-        thetaMaxVelocity,
-        thetaMaxAcceleration);
-    TunableNumberUtil.ifChanged(
-        hashCode(), tolerance -> thetaController.setTolerance(tolerance[0]), thetaTolerance);
-
     Pose2d currentPose = drivetrain.getPose();
 
-    // Transform2d difference = currentPose.minus(targetPose);
-    // double highVelocityDistanceThresholdMeters = 1.0; // arbitrary 1 meters away right now
-    // double straightLineHighVelocityMPS = 2.0; // arbitrary 2 m/s right now
+    final double xVelocity = xController.calculate(currentPose.getX());
+    final double yVelocity = yController.calculate(currentPose.getY());
+    final double thetaVelocity = thetaController.calculate(currentPose.getRotation().getRadians());
 
-    // use last values of filter
-    final double xVelocity = xController.calculate(currentPose.getX(), this.targetPose.getX());
-    final double yVelocity = yController.calculate(currentPose.getY(), this.targetPose.getY());
-    final double thetaVelocity =
-        thetaController.calculate(
-            currentPose.getRotation().getRadians(), this.targetPose.getRotation().getRadians());
-
-    // xVelocity =
-    //     Math.abs(difference.getX()) > highVelocityDistanceThresholdMeters
-    //         ? (xController.calculate(currentPose.getX(), this.targetPose.getX()) >= 0
-    //             ? straightLineHighVelocityMPS
-    //             : -straightLineHighVelocityMPS)
-    //         : xController.calculate(currentPose.getX(), this.targetPose.getX());
-    // yVelocity =
-    //     Math.abs(difference.getY()) > highVelocityDistanceThresholdMeters
-    //         ? (yController.calculate(currentPose.getY(), this.targetPose.getY()) >= 0
-    //             ? straightLineHighVelocityMPS
-    //             : -straightLineHighVelocityMPS)
-    //         : yController.calculate(currentPose.getY(), this.targetPose.getY());
-    // thetaVelocity =
-    //     thetaController.calculate(
-    //         currentPose.getRotation().getRadians(), this.targetPose.getRotation().getRadians());
-
-    // if (xController.atGoal()) xVelocity = 0.0;
-    // if (yController.atGoal()) yVelocity = 0.0;
-    // if (thetaController.atGoal()) thetaVelocity = 0.0;
-
-    int allianceMultiplier = AllianceColor.getAlliance() == Alliance.Blue ? 1 : -1;
-
-    System.out.println("X[" + xVelocity + "] Y[" + yVelocity + "] theta[" + thetaVelocity + "]");
-    // drivetrain.drive(
-    //     allianceMultiplier * xVelocity, allianceMultiplier * yVelocity, thetaVelocity, true,
-    // true);
     drivetrain.setControl(
-        DriveConstants.DRIVE_TO_POSE_SWERVE_REQUEST
+        DRIVE_TO_POSE
             .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance)
             .withVelocityX(xVelocity)
             .withVelocityY(yVelocity)
@@ -259,20 +142,7 @@ public class DriveToPose extends Command {
    */
   @Override
   public boolean isFinished() {
-    Transform2d difference = drivetrain.getPose().minus(targetPose);
-    // Logger.recordOutput("DriveToPose/difference", difference);
-
-    boolean atGoal =
-        Math.abs(difference.getX()) < targetTolerance.getX()
-            && Math.abs(difference.getY()) < targetTolerance.getY()
-            && Math.abs(difference.getRotation().getRadians())
-                < targetTolerance.getRotation().getRadians();
-
-    // check that running is true (i.e., the calculate method has been invoked on the PID
-    // controllers) and that each of the controllers is at their goal. This is important since these
-    // controllers will return true for atGoal if the calculate method has not yet been invoked.
-    //    return this.timer.hasElapsed(timeout.get()) || atGoal;
-    return atGoal;
+    return xController.atGoal() && yController.atGoal() && thetaController.atGoal();
   }
 
   /**
@@ -283,9 +153,6 @@ public class DriveToPose extends Command {
    */
   @Override
   public void end(boolean interrupted) {
-    // drivetrain.disableAccelerationLimiting();
-    drivetrain.stop();
-    running = false;
-    System.out.println("Drive to pose stopped for " + targetPose.toString());
+    drivetrain.setControl(new SwerveRequest.Idle());
   }
 }
