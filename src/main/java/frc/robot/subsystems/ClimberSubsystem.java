@@ -9,9 +9,17 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.io.File;
 import java.io.IOException;
+import edu.wpi.first.wpilibj.Servo;
 
 public class ClimberSubsystem extends SubsystemBase {
   private final SparkBase winch;
+  private final int SERVO_PWM_PORT = 1;
+  private Servo servo = new Servo(SERVO_PWM_PORT);
+    
+  public void release() {
+      servo.set(1.0);
+  }
+
 
   public ClimberSubsystem() {
     File directory = new File(Filesystem.getDeployDirectory(), "motors/climber");
