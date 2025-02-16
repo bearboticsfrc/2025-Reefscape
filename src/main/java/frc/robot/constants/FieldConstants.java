@@ -10,7 +10,13 @@ package frc.robot.constants;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 
-import edu.wpi.first.math.geometry.*;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,39 +71,39 @@ public class FieldConstants {
     public static final double faceToZoneLine =
         Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
 
-    public static final Pose2d[] centerFaces =
+    public static final Pose2d[] faces =
         new Pose2d[6]; // Starting facing the driver station in clockwise order
     public static final List<Map<ReefHeight, Pose3d>> branchPositions =
         new ArrayList<>(); // Starting at the right branch facing the driver station in clockwise
 
     static {
       // Initialize faces
-      centerFaces[0] =
+      faces[0] =
           new Pose2d(
               Units.inchesToMeters(144.003),
               Units.inchesToMeters(158.500),
               Rotation2d.fromDegrees(180));
-      centerFaces[5] =
+      faces[5] =
           new Pose2d(
               Units.inchesToMeters(160.373),
               Units.inchesToMeters(186.857),
               Rotation2d.fromDegrees(120));
-      centerFaces[4] =
+      faces[4] =
           new Pose2d(
               Units.inchesToMeters(193.116),
               Units.inchesToMeters(186.858),
               Rotation2d.fromDegrees(60));
-      centerFaces[3] =
+      faces[3] =
           new Pose2d(
               Units.inchesToMeters(209.489),
               Units.inchesToMeters(158.502),
               Rotation2d.fromDegrees(0));
-      centerFaces[2] =
+      faces[2] =
           new Pose2d(
               Units.inchesToMeters(193.118),
               Units.inchesToMeters(130.145),
               Rotation2d.fromDegrees(-60));
-      centerFaces[1] =
+      faces[1] =
           new Pose2d(
               Units.inchesToMeters(160.375),
               Units.inchesToMeters(130.144),

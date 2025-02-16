@@ -1,7 +1,7 @@
 {
     "fileName": "bearlib.json",
     "name": "bearlib",
-    "version": "2025.1.0",
+    "version": "2025.2.0",
     "frcYear": "2025",
     "uuid": "7a5077f9-339e-48cc-9ab0-f48433311280",
     "mavenUrls": [
@@ -12,7 +12,7 @@
         {
             "groupId": "frc4068.bearlib",
             "artifactId": "bearlib",
-            "version": "2025.1.0"
+            "version": "2025.2.0"
         }
     ],
     "requires": [
