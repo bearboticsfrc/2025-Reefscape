@@ -5,11 +5,9 @@ import static edu.wpi.first.units.Units.Seconds;
 import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
-
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -20,13 +18,14 @@ import java.io.IOException;
 
 public class CoralSubsystem extends SubsystemBase {
   private final int INTAKE_SENSOR_PORT = 1;
-  private final Time INTAKE_SLOWDOWN = Seconds.of(0.17);
-  private final Time SCORE_CORAL = Seconds.of(0.5);
+  private final Time SCORING_TIME = Seconds.of(0.5);
 
   private final SparkBase intake;
-  private final SparkBase coral;
+  private final SparkBase outake;
+
+  private final RelativeEncoder outakeEncoder;
+
   private final DigitalInput intakeSensor = new DigitalInput(INTAKE_SENSOR_PORT);
-  private final RelativeEncoder encoder;
 
   /**
    * Constructs a CoralSubsystem.
@@ -37,17 +36,18 @@ public class CoralSubsystem extends SubsystemBase {
     File directory = new File(Filesystem.getDeployDirectory(), "motors/coral");
 
     try {
-      ConfiguredMotor configuredMotor =
-          new MotorParser(directory).withMotor("motor.json").configure();
-      ConfiguredMotor configuredMotor2 =
-          new MotorParser(directory).withMotor("motor2.json").configure();
+      ConfiguredMotor configuredIntake =
+          new MotorParser(directory).withMotor("intake.json").configure();
+      ConfiguredMotor configuredOutake =
+          new MotorParser(directory).withMotor("outake.json").configure();
 
-      intake = configuredMotor.getSpark();
-      coral = configuredMotor2.getSpark();
+      intake = configuredIntake.getSpark();
+      outake = configuredOutake.getSpark();
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure coral motor(s)!", exception);
     }
-    encoder = coral.getEncoder();
+
+    outakeEncoder = outake.getEncoder();
   }
 
   /**
@@ -63,20 +63,19 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} intaking the coral.
    */
   public Command intakeCoral() {
-    return runIntake(MotorSpeed.FULL, MotorSpeed.REVERSE_QUARTER)
+    return runIntake(MotorSpeed.FULL)
+        .alongWith(runOutake(MotorSpeed.REVERSE_QUARTER))
         .andThen(Commands.waitUntil(this::isCoralInIntake))
-        .andThen(Commands.runOnce(() -> encoder.setPosition(0)))
-
-        .andThen(runIntake(MotorSpeed.QUARTER, MotorSpeed.REVERSE_TENTH))
-        .andThen(Commands.waitUntil(() -> encoder.getPosition() <= -1))
-        .andThen(Commands.parallel(runIntake(MotorSpeed.OFF, MotorSpeed.OFF),
-          Commands.runOnce(()-> DataLogManager.log("encoder ticks "+ Double.toString(encoder.getPosition())))));
+        .andThen(Commands.runOnce(() -> outakeEncoder.setPosition(0)))
+        .andThen(runIntake(MotorSpeed.QUARTER).alongWith(runOutake(MotorSpeed.REVERSE_TENTH)))
+        .andThen(Commands.waitUntil(() -> outakeEncoder.getPosition() <= -1))
+        .andThen(stopIntake());
   }
 
-  public Command scoreCoral(){
-    return runIntake(MotorSpeed.OFF, MotorSpeed.REVERSE_FULL)
-        .andThen(Commands.waitTime(SCORE_CORAL))
-        .andThen(runIntake(MotorSpeed.OFF, MotorSpeed.OFF));
+  public Command scoreCoral() {
+    return runOutake(MotorSpeed.REVERSE_FULL)
+        .andThen(Commands.waitTime(SCORING_TIME))
+        .andThen(runOutake(MotorSpeed.OFF));
   }
 
   /**
@@ -85,11 +84,21 @@ public class CoralSubsystem extends SubsystemBase {
    * @param speed {@link MotorSpeed} describing the desired intake motor speed.
    * @return A {@link Command} running the coral intake.
    */
-  public Command runIntake(MotorSpeed speed, MotorSpeed coralSpeed) {
-    return this.runOnce(
-        () -> {
-          intake.set(speed.getSpeed());
-          coral.set(coralSpeed.getSpeed());
-        });
+  public Command runIntake(MotorSpeed speed) {
+    return runOnce(() -> intake.set(speed.getSpeed()));
+  }
+
+  /**
+   * Run the coral outake at the supplied speed.
+   *
+   * @param speed {@link MotorSpeed} describing the desired intake motor speed.
+   * @return A {@link Command} running the coral intake.
+   */
+  public Command runOutake(MotorSpeed speed) {
+    return runOnce(() -> outake.set(speed.getSpeed()));
+  }
+
+  public Command stopIntake() {
+    return Commands.parallel(runOnce(intake::stopMotor), runOnce(outake::stopMotor));
   }
 }
