@@ -5,8 +5,11 @@ import static edu.wpi.first.units.Units.Seconds;
 import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
+
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -23,6 +26,7 @@ public class CoralSubsystem extends SubsystemBase {
   private final SparkBase intake;
   private final SparkBase coral;
   private final DigitalInput intakeSensor = new DigitalInput(INTAKE_SENSOR_PORT);
+  private final RelativeEncoder encoder;
 
   /**
    * Constructs a CoralSubsystem.
@@ -43,6 +47,7 @@ public class CoralSubsystem extends SubsystemBase {
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure coral motor(s)!", exception);
     }
+    encoder = coral.getEncoder();
   }
 
   /**
@@ -60,9 +65,12 @@ public class CoralSubsystem extends SubsystemBase {
   public Command intakeCoral() {
     return runIntake(MotorSpeed.FULL, MotorSpeed.REVERSE_QUARTER)
         .andThen(Commands.waitUntil(this::isCoralInIntake))
+        .andThen(Commands.runOnce(() -> encoder.setPosition(0)))
+
         .andThen(runIntake(MotorSpeed.QUARTER, MotorSpeed.REVERSE_TENTH))
-        .andThen(Commands.waitTime(INTAKE_SLOWDOWN))
-        .andThen(runIntake(MotorSpeed.OFF, MotorSpeed.OFF));
+        .andThen(Commands.waitUntil(() -> encoder.getPosition() <= -1))
+        .andThen(Commands.parallel(runIntake(MotorSpeed.OFF, MotorSpeed.OFF),
+          Commands.runOnce(()-> DataLogManager.log("encoder ticks "+ Double.toString(encoder.getPosition())))));
   }
 
   public Command scoreCoral(){
