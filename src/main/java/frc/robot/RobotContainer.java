@@ -39,8 +39,12 @@ public class RobotContainer {
         .onTrue(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.TURBO)))
         .onFalse(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.NORMAL)));
 
-    drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
-    drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
+    driverJoystick.x().onTrue(manipulatorSubsystem.intakeCoral());
+    
+    driverJoystick.y().onTrue(manipulatorSubsystem.scoreCoral());
+
+    // drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
+    // drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
   }
 
   /**
