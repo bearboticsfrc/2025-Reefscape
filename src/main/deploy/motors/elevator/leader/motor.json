@@ -1,8 +1,9 @@
 {
     "type": "max",
-    "id": 2,
+    "id": 30,
     "inverted": true,
     "current_limit": 30,
+    "idle_mode": "brake",
     "soft_limits": [
         {
             "direction": "forward",

@@ -4,10 +4,12 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.swerve.SwerveRequest;
+
 import bearlib.util.ProcessedJoystick;
 import bearlib.util.ProcessedJoystick.JoystickAxis;
 import bearlib.util.ProcessedJoystick.ThrottleProfile;
-import com.ctre.phoenix6.swerve.SwerveRequest;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -17,6 +19,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.ElevatorSubsystem;
 
 public class RobotContainer {
+  private final ElevatorSubsystem elevatorSubsystem;
   private final CommandXboxController driverJoystick = new CommandXboxController(0);
 
   private final ProcessedJoystick processedJoystick =
@@ -26,20 +29,23 @@ public class RobotContainer {
   public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
   public RobotContainer() {
+    this.elevatorSubsystem = new ElevatorSubsystem();
     configureBindings();
-    ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem();
   }
 
   private void configureBindings() {
     driverJoystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+    driverJoystick.a().onTrue(elevatorSubsystem.zeroRelativeEncoder());
 
-    driverJoystick
+    /*driverJoystick
         .rightStick()
         .onTrue(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.TURBO)))
         .onFalse(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.NORMAL)));
+    */
 
-    drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
-    drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
+    // drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
+    // drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
+
   }
 
   /**
@@ -74,5 +80,17 @@ public class RobotContainer {
 
   public Command getAutonomousCommand() {
     return Commands.print("No autonomous command configured");
+  }
+
+  public void periodic() {
+    
+    double val = driverJoystick.getRightY();
+    if (val > 0.3) {
+      val = 0.3;
+    } else if (val < -0.3) {
+      val = -0.3;
+    }
+    elevatorSubsystem.setSpeed(val);
+    DataLogManager.log("moving elevator"+val);
   }
 }

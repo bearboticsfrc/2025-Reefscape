@@ -2,18 +2,25 @@ package frc.robot.subsystems;
 
 import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.deserializer.MotorParser;
+
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
-import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.epilogue.Logged.Importance;
+
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 import java.io.File;
 import java.io.IOException;
+
+import javax.xml.crypto.Data;
+
+import edu.wpi.first.wpilibj.DataLogManager;
 
 public class ElevatorSubsystem extends SubsystemBase {
   // Time step for trapezoidal profile calculations (in seconds)
@@ -39,10 +46,12 @@ public class ElevatorSubsystem extends SubsystemBase {
   // Spark motor controller instance
   private final SparkBase motor;
 
-  @Logged(importance = Importance.DEBUG)
+  private final SparkBase follower;
+
+  // @Logged(importance = Importance.DEBUG)
   private TrapezoidProfile.State targetState = new TrapezoidProfile.State(0, 0);
 
-  @Logged(importance = Importance.DEBUG)
+  // @Logged(importance = Importance.DEBUG)
   private TrapezoidProfile.State currentState = new TrapezoidProfile.State(0, 0);
 
   /** Constructs a new ElevatorSubsystem by configuring the leader and follower motors. */
@@ -59,7 +68,10 @@ public class ElevatorSubsystem extends SubsystemBase {
               .withPidf("pidf.json")
               .configure();
 
-      new MotorParser(followerDirectory).withMotor("motor.json").configure();
+      follower = new MotorParser(followerDirectory).withMotor("motor.json").configure().getSpark();
+
+      // follower configuration
+      // new MotorParser(followerDirectory).withMotor("motor.json").configure();
 
       motor = configuredLeaderMotor.getSpark();
     } catch (IOException exception) {
@@ -117,6 +129,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         .getClosedLoopController()
         .setReference(
             currentState.position, ControlType.kPosition, ClosedLoopSlot.kSlot0, feedForwardValue);
+    SmartDashboard.putNumber("Elevator encoder", motor.getEncoder().getPosition());
   }
 
   /**
@@ -146,5 +159,14 @@ public class ElevatorSubsystem extends SubsystemBase {
     public double getPosition() {
       return position;
     }
+  }
+
+  public Command zeroRelativeEncoder() {
+    return Commands.runOnce(() -> motor.getEncoder().setPosition(0));
+  }
+
+  public void setSpeed(double power) {
+    DataLogManager.log("setSpeed(): " + power);
+   //motor.set(power);
   }
 }

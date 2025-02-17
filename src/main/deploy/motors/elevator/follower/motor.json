@@ -1,8 +1,9 @@
 {
     "type": "max",
-    "id": 1,
+    "id": 31,
+    "idle_mode": "brake",
     "leader": {
-        "id": 2,
-        "follow_inverted": true
+        "id": 30,
+        "follow_inverted": false
     }
 }
