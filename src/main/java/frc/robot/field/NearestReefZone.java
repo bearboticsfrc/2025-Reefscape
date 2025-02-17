@@ -4,14 +4,16 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import frc.robot.constants.FieldConstants;
 import frc.robot.utils.AllianceFlipUtil;
 import java.util.Arrays;
 
 public class NearestReefZone {
-  public static final double tangentialBranchOffset = 0.5; // meters
+  public double tangentialBranchOffset;
 
   public Transform2d getTanUnitVectorToFace(Pose2d face) {
+    this.tangentialBranchOffset= AllianceFlipUtil.shouldFlip()? Units.inchesToMeters(6.469): Units.inchesToMeters(6.469) *-1; // meters; // meters
     Translation2d translation =
         new Translation2d(
             Math.cos(face.getRotation().getRadians()), Math.sin(face.getRotation().getRadians()));
