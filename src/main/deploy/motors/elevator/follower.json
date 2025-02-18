@@ -1,6 +1,7 @@
 {
   "type": "max",
   "id": 31,
+  "current_limit": 5,
   "idle_mode": "brake",
   "leader": {
     "id": 30,

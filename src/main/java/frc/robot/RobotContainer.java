@@ -9,6 +9,7 @@ import bearlib.util.ProcessedJoystick.JoystickAxis;
 import bearlib.util.ProcessedJoystick.ThrottleProfile;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -16,6 +17,7 @@ import frc.robot.constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.ElevatorSubsystem;
+import frc.robot.subsystems.ElevatorSubsystem.ElevatorPosition;
 
 public class RobotContainer {
   private final ElevatorSubsystem elevatorSubsystem;
@@ -27,6 +29,8 @@ public class RobotContainer {
 
   public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
+  private double max = 0;
+
   public RobotContainer() {
     this.elevatorSubsystem = new ElevatorSubsystem();
     configureBindings();
@@ -34,7 +38,15 @@ public class RobotContainer {
 
   private void configureBindings() {
     driverJoystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
-    driverJoystick.a().onTrue(elevatorSubsystem.zeroRelativeEncoder());
+    driverJoystick
+        .a()
+        .onTrue(elevatorSubsystem.runElevatorTo(ElevatorPosition.L2))
+        .onFalse(elevatorSubsystem.stop());
+
+    driverJoystick
+        .b()
+        .onTrue(elevatorSubsystem.runElevatorTo(ElevatorPosition.L1))
+        .onFalse(elevatorSubsystem.stop());
 
     /*driverJoystick
         .rightStick()
@@ -82,9 +94,16 @@ public class RobotContainer {
   }
 
   public void periodic() {
-    double val =
-        MathUtil.applyDeadband(MathUtil.clamp(driverJoystick.getRightY(), -0.2, 0.2), 0.01);
+    double factor = 10;
 
-    elevatorSubsystem.setSpeed(-val);
+    double val =
+        -MathUtil.applyDeadband(
+            MathUtil.clamp(driverJoystick.getRightY() / factor, -1, 1), 0.01 / factor);
+
+    if (val > max) {
+      max = val;
+      DataLogManager.log("Max: " + max);
+    }
+    elevatorSubsystem.setSpeed(val);
   }
 }

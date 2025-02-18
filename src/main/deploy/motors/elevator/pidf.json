@@ -1,7 +1,7 @@
 {
-  "p": 1.25,
-  "d": 0.01,
-  "ff": 1,
+  "p": 0.1,
+  "i": 0,
+  "i_zone": 0,
   "maximum_output": 10,
-  "minimum_output": 0
+  "minimum_output": -10
 }
