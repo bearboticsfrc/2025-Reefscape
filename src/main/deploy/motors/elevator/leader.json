@@ -13,5 +13,15 @@
             "direction": "reverse",
             "limit": 0
         }
+    ],
+    "hard_limits": [
+        {
+            "direction": "forward",
+            "type": "open"
+        },
+        {
+            "direction": "reverse",
+            "type": "open"
+        }
     ]
 }
