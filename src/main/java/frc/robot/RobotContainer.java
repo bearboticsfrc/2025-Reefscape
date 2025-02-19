@@ -14,8 +14,12 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+<<<<<<< HEAD
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.ElevatorSubsystem.ElevatorPosition;
+=======
+import frc.robot.subsystems.ManipulatorSubsystem;
+>>>>>>> 2c82fd82006cd8cd29fca0a53f1824da20b94d9f
 
 public class RobotContainer {
   private final ElevatorSubsystem elevatorSubsystem;
@@ -26,6 +30,8 @@ public class RobotContainer {
   private ThrottleProfile throttleProfile = ThrottleProfile.NORMAL;
 
   public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+
+  public final ManipulatorSubsystem manipulatorSubsystem = new ManipulatorSubsystem();
 
   public RobotContainer() {
     this.elevatorSubsystem = new ElevatorSubsystem(driverJoystick);
@@ -64,6 +70,15 @@ public class RobotContainer {
     // drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     // drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
 
+<<<<<<< HEAD
+=======
+    driverJoystick.x().onTrue(manipulatorSubsystem.intakeCoral());
+    
+    driverJoystick.y().onTrue(manipulatorSubsystem.scoreCoral());
+
+    // drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
+    // drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
+>>>>>>> 2c82fd82006cd8cd29fca0a53f1824da20b94d9f
   }
 
   /**
