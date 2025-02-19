@@ -1,27 +1,6 @@
 {
     "type": "max",
     "id": 30,
-    "inverted": true,
-    "current_limit": 5,
-    "idle_mode": "brake",
-    "soft_limits": [
-        {
-            "direction": "forward",
-            "limit": 100
-        },
-        {
-            "direction": "reverse",
-            "limit": 0
-        }
-    ],
-    "hard_limits": [
-        {
-            "direction": "forward",
-            "type": "open"
-        },
-        {
-            "direction": "reverse",
-            "type": "open"
-        }
-    ]
+    "current_limit": 60,
+    "idle_mode": "brake"
 }

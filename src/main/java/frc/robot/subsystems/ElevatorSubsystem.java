@@ -10,62 +10,65 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import java.io.File;
 import java.io.IOException;
 
 public class ElevatorSubsystem extends SubsystemBase {
   // Feedforward gains and motion parameters
   private final double A = 0;
-  private final double S = 0;
-  private final double G = 0.042;
+  private final double S = 0.036;
+  private final double G = 0.065;
   private final double V = 0;
 
-  public final double MAX_ACCELERATION = 0.1;
-  public final double MAX_VELOCITY = 1;
+  public final double MAX_ACCELERATION = 35;
+  public final double MAX_VELOCITY = 50;
+
+  // Elevator feedforward controller
+  private final ElevatorFeedforward feedforward = new ElevatorFeedforward(A, G, S, V);
 
   // Trapezoidal motion profile constraints and instance
   private final TrapezoidProfile.Constraints trapezoidConstraints =
       new TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
   private final TrapezoidProfile trapezoidProfile = new TrapezoidProfile(trapezoidConstraints);
 
-  // Elevator feedforward controller
-  private final ElevatorFeedforward feedforward = new ElevatorFeedforward(A, G, S, V);
-
-  private TrapezoidProfile.State targetState = new TrapezoidProfile.State();
-  private TrapezoidProfile.State currentState = new TrapezoidProfile.State();
+  private TrapezoidProfile.State goal = new TrapezoidProfile.State();
+  private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
   // Spark motor controller instance
   private final SparkBase motor;
   private final RelativeEncoder encoder;
 
   /** Constructs a new ElevatorSubsystem by configuring the leader and follower motors. */
-  public ElevatorSubsystem() {
+  public ElevatorSubsystem(CommandXboxController controller) {
     File baseDirectory = new File(Filesystem.getDeployDirectory(), "motors");
     File directory = new File(baseDirectory, "elevator");
 
     try {
       ConfiguredMotor configuredMotor =
-          new MotorParser(directory)
-              .withMotor("leader.json")
-              .withEncoder("encoder.json")
-              .withPidf("pidf.json")
-              .configure();
+          new MotorParser(directory).withMotor("leader.json").withPidf("pidf.json").configure();
 
       new MotorParser(directory).withMotor("follower.json").configure();
 
       motor = configuredMotor.getSpark();
-      encoder = configuredMotor.getRelativeEncoder().get();
+      encoder = motor.getEncoder();
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure elevator motor(s): ", exception);
     }
 
-    Shuffleboard.getTab("Sensors").addDouble("Applied Output", motor::getAppliedOutput);
-    Shuffleboard.getTab("Sensors").addDouble("Position", encoder::getPosition);
-    Shuffleboard.getTab("Sensors").addDouble("Current State", () -> currentState.position);
-    Shuffleboard.getTab("Sensors").addDouble("Target State", () -> targetState.position);
+    ShuffleboardTab sensors = Shuffleboard.getTab("Sensors");
+
+    sensors.addDouble("Output Current", motor::getOutputCurrent);
+    sensors.addDouble("Applied Output", motor::getAppliedOutput);
+    sensors.addDouble("Velocity", encoder::getVelocity);
+    sensors.addDouble("Position", encoder::getPosition);
+    sensors.addDouble("Setpoint State", () -> setpoint.position);
+    sensors.addDouble("Goal State", () -> goal.position);
+    sensors.addBoolean("Reverse Limit Switch", motor.getReverseLimitSwitch()::isPressed);
+    sensors.addBoolean("Forward Limit Switch", motor.getForwardLimitSwitch()::isPressed);
   }
 
   /**
@@ -74,52 +77,26 @@ public class ElevatorSubsystem extends SubsystemBase {
    * @param position The desired elevator position.
    */
   private void set(ElevatorPosition position) {
-    targetState = new TrapezoidProfile.State(position.getPosition(), 0);
-    currentState = calculateState(targetState);
-
-    motor
-        .getClosedLoopController()
-        .setReference(
-            currentState.position,
-            ControlType.kPosition,
-            ClosedLoopSlot.kSlot0,
-            calculateFeedForward(targetState));
-  }
-
-  /**
-   * Calculates the trapezoidal profile state based on the current encoder position and target
-   * state.
-   *
-   * @param targetState The target state for the motion profile.
-   * @return The updated trapezoidal profile state.
-   */
-  private TrapezoidProfile.State calculateState(TrapezoidProfile.State targetState) {
-    double currentPosition = motor.getAbsoluteEncoder().getPosition();
-
-    return trapezoidProfile.calculate(
-        0.02, new TrapezoidProfile.State(currentPosition, currentState.velocity), targetState);
-  }
-
-  /**
-   * Calculates the feedforward value using the current encoder position and velocity.
-   *
-   * @return The computed feedforward value.
-   */
-  private double calculateFeedForward(TrapezoidProfile.State nextState) {
-    return feedforward.calculateWithVelocities(currentState.velocity, nextState.velocity);
+    goal = new TrapezoidProfile.State(position.getPosition(), 0);
   }
 
   @Override
   public void periodic() {
-    TrapezoidProfile.State nextState = trapezoidProfile.calculate(0.02, currentState, targetState);
-    double feedForwardValue = calculateFeedForward(nextState);
+    updateTrapezoidProfile();
+  }
+
+  private void updateTrapezoidProfile() {
+    TrapezoidProfile.State nextSetpoint = trapezoidProfile.calculate(0.02, setpoint, goal);
 
     motor
         .getClosedLoopController()
         .setReference(
-            currentState.position, ControlType.kPosition, ClosedLoopSlot.kSlot0, feedForwardValue);
+            setpoint.position,
+            ControlType.kPosition,
+            ClosedLoopSlot.kSlot0,
+            feedforward.calculateWithVelocities(setpoint.velocity, nextSetpoint.velocity));
 
-    currentState = nextState;
+    setpoint = nextSetpoint;
   }
 
   /**
@@ -138,10 +115,10 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   /** Enum representing preset elevator positions. */
   public enum ElevatorPosition {
-    L4(38),
-    L3(0),
-    L2(15),
-    L1(10),
+    L4(39),
+    L3(23.8),
+    L2(12.5),
+    L1(5),
     HOME(0);
 
     private final double position;
@@ -153,13 +130,5 @@ public class ElevatorSubsystem extends SubsystemBase {
     public double getPosition() {
       return position;
     }
-  }
-
-  public Command zeroRelativeEncoder() {
-    return Commands.runOnce(() -> motor.getEncoder().setPosition(0));
-  }
-
-  public void setSpeed(double power) {
-    motor.set(power);
   }
 }
