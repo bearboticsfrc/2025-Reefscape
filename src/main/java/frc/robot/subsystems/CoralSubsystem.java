@@ -85,7 +85,7 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} running the coral intake.
    */
   public Command runIntake(MotorSpeed speed) {
-    return runOnce(() -> intake.set(speed.getSpeed()));
+    return Commands.runOnce(() -> intake.set(speed.getSpeed()));
   }
 
   /**
@@ -95,10 +95,11 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} running the coral intake.
    */
   public Command runOutake(MotorSpeed speed) {
-    return runOnce(() -> outake.set(speed.getSpeed()));
+    return Commands.runOnce(() -> outake.set(speed.getSpeed()));
   }
 
   public Command stopIntake() {
-    return Commands.parallel(runOnce(intake::stopMotor), runOnce(outake::stopMotor));
+    return Commands.parallel(
+        Commands.runOnce(intake::stopMotor), Commands.runOnce(outake::stopMotor));
   }
 }
