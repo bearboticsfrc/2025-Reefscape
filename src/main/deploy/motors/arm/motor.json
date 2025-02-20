@@ -1,0 +1,7 @@
+{
+    "type": "flex",
+    "id": 6,
+    "inverted": true,
+    "current_limit": 30,
+    "idle_mode": "brake"
+}

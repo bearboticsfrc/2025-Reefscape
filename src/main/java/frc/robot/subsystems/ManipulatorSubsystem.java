@@ -14,7 +14,7 @@ public class ManipulatorSubsystem extends SubsystemBase {
     return coral.intakeCoral();
   }
 
-  public Command scoreCoral(){
+  public Command scoreCoral() {
     return coral.scoreCoral();
   }
 }

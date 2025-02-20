@@ -13,6 +13,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.ArmSubsystem;
+import frc.robot.subsystems.ArmSubsystem.ArmPosition;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.ElevatorSubsystem.ElevatorPosition;
@@ -20,6 +22,7 @@ import frc.robot.subsystems.ManipulatorSubsystem;
 
 public class RobotContainer {
   private final ElevatorSubsystem elevatorSubsystem;
+  private final ArmSubsystem armSubsystem;
   private final CommandXboxController driverJoystick = new CommandXboxController(0);
 
   private final ProcessedJoystick processedJoystick =
@@ -32,11 +35,12 @@ public class RobotContainer {
 
   public RobotContainer() {
     this.elevatorSubsystem = new ElevatorSubsystem(driverJoystick);
+    this.armSubsystem = new ArmSubsystem(driverJoystick);
     configureBindings();
   }
 
   private void configureBindings() {
-    driverJoystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+    // driverJoystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
 
     driverJoystick
         .y()
@@ -50,7 +54,7 @@ public class RobotContainer {
 
     driverJoystick
         .b()
-        .onTrue(elevatorSubsystem.runElevatorTo(ElevatorPosition.L1))
+        .onTrue(elevatorSubsystem.runElevatorTo(ElevatorPosition.L2))
         .onFalse(elevatorSubsystem.stop());
 
     driverJoystick
@@ -60,6 +64,11 @@ public class RobotContainer {
 
     driverJoystick.leftBumper().onTrue(manipulatorSubsystem.intakeCoral());
     driverJoystick.rightBumper().onFalse(manipulatorSubsystem.scoreCoral());
+
+    driverJoystick.povRight().onTrue(armSubsystem.runArmTo(ArmPosition.REEF));
+    driverJoystick.povDown().onTrue(armSubsystem.runArmTo(ArmPosition.HOME));
+    driverJoystick.povUp().onTrue(armSubsystem.runArmTo(ArmPosition.BARGE));
+
     /*driverJoystick
         .rightStick()
         .onTrue(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.TURBO)))
