@@ -24,8 +24,8 @@ public class ArmSubsystem extends SubsystemBase {
   private final double G = 0.0095; // / or maybe .0145???
   private final double V = 0;
 
-  public final double MAX_ACCELERATION = .5;
-  public final double MAX_VELOCITY = .5;
+  public final double MAX_ACCELERATION = 100;
+  public final double MAX_VELOCITY = 200; // higher than what we need
 
   // Arm feedforward controller
   private final ArmFeedforward feedforward = new ArmFeedforward(A, G, S, V);
@@ -132,7 +132,7 @@ public class ArmSubsystem extends SubsystemBase {
 
   /** Enum representing preset arm positions. */
   public enum ArmPosition {
-    BARGE(15),
+    BARGE(20),
     REEF(5),
     HOME(0);
 

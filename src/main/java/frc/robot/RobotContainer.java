@@ -62,8 +62,11 @@ public class RobotContainer {
         .onTrue(elevatorSubsystem.runElevatorTo(ElevatorPosition.HOME))
         .onFalse(elevatorSubsystem.stop());
 
-    driverJoystick.leftBumper().onTrue(manipulatorSubsystem.intakeCoral());
-    driverJoystick.rightBumper().onFalse(manipulatorSubsystem.scoreCoral());
+    //    driverJoystick.leftBumper().onTrue(manipulatorSubsystem.intakeCoral());
+    //    driverJoystick.rightBumper().onFalse(manipulatorSubsystem.scoreCoral());
+
+    driverJoystick.leftBumper().toggleOnTrue(manipulatorSubsystem.intakeAlgae());
+    driverJoystick.rightBumper().onFalse(manipulatorSubsystem.scoreAlgae());
 
     driverJoystick.povRight().onTrue(armSubsystem.runArmTo(ArmPosition.REEF));
     driverJoystick.povDown().onTrue(armSubsystem.runArmTo(ArmPosition.HOME));
