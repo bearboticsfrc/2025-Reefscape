@@ -5,11 +5,10 @@ import static edu.wpi.first.units.Units.Seconds;
 import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.spark.SparkBase;
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -20,6 +19,7 @@ public class AlgaeSubsystem extends SubsystemBase {
   private final int ALGAE_SENSOR_PORT = 0;
   private final Time SCORING_TIME = Seconds.of(0.5);
 
+  @Logged(name = "Algae Motor")
   private final SparkBase motor;
 
   private final DigitalInput algaeSensor = new DigitalInput(ALGAE_SENSOR_PORT);
@@ -37,20 +37,21 @@ public class AlgaeSubsystem extends SubsystemBase {
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure algae motor!", exception);
     }
+  }
 
-    ShuffleboardTab sensors = Shuffleboard.getTab("Algae Sensors");
-
-    sensors.addDouble("Output Current", motor::getOutputCurrent);
-    sensors.addDouble("Applied Output", motor::getAppliedOutput);
-    sensors.addDouble("Velocity", () -> motor.getEncoder().getVelocity());
+  @Override
+  public void periodic() {
+    if (hasAlgae() && motor.get() == 0) {
+      motor.set(0.05);
+    }
   }
 
   /**
    * @return true if the algae is blocking the sensor.
    */
+  @Logged(name = "Has Algae")
   public boolean hasAlgae() {
-    return motor.getEncoder().getVelocity() < 0.1;
-    // return !algaeSensor.get();
+    return !algaeSensor.get();
   }
 
   /**

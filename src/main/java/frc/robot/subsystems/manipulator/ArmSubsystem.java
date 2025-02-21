@@ -1,15 +1,17 @@
 package frc.robot.subsystems.manipulator;
 
+import static edu.wpi.first.units.Units.Radians;
+
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.io.File;
@@ -30,6 +32,13 @@ public class ArmSubsystem extends SubsystemBase {
   public final double HORIZONTAL = 12.7;
   public final double ANGLE_DIVISOR = HORIZONTAL / (Math.PI / 2);
 
+  // Spark motor controller instance
+  @Logged(name = "Arm Motor")
+  private final SparkBase motor;
+
+  @Logged(name = "Arm Encoder")
+  private final RelativeEncoder encoder;
+
   // Arm feedforward controller
   private final ArmFeedforward feedforward = new ArmFeedforward(A, G, S, V);
 
@@ -38,12 +47,11 @@ public class ArmSubsystem extends SubsystemBase {
       new TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
   private final TrapezoidProfile trapezoidProfile = new TrapezoidProfile(trapezoidConstraints);
 
+  @Logged(name = "Arm Goal")
   private TrapezoidProfile.State goal = new TrapezoidProfile.State();
-  private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
-  // Spark motor controller instance
-  private final SparkBase motor;
-  private final RelativeEncoder encoder;
+  @Logged(name = "Arm Setpoint")
+  private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
   /** Constructs a new ArmSubsystem by configuring the leader and follower motors. */
   public ArmSubsystem() {
@@ -56,19 +64,15 @@ public class ArmSubsystem extends SubsystemBase {
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure arm motor(s): ", exception);
     }
-
-    ShuffleboardTab sensors = Shuffleboard.getTab("Arm Sensors");
-
-    sensors.addDouble("Output Current", motor::getOutputCurrent);
-    sensors.addDouble("Applied Output", motor::getAppliedOutput);
-    sensors.addDouble("Position", encoder::getPosition);
-    sensors.addDouble("Radians", this::getAngleRadians);
-    sensors.addDouble("Setpoint State", () -> setpoint.position);
-    sensors.addDouble("Goal State", () -> goal.position);
   }
 
-  private double getAngleRadians() {
-    return (encoder.getPosition() - HORIZONTAL) / ANGLE_DIVISOR;
+  @Logged(name = "Arm At Setpoint")
+  public boolean isAtSetpoint() {
+    return trapezoidProfile.timeLeftUntil(goal.position) == 0;
+  }
+
+  private Angle getAngleRadians() {
+    return Radians.of((encoder.getPosition() - HORIZONTAL) / ANGLE_DIVISOR);
   }
 
   /**
@@ -95,7 +99,7 @@ public class ArmSubsystem extends SubsystemBase {
             ControlType.kPosition,
             ClosedLoopSlot.kSlot0,
             feedforward.calculateWithVelocities(
-                getAngleRadians(), setpoint.velocity, nextSetpoint.velocity));
+                getAngleRadians().magnitude(), setpoint.velocity, nextSetpoint.velocity));
 
     setpoint = nextSetpoint;
   }

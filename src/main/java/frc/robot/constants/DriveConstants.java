@@ -19,8 +19,8 @@ public class DriveConstants {
   public static final double ROTATIONAL_DEADBAND = MAX_ANGULAR_VELOCITY * 0.1; // 10% deadband
 
   // Field centric swerve request
-  public static final SwerveRequest.FieldCentric FIELD_CENTRIC_SWERVE_REQUEST =
-      new SwerveRequest.FieldCentric()
+  public static final SwerveRequest.RobotCentric FIELD_CENTRIC_SWERVE_REQUEST =
+      new SwerveRequest.RobotCentric()
           .withDeadband(LINEAR_DEADBAND)
           .withRotationalDeadband(ROTATIONAL_DEADBAND)
           .withDriveRequestType(DriveRequestType.OpenLoopVoltage);

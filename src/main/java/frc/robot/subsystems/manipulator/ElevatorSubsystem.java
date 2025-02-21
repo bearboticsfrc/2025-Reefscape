@@ -5,11 +5,10 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.io.File;
@@ -26,7 +25,10 @@ public class ElevatorSubsystem extends SubsystemBase {
   public final double MAX_VELOCITY = 70; // was 50 on Tuesday;
 
   // Spark motor controller instance
+  @Logged(name = "Elevator Motor")
   private final SparkBase motor;
+
+  @Logged(name = "Elevator Encoder")
   private final RelativeEncoder encoder;
 
   // Elevator feedforward controller
@@ -37,7 +39,10 @@ public class ElevatorSubsystem extends SubsystemBase {
       new TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
   private final TrapezoidProfile trapezoidProfile = new TrapezoidProfile(trapezoidConstraints);
 
+  @Logged(name = "Arm Goal")
   private TrapezoidProfile.State goal = new TrapezoidProfile.State();
+
+  @Logged(name = "Arm Setpoint")
   private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
   /** Constructs a new ElevatorSubsystem by configuring the leader and follower motors. */
@@ -58,17 +63,11 @@ public class ElevatorSubsystem extends SubsystemBase {
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure elevator motor(s): ", exception);
     }
+  }
 
-    ShuffleboardTab sensors = Shuffleboard.getTab("Sensors");
-
-    sensors.addDouble("Output Current", motor::getOutputCurrent);
-    sensors.addDouble("Applied Output", motor::getAppliedOutput);
-    sensors.addDouble("Velocity", encoder::getVelocity);
-    sensors.addDouble("Position", encoder::getPosition);
-    sensors.addDouble("Setpoint State", () -> setpoint.position);
-    sensors.addDouble("Goal State", () -> goal.position);
-    sensors.addBoolean("Reverse Limit Switch", motor.getReverseLimitSwitch()::isPressed);
-    sensors.addBoolean("Forward Limit Switch", motor.getForwardLimitSwitch()::isPressed);
+  @Logged(name = "Elevator At Setpoint")
+  public boolean isAtSetpoint() {
+    return trapezoidProfile.timeLeftUntil(goal.position) == 0;
   }
 
   /**
@@ -117,7 +116,7 @@ public class ElevatorSubsystem extends SubsystemBase {
   /** Enum representing preset elevator positions. */
   public enum ElevatorPosition {
     L4(39.6),
-    L3(23.8),
+    L3(23.2),
     L2(12.5),
     L1(5),
     HOME(0);

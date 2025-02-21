@@ -6,6 +6,7 @@ import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -20,9 +21,13 @@ public class CoralSubsystem extends SubsystemBase {
   private final Time SCORING_TIME = Seconds.of(0.5);
   private final double RETRACT_THRESHOLD = -1;
 
+  @Logged(name = "Coral Intake Motor")
   private final SparkBase intake;
+
+  @Logged(name = "Coral Outake Motor")
   private final SparkBase outake;
 
+  @Logged(name = "Coral Outake Encoder")
   private final RelativeEncoder outakeEncoder;
 
   private final DigitalInput intakeSensor = new DigitalInput(INTAKE_SENSOR_PORT);
@@ -48,7 +53,8 @@ public class CoralSubsystem extends SubsystemBase {
   /**
    * @return true if the coral is blocking the coral intake sensor.
    */
-  public boolean isCoralInIntake() {
+  @Logged(name = "Has Coral")
+  public boolean hasCoral() {
     return !intakeSensor.get();
   }
 
@@ -58,11 +64,10 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} intaking the coral.
    */
   public Command intakeCoral() {
-    return runIntake(MotorSpeed.FULL)
-        .alongWith(runOutake(MotorSpeed.REVERSE_QUARTER))
-        .andThen(Commands.waitUntil(this::isCoralInIntake))
+    return runIntake(MotorSpeed.QUARTER)
+        .alongWith(runOutake(MotorSpeed.REVERSE_TENTH))
+        .andThen(Commands.waitUntil(this::hasCoral))
         .andThen(Commands.runOnce(() -> outakeEncoder.setPosition(0)))
-        .andThen(runIntake(MotorSpeed.QUARTER).alongWith(runOutake(MotorSpeed.REVERSE_TENTH)))
         .andThen(Commands.waitUntil(() -> outakeEncoder.getPosition() <= RETRACT_THRESHOLD))
         .andThen(stopIntake());
   }
@@ -73,7 +78,7 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} scoring the coral.
    */
   public Command scoreCoral() {
-    return runOutake(MotorSpeed.REVERSE_FULL)
+    return runOutake(MotorSpeed.REVERSE_QUARTER)
         .andThen(Commands.waitTime(SCORING_TIME))
         .andThen(runOutake(MotorSpeed.OFF));
   }
@@ -101,7 +106,7 @@ public class CoralSubsystem extends SubsystemBase {
   /**
    * @return A {@link Command} stopping both the intake and outake motors.
    */
-  private Command stopIntake() {
+  public Command stopIntake() {
     return Commands.runOnce(intake::stopMotor).alongWith(Commands.runOnce(outake::stopMotor));
   }
 }
