@@ -1,6 +1,5 @@
 package frc.robot.subsystems.manipulator;
 
-import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
@@ -46,12 +45,15 @@ public class ElevatorSubsystem extends SubsystemBase {
     File directory = new File(Filesystem.getDeployDirectory(), "motors/elevator");
 
     try {
-      ConfiguredMotor configuredMotor =
-          new MotorParser(directory).withMotor("leader.json").withPidf("pidf.json").configure();
+      motor =
+          new MotorParser(directory)
+              .withMotor("leader.json")
+              .withPidf("pidf.json")
+              .configureAsync();
 
-      new MotorParser(directory).withMotor("follower.json").configure();
+      // Don't need to hold a reference, just configure...
+      new MotorParser(directory).withMotor("follower.json").configureAsync();
 
-      motor = configuredMotor.getSpark();
       encoder = motor.getEncoder();
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure elevator motor(s): ", exception);

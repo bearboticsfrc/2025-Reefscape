@@ -1,8 +1,7 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.manipulator;
 
 import static edu.wpi.first.units.Units.Seconds;
 
-import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.spark.SparkBase;
@@ -34,10 +33,7 @@ public class AlgaeSubsystem extends SubsystemBase {
     File directory = new File(Filesystem.getDeployDirectory(), "motors/algae");
 
     try {
-      ConfiguredMotor configuredMotor =
-          new MotorParser(directory).withMotor("motor.json").configure();
-
-      motor = configuredMotor.getSpark();
+      motor = new MotorParser(directory).withMotor("motor.json").configureAsync();
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure algae motor!", exception);
     }

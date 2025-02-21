@@ -2,7 +2,6 @@ package frc.robot.subsystems.manipulator;
 
 import static edu.wpi.first.units.Units.Seconds;
 
-import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.RelativeEncoder;
@@ -37,13 +36,8 @@ public class CoralSubsystem extends SubsystemBase {
     File directory = new File(Filesystem.getDeployDirectory(), "motors/coral");
 
     try {
-      ConfiguredMotor configuredIntake =
-          new MotorParser(directory).withMotor("intake.json").configure();
-      ConfiguredMotor configuredOutake =
-          new MotorParser(directory).withMotor("outake.json").configure();
-
-      intake = configuredIntake.getSpark();
-      outake = configuredOutake.getSpark();
+      intake = new MotorParser(directory).withMotor("intake.json").configureAsync();
+      outake = new MotorParser(directory).withMotor("outake.json").configureAsync();
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure coral motor(s)!", exception);
     }

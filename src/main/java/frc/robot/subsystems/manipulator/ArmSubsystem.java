@@ -1,6 +1,5 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.manipulator;
 
-import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
@@ -13,7 +12,6 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import java.io.File;
 import java.io.IOException;
 
@@ -26,6 +24,11 @@ public class ArmSubsystem extends SubsystemBase {
 
   public final double MAX_ACCELERATION = 100;
   public final double MAX_VELOCITY = 200; // higher than what we need
+
+  // arm pointed down is - 1/2 PI
+  // arm pointed at horizonal is 0
+  public final double HORIZONTAL = 12.7;
+  public final double ANGLE_DIVISOR = HORIZONTAL / (Math.PI / 2);
 
   // Arm feedforward controller
   private final ArmFeedforward feedforward = new ArmFeedforward(A, G, S, V);
@@ -42,19 +45,13 @@ public class ArmSubsystem extends SubsystemBase {
   private final SparkBase motor;
   private final RelativeEncoder encoder;
 
-  private CommandXboxController xbox;
-
   /** Constructs a new ArmSubsystem by configuring the leader and follower motors. */
-  public ArmSubsystem(CommandXboxController controller) {
-    xbox = controller;
-    File baseDirectory = new File(Filesystem.getDeployDirectory(), "motors");
-    File directory = new File(baseDirectory, "arm");
+  public ArmSubsystem() {
+    File directory = new File(Filesystem.getDeployDirectory(), "motors/arm");
 
     try {
-      ConfiguredMotor configuredMotor =
-          new MotorParser(directory).withMotor("motor.json").withPidf("pidf.json").configure();
-
-      motor = configuredMotor.getSpark();
+      motor =
+          new MotorParser(directory).withMotor("motor.json").withPidf("pidf.json").configureAsync();
       encoder = motor.getEncoder();
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure arm motor(s): ", exception);
@@ -68,16 +65,10 @@ public class ArmSubsystem extends SubsystemBase {
     sensors.addDouble("Radians", this::getAngleRadians);
     sensors.addDouble("Setpoint State", () -> setpoint.position);
     sensors.addDouble("Goal State", () -> goal.position);
-    sensors.addDouble("input", this::getInput);
   }
 
   private double getAngleRadians() {
-    // arm pointed down is - 1/2 PI
-    // arm pointed at horizonal is 0
-    final double horizontal = 12.7;
-    final double divisor = horizontal / (Math.PI / 2.0);
-
-    return (encoder.getPosition() - horizontal) / divisor;
+    return (encoder.getPosition() - HORIZONTAL) / ANGLE_DIVISOR;
   }
 
   /**
@@ -89,15 +80,8 @@ public class ArmSubsystem extends SubsystemBase {
     goal = new TrapezoidProfile.State(position.getPosition(), 0);
   }
 
-  public double getInput() {
-    return (xbox.getLeftY() * xbox.getLeftY() * Math.signum(xbox.getLeftY())) / 20.0;
-  }
-
   @Override
   public void periodic() {
-
-    // motor.set(getInput());
-
     updateTrapezoidProfile();
   }
 
