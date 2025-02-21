@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.manipulator;
 
 import bearlib.motor.ConfiguredMotor;
 import bearlib.motor.deserializer.MotorParser;
@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import java.io.File;
 import java.io.IOException;
 
@@ -27,6 +26,10 @@ public class ElevatorSubsystem extends SubsystemBase {
   public final double MAX_ACCELERATION = 35;
   public final double MAX_VELOCITY = 50;
 
+  // Spark motor controller instance
+  private final SparkBase motor;
+  private final RelativeEncoder encoder;
+
   // Elevator feedforward controller
   private final ElevatorFeedforward feedforward = new ElevatorFeedforward(A, G, S, V);
 
@@ -38,14 +41,9 @@ public class ElevatorSubsystem extends SubsystemBase {
   private TrapezoidProfile.State goal = new TrapezoidProfile.State();
   private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
-  // Spark motor controller instance
-  private final SparkBase motor;
-  private final RelativeEncoder encoder;
-
   /** Constructs a new ElevatorSubsystem by configuring the leader and follower motors. */
-  public ElevatorSubsystem(CommandXboxController controller) {
-    File baseDirectory = new File(Filesystem.getDeployDirectory(), "motors");
-    File directory = new File(baseDirectory, "elevator");
+  public ElevatorSubsystem() {
+    File directory = new File(Filesystem.getDeployDirectory(), "motors/elevator");
 
     try {
       ConfiguredMotor configuredMotor =
@@ -85,6 +83,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     updateTrapezoidProfile();
   }
 
+  /** Update the trapezoid motion profile setpoint. */
   private void updateTrapezoidProfile() {
     TrapezoidProfile.State nextSetpoint = trapezoidProfile.calculate(0.02, setpoint, goal);
 

@@ -1,4 +1,4 @@
-package frc.robot.subsystems;
+package frc.robot.subsystems.manipulator;
 
 import static edu.wpi.first.units.Units.Seconds;
 
@@ -19,6 +19,7 @@ import java.io.IOException;
 public class CoralSubsystem extends SubsystemBase {
   private final int INTAKE_SENSOR_PORT = 1;
   private final Time SCORING_TIME = Seconds.of(0.5);
+  private final double RETRACT_THRESHOLD = -1;
 
   private final SparkBase intake;
   private final SparkBase outake;
@@ -68,10 +69,15 @@ public class CoralSubsystem extends SubsystemBase {
         .andThen(Commands.waitUntil(this::isCoralInIntake))
         .andThen(Commands.runOnce(() -> outakeEncoder.setPosition(0)))
         .andThen(runIntake(MotorSpeed.QUARTER).alongWith(runOutake(MotorSpeed.REVERSE_TENTH)))
-        .andThen(Commands.waitUntil(() -> outakeEncoder.getPosition() <= -1))
+        .andThen(Commands.waitUntil(() -> outakeEncoder.getPosition() <= RETRACT_THRESHOLD))
         .andThen(stopIntake());
   }
 
+  /**
+   * Coral score command
+   *
+   * @return A {@link Command} scoring the coral.
+   */
   public Command scoreCoral() {
     return runOutake(MotorSpeed.REVERSE_FULL)
         .andThen(Commands.waitTime(SCORING_TIME))
@@ -84,7 +90,7 @@ public class CoralSubsystem extends SubsystemBase {
    * @param speed {@link MotorSpeed} describing the desired intake motor speed.
    * @return A {@link Command} running the coral intake.
    */
-  public Command runIntake(MotorSpeed speed) {
+  private Command runIntake(MotorSpeed speed) {
     return Commands.runOnce(() -> intake.set(speed.getSpeed()));
   }
 
@@ -94,12 +100,14 @@ public class CoralSubsystem extends SubsystemBase {
    * @param speed {@link MotorSpeed} describing the desired intake motor speed.
    * @return A {@link Command} running the coral intake.
    */
-  public Command runOutake(MotorSpeed speed) {
+  private Command runOutake(MotorSpeed speed) {
     return Commands.runOnce(() -> outake.set(speed.getSpeed()));
   }
 
-  public Command stopIntake() {
-    return Commands.parallel(
-        Commands.runOnce(intake::stopMotor), Commands.runOnce(outake::stopMotor));
+  /**
+   * @return A {@link Command} stopping both the intake and outake motors.
+   */
+  private Command stopIntake() {
+    return Commands.runOnce(intake::stopMotor).alongWith(Commands.runOnce(outake::stopMotor));
   }
 }

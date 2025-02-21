@@ -14,12 +14,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.ElevatorSubsystem;
-import frc.robot.subsystems.ElevatorSubsystem.ElevatorPosition;
-import frc.robot.subsystems.ManipulatorSubsystem;
+import frc.robot.subsystems.manipulator.ManipulatorSubsystem;
 
 public class RobotContainer {
-  private final ElevatorSubsystem elevatorSubsystem;
   private final CommandXboxController driverJoystick = new CommandXboxController(0);
 
   private final ProcessedJoystick processedJoystick =
@@ -31,44 +28,22 @@ public class RobotContainer {
   public final ManipulatorSubsystem manipulatorSubsystem = new ManipulatorSubsystem();
 
   public RobotContainer() {
-    this.elevatorSubsystem = new ElevatorSubsystem(driverJoystick);
     configureBindings();
   }
 
   private void configureBindings() {
-    driverJoystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
-
-    driverJoystick
-        .y()
-        .onTrue(elevatorSubsystem.runElevatorTo(ElevatorPosition.L4))
-        .onFalse(elevatorSubsystem.stop());
-
-    driverJoystick
-        .x()
-        .onTrue(elevatorSubsystem.runElevatorTo(ElevatorPosition.L3))
-        .onFalse(elevatorSubsystem.stop());
-
-    driverJoystick
-        .b()
-        .onTrue(elevatorSubsystem.runElevatorTo(ElevatorPosition.L1))
-        .onFalse(elevatorSubsystem.stop());
-
-    driverJoystick
-        .a()
-        .onTrue(elevatorSubsystem.runElevatorTo(ElevatorPosition.HOME))
-        .onFalse(elevatorSubsystem.stop());
+    driverJoystick.a().onTrue(drivetrain.runOnce(drivetrain::seedFieldCentric));
 
     driverJoystick.leftBumper().onTrue(manipulatorSubsystem.intakeCoral());
-    driverJoystick.rightBumper().onFalse(manipulatorSubsystem.scoreCoral());
-    /*driverJoystick
+    driverJoystick.rightBumper().onTrue(manipulatorSubsystem.scoreCoral());
+
+    driverJoystick
         .rightStick()
         .onTrue(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.TURBO)))
         .onFalse(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.NORMAL)));
-    */
 
-    // drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
-    // drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
-
+    drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
+    drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
   }
 
   /**
