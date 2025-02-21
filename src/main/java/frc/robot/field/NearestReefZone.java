@@ -13,7 +13,10 @@ public class NearestReefZone {
   public double tangentialBranchOffset;
 
   public Transform2d getTanUnitVectorToFace(Pose2d face) {
-    this.tangentialBranchOffset= AllianceFlipUtil.shouldFlip()? Units.inchesToMeters(6.469): Units.inchesToMeters(6.469) *-1; // meters; // meters
+    this.tangentialBranchOffset =
+        AllianceFlipUtil.shouldFlip()
+            ? Units.inchesToMeters(6.469)
+            : Units.inchesToMeters(6.469) * -1; // meters; // meters
     Translation2d translation =
         new Translation2d(
             Math.cos(face.getRotation().getRadians()), Math.sin(face.getRotation().getRadians()));

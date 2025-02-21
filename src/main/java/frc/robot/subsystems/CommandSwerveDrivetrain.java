@@ -43,7 +43,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
 
   private final Vision vision =
       new Vision(
-          Arrays.asList(VisionConstants.FRONT_LEFT_CAMERA, VisionConstants.FRONT_RIGHT_CAMERA));
+          Arrays.asList(VisionConstants.FRONT_LEFT_CAMERA, VisionConstants.FRONT_RIGHT_CAMERA, VisionConstants.REAR_CAMERA));
 
   /** Swerve request to apply during robot-centric path following */
   private final SwerveRequest.ApplyRobotSpeeds pathApplyRobotSpeeds =
