@@ -26,9 +26,8 @@ package frc.robot.vision;
 
 import static frc.robot.constants.VisionConstants.*;
 
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,16 +36,13 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class Vision {
   private final List<PhotonCamera> cameras = new ArrayList<>();
   private final List<PhotonPoseEstimator> photonEstimators = new ArrayList<>();
 
-  private final StructArrayPublisher<Pose2d> targetPoses =
-      NetworkTableInstance.getDefault()
-          .getStructArrayTopic("Vision Targets", Pose2d.struct)
-          .publish();
+  @Logged(name = "Target Poses")
+  private final List<Pose2d> targetPoses = new ArrayList<>();
 
   public Vision(List<VisionCamera> visionCameras) {
     for (VisionCamera visionCamera : visionCameras) {
@@ -95,7 +91,7 @@ public class Vision {
     }
 
     List<EstimatedRobotPose> estimatedPoses = new ArrayList<>();
-    targetPoses.set(new Pose2d[0]);
+    targetPoses.clear();
 
     for (int i = 0; i < photonEstimators.size(); i++) {
       Optional<PhotonPipelineResult> maybeResult = results.get(i);
@@ -111,34 +107,19 @@ public class Vision {
       }
 
       PhotonPoseEstimator photonEstimator = photonEstimators.get(i);
-      Optional<EstimatedRobotPose> estimatedPose = photonEstimator.update(maybeResult.get());
+      Optional<EstimatedRobotPose> maybeEstimatedPose = photonEstimator.update(maybeResult.get());
 
-      if (estimatedPose.isEmpty()) {
+      if (maybeEstimatedPose.isEmpty()) {
         continue;
       }
 
-      estimatedPoses.add(estimatedPose.get());
-    }
+      EstimatedRobotPose estimatedPose = maybeEstimatedPose.get();
 
-    appendTargetsToNT(estimatedPoses);
+      targetPoses.add(estimatedPose.estimatedPose.toPose2d());
+      estimatedPoses.add(estimatedPose);
+    }
 
     return estimatedPoses;
-  }
-
-  private void appendTargetsToNT(List<EstimatedRobotPose> estimatedRobotPoses) {
-    List<Pose2d> poses = new ArrayList<>();
-
-    for (EstimatedRobotPose estimatedRobotPose : estimatedRobotPoses) {
-      for (PhotonTrackedTarget target : estimatedRobotPose.targetsUsed) {
-        poses.add(getTagPose2d(target.getFiducialId()));
-      }
-    }
-
-    targetPoses.set(poses.toArray(new Pose2d[0]));
-  }
-
-  private Pose2d getTagPose2d(int fiducialId) {
-    return APRIL_TAG_FIELD_LAYOUT.getTagPose(fiducialId).get().toPose2d();
   }
 
   private boolean isTooFar(PhotonPipelineResult result) {

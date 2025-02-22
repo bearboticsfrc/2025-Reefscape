@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Supplier;
 
 public class ElevatorSubsystem extends SubsystemBase {
   // Feedforward gains and motion parameters
@@ -107,6 +108,16 @@ public class ElevatorSubsystem extends SubsystemBase {
    */
   public Command runElevatorTo(ElevatorPosition position) {
     return runOnce(() -> set(position));
+  }
+
+  /**
+   * Creates a command to run the elevator to a specified position.
+   *
+   * @param position The target elevator position.
+   * @return A command that moves the elevator.
+   */
+  public Command runElevatorTo(Supplier<ElevatorPosition> position) {
+    return runOnce(() -> set(position.get()));
   }
 
   public Command stop() {

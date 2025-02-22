@@ -18,6 +18,7 @@ import java.io.IOException;
 public class AlgaeSubsystem extends SubsystemBase {
   private final int ALGAE_SENSOR_PORT = 0;
   private final Time SCORING_TIME = Seconds.of(0.5);
+  private final double IDLE_INTAKE_SPEED = 0.1;
 
   @Logged(name = "Algae Motor")
   private final SparkBase motor;
@@ -42,7 +43,7 @@ public class AlgaeSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     if (hasAlgae() && motor.get() == 0) {
-      motor.set(0.05);
+      motor.set(IDLE_INTAKE_SPEED);
     }
   }
 
@@ -60,27 +61,13 @@ public class AlgaeSubsystem extends SubsystemBase {
    * @return A {@link Command} intaking the algae.
    */
   public Command intakeAlgae() {
-    return runMotor(MotorSpeed.QUARTER)
-        .andThen(Commands.print("running at quarter"))
+    return run(MotorSpeed.QUARTER)
         .andThen(Commands.waitUntil(this::hasAlgae))
-        .andThen(Commands.print("running at tenth"))
-        .andThen(runMotor(MotorSpeed.TENTH));
-  }
-
-  public Command intakeAlgaeOld() {
-    return runMotor(MotorSpeed.QUARTER)
-        .andThen(Commands.print("running at quarter"))
-        .andThen(Commands.waitUntil(this::hasAlgae))
-        .andThen(Commands.print("running at tenth"))
-        .andThen(runMotor(MotorSpeed.TENTH).finallyDo(() -> motor.stopMotor()));
-  }
-
-  public Command stopIntakeAlgae() {
-    return stopMotor();
+        .andThen(run(MotorSpeed.TENTH));
   }
 
   public Command scoreAlgae() {
-    return runMotor(MotorSpeed.REVERSE_FULL)
+    return run(MotorSpeed.REVERSE_FULL)
         .andThen(Commands.waitTime(SCORING_TIME))
         .andThen(stopMotor());
   }
@@ -91,7 +78,7 @@ public class AlgaeSubsystem extends SubsystemBase {
    * @param speed {@link MotorSpeed} describing the desired intake motor speed.
    * @return A {@link Command} running the algae intake.
    */
-  public Command runMotor(MotorSpeed speed) {
+  public Command run(MotorSpeed speed) {
     return Commands.runOnce(() -> motor.set(speed.getSpeed()));
   }
 

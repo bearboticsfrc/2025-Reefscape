@@ -10,6 +10,7 @@ import frc.robot.generated.TunerConstants;
 public class DriveConstants {
   public static final int DRIVER_JOYSTICK_PORT = 0;
   public static final int OPERATOR_JOYSTICK_PORT = 1;
+  public static final int OPERATOR_GAMEPAD_PORT = 2;
 
   public static double MAX_VELOCITY = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   private static double MAX_ANGULAR_VELOCITY = RotationsPerSecond.of(0.75).in(RadiansPerSecond);

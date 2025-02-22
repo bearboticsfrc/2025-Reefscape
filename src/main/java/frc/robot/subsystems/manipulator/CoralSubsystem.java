@@ -64,7 +64,7 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} intaking the coral.
    */
   public Command intakeCoral() {
-    return runIntake(MotorSpeed.QUARTER)
+    return runIntake(MotorSpeed.HALF)
         .alongWith(runOutake(MotorSpeed.REVERSE_TENTH))
         .andThen(Commands.waitUntil(this::hasCoral))
         .andThen(Commands.runOnce(() -> outakeEncoder.setPosition(0)))
@@ -78,7 +78,7 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} scoring the coral.
    */
   public Command scoreCoral() {
-    return runOutake(MotorSpeed.REVERSE_QUARTER)
+    return runOutake(MotorSpeed.REVERSE_HALF)
         .andThen(Commands.waitTime(SCORING_TIME))
         .andThen(runOutake(MotorSpeed.OFF));
   }
