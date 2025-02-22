@@ -8,7 +8,10 @@ import bearlib.util.ProcessedJoystick;
 import bearlib.util.ProcessedJoystick.JoystickAxis;
 import bearlib.util.ProcessedJoystick.ThrottleProfile;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -24,7 +27,8 @@ import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
 
 @Logged
 public class RobotContainer {
-  private final CommandXboxController driverJoystick = new CommandXboxController(0);
+  private final CommandXboxController driverJoystick =
+      new CommandXboxController(DriveConstants.DRIVER_JOYSTICK_PORT);
 
   private final ProcessedJoystick processedJoystick =
       new ProcessedJoystick(driverJoystick, this::getThrottleProfile, DriveConstants.MAX_VELOCITY);
@@ -37,10 +41,14 @@ public class RobotContainer {
   private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   private final ArmSubsystem arm = new ArmSubsystem();
 
+  private SendableChooser<Command> autoChooser;
+
   public RobotContainer() {
     configureBindings();
+    configureAutoBuilder();
   }
 
+  /** Configure the button bindings. */
   private void configureBindings() {
     driverJoystick.leftBumper().whileTrue(coral.intakeCoral()).onFalse(coral.stopIntake());
     driverJoystick.rightBumper().whileTrue(coral.scoreCoral()).onFalse(coral.stopIntake());
@@ -81,12 +89,17 @@ public class RobotContainer {
         .onTrue(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.TURBO)))
         .onFalse(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.NORMAL)));
 
+    driverJoystick
+        .leftStick()
+        .onTrue(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.TURTLE)))
+        .onFalse(Commands.runOnce(() -> setThrottleProfile(ThrottleProfile.NORMAL)));
+
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
   }
 
   /**
-   * Gets the default drive request using field centric mode..
+   * Gets the default drive request using field centric mode.
    *
    * @return The default drive request.
    */
@@ -95,6 +108,12 @@ public class RobotContainer {
         .withVelocityX(processedJoystick.get(JoystickAxis.Ly))
         .withVelocityY(processedJoystick.get(JoystickAxis.Lx))
         .withRotationalRate(processedJoystick.get(JoystickAxis.Rx));
+  }
+
+  /** Configures the PathPlanner autobuilder for publishing on NT. */
+  private void configureAutoBuilder() {
+    autoChooser = AutoBuilder.buildAutoChooser();
+    SmartDashboard.putData("Auto Path", autoChooser);
   }
 
   /**
@@ -115,7 +134,12 @@ public class RobotContainer {
     return throttleProfile;
   }
 
+  /**
+   * Get the currently selected autonomous command.
+   *
+   * @return The command.
+   */
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    return autoChooser.getSelected();
   }
 }
