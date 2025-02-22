@@ -39,9 +39,9 @@ public class DriveToPose extends Command {
   private final double TRANSLATION_K = 6;
   private final double THETA_K = 10;
 
-  private final double TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(4).in(MetersPerSecond);
+  private final double TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(6).in(MetersPerSecond);
   private final double TRANSLATION_MAX_ACCELERATION =
-      MetersPerSecondPerSecond.of(1).in(MetersPerSecondPerSecond);
+      MetersPerSecondPerSecond.of(4).in(MetersPerSecondPerSecond);
 
   private final double THETA_MAX_VELOCITY = RadiansPerSecond.of(2 * Math.PI).in(RadiansPerSecond);
   private final double THETA_MAX_ACCELERATION =
