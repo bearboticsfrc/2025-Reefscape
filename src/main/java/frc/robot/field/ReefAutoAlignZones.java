@@ -7,11 +7,14 @@
 package frc.robot.field;
 
 import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.Meters;
+import static frc.robot.constants.VisionConstants.APRIL_TAG_FIELD_LAYOUT;
 
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Distance;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +26,8 @@ public class ReefAutoAlignZones {
       Units.inchesToMeters(299.438); // Measured from the inside of starting line
 
   public static List<ReefAutoAlignZone> zones;
+
+  public static HashMap<Pose2d, TagPose> tagPoses = new HashMap<>();
 
   static {
     zones = new ArrayList<>();
@@ -50,8 +55,8 @@ public class ReefAutoAlignZones {
                   .transformBy(new Transform2d(adjustX, -adjustY, new Rotation2d()))
                   .getY());
 
-      double centerToBranchX = Units.inchesToMeters(30.738);
-      double centerToBranchY = Units.inchesToMeters(6.469);
+      Distance centerToBranchX = Inches.of(30.738);
+      Distance centerToBranchY = Inches.of(6.469);
 
       Pose2d rightBranch =
           new Pose2d(
@@ -71,23 +76,22 @@ public class ReefAutoAlignZones {
               new Translation2d(
                   poseDirection
                       .transformBy(
-                          new Transform2d(centerToBranchX, -centerToBranchY, new Rotation2d()))
+                          new Transform2d(
+                              centerToBranchX, centerToBranchY.unaryMinus(), new Rotation2d()))
                       .getX(),
                   poseDirection
                       .transformBy(
-                          new Transform2d(centerToBranchX, -centerToBranchY, new Rotation2d()))
+                          new Transform2d(
+                              centerToBranchX, centerToBranchY.unaryMinus(), new Rotation2d()))
                       .getY()),
               poseDirection.getRotation());
 
       Transform2d reefFaceOffset =
-          new Transform2d(
-              Inches.of(1.625).in(Meters), Inches.of(0).in(Meters), Rotation2d.fromDegrees(0));
+          new Transform2d(Inches.of(1.625), Inches.of(0), Rotation2d.fromDegrees(0));
       Transform2d robotBranchScoringOffset =
-          new Transform2d(
-              Inches.of(17.5).in(Meters), Inches.of(0).in(Meters), Rotation2d.fromDegrees(0));
+          new Transform2d(Inches.of(17.5), Inches.of(0), Rotation2d.fromDegrees(0));
       Transform2d rotate180 =
-          new Transform2d(
-              Inches.of(0).in(Meters), Inches.of(0).in(Meters), Rotation2d.fromDegrees(180));
+          new Transform2d(Inches.of(0), Inches.of(0), Rotation2d.fromDegrees(180));
 
       Pose2d leftScorePose =
           rightBranch.plus(reefFaceOffset).plus(robotBranchScoringOffset).plus(rotate180);
@@ -100,6 +104,31 @@ public class ReefAutoAlignZones {
       zones.add(
           new ReefAutoAlignZone(
               reefCenter, rightPoint, middlePoint, poseDirection.getRotation(), rightScorePose));
+
+      for (AprilTag tag : APRIL_TAG_FIELD_LAYOUT.getTags()) {
+        if ((tag.ID < 6 || tag.ID > 11) && (tag.ID < 15 || tag.ID > 22)) {
+          continue;
+        }
+
+        TagPose tagPose = new TagPose();
+
+        tagPose.left =
+            tag.pose
+                .toPose2d()
+                .plus(
+                    new Transform2d(
+                        new Translation2d(Inches.of(21), centerToBranchY), Rotation2d.k180deg));
+
+        tagPose.right =
+            tag.pose
+                .toPose2d()
+                .plus(
+                    new Transform2d(
+                        new Translation2d(Inches.of(21), centerToBranchY.unaryMinus()),
+                        Rotation2d.k180deg));
+
+        tagPoses.put(tag.pose.toPose2d(), tagPose);
+      }
     }
   }
 
@@ -110,49 +139,5 @@ public class ReefAutoAlignZones {
       }
     }
     return Optional.empty();
-  }
-
-  public static void main(String[] args) {
-
-    Translation2d point = new Translation2d(5.2, 6);
-    for (ReefAutoAlignZone zone : ReefAutoAlignZones.zones) {
-
-      // System.out.println("center " +zone.getCenter()+ "point1 " + zone.getPoint1() + " point2 " +
-      // zone.getPoint2());
-      System.out.println(
-          zone.getCenter().getX()
-              + ","
-              + zone.getCenter().getY()
-              + ","
-              + zone.getPoint1().getX()
-              + ","
-              + zone.getPoint1().getY()
-              + ","
-              + zone.getPoint2().getX()
-              + ","
-              + zone.getPoint2().getY());
-      /*System.out.println(
-                "ScorePose "
-                    + zone.getScorePose()
-                    + " point "
-                    + point
-                    + " in zone "
-                    + zone.containsPoint(point));
-      */
-      /*      Pose2d branch = Reef.branchPositions.get(i).get(ReefHeight.L2).toPose2d();
-           Pose2d scorePose =
-               Reef.branchPositions
-                   .get(i)
-                   .get(ReefHeight.L2)
-                   .toPose2d()
-                   .plus(reefFaceOffset)
-                   .plus(robotBranchScoringOffset)
-                   .plus(rotate180);
-
-           System.out.println("Branch " + i + " pose3d = " + branch);
-           System.out.println("score " + i + " pose3d = " + scorePose);
-      */ }
-    // scoringPose = Reef.branchPositions.get(targetBranch.ordinal()).get(ReefHeight.L2).toPose2d()
-    // .plus(robotBranchScoringOffset);
   }
 }

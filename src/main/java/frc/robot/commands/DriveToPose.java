@@ -15,6 +15,7 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentric;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -38,15 +39,15 @@ public class DriveToPose extends Command {
   private final double TRANSLATION_K = 6;
   private final double THETA_K = 10;
 
-  private final double TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(3).in(MetersPerSecond);
+  private final double TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(4).in(MetersPerSecond);
   private final double TRANSLATION_MAX_ACCELERATION =
-      MetersPerSecondPerSecond.of(6.0).in(MetersPerSecondPerSecond);
+      MetersPerSecondPerSecond.of(1).in(MetersPerSecondPerSecond);
 
   private final double THETA_MAX_VELOCITY = RadiansPerSecond.of(2 * Math.PI).in(RadiansPerSecond);
   private final double THETA_MAX_ACCELERATION =
       RadiansPerSecondPerSecond.of(2 * Math.PI).in(RadiansPerSecondPerSecond);
 
-  private final double POSITION_TOLERANCE = Inches.of(3).in(Meters);
+  private final double POSITION_TOLERANCE = Inches.of(1).in(Meters);
   private final double ROTATIONS_TOLERANCE = Radians.of(0.017).in(Radians);
 
   private final TrapezoidProfile.Constraints TRANSLATION_CONSTRAINTS =
@@ -66,6 +67,7 @@ public class DriveToPose extends Command {
   private final CommandSwerveDrivetrain drivetrain;
   private final Supplier<Pose2d> poseSupplier;
 
+  @Logged(name = "Drive To Pose Target Pose")
   private Pose2d targetPose;
 
   /**
@@ -83,7 +85,6 @@ public class DriveToPose extends Command {
     xController.setTolerance(POSITION_TOLERANCE);
     yController.setTolerance(POSITION_TOLERANCE);
     thetaController.setTolerance(ROTATIONS_TOLERANCE);
-
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
 
     addRequirements(drivetrain);
@@ -104,7 +105,7 @@ public class DriveToPose extends Command {
     yController.setGoal(targetPose.getY());
     thetaController.setGoal(targetPose.getRotation().getRadians());
 
-    Pose2d currentPose = drivetrain.getPose();
+    Pose2d currentPose = drivetrain.getState().Pose;
 
     xController.reset(currentPose.getX());
     yController.reset(currentPose.getY());
@@ -118,7 +119,7 @@ public class DriveToPose extends Command {
    */
   @Override
   public void execute() {
-    Pose2d currentPose = drivetrain.getPose();
+    Pose2d currentPose = drivetrain.getState().Pose;
 
     final double xVelocity = xController.calculate(currentPose.getX());
     final double yVelocity = yController.calculate(currentPose.getY());

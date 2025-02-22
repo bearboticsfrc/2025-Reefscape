@@ -12,6 +12,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.NotLogged;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,10 +20,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.BargeScoreCommand;
+import frc.robot.commands.DriveToPose;
 import frc.robot.commands.ReefScoreCommand;
 import frc.robot.constants.DriveConstants;
-import frc.robot.field.NearestReefZone;
-import frc.robot.field.ReefAutoAlignZone;
 import frc.robot.field.ReefAutoAlignZones;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -32,6 +32,7 @@ import frc.robot.subsystems.manipulator.ArmSubsystem.ArmPosition;
 import frc.robot.subsystems.manipulator.CoralSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
+import java.util.ArrayList;
 
 @Logged
 public class RobotContainer {
@@ -79,14 +80,14 @@ public class RobotContainer {
                 .andThen(Commands.waitUntil(elevator::isAtSetpoint)))
         .onFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
-    // Align with coral station
-    // driverJoystick.leftTrigger()
-
     driverJoystick.b().whileTrue(algae.scoreAlgae()).onFalse(algae.stopMotor());
     driverJoystick
         .a()
         .whileTrue(arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()))
         .onFalse(arm.runArmTo(ArmPosition.HOME).andThen(algae.stopMotor()));
+
+    driverJoystick.x().onTrue(Commands.runOnce(drivetrain.orchestra::play));
+    driverJoystick.y().onTrue(Commands.runOnce(drivetrain.orchestra::stop));
 
     driverJoystick.leftTrigger().whileTrue(algae.intakeAlgae()).onFalse(algae.stopMotor());
 
@@ -101,6 +102,9 @@ public class RobotContainer {
         .povUp()
         .whileTrue(BargeScoreCommand.raise(elevator, arm, algae))
         .whileFalse(BargeScoreCommand.lower(elevator, arm, algae));
+
+    driverJoystick.povRight().whileTrue(new DriveToPose(drivetrain, this::getNearestRightPose));
+    driverJoystick.povLeft().whileTrue(new DriveToPose(drivetrain, this::getNearestLeftPose));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
@@ -122,6 +126,21 @@ public class RobotContainer {
     operatorGamepad
         .button(4)
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L4)));
+  }
+
+  public Pose2d getNearestLeftPose() {
+    return ReefAutoAlignZones.tagPoses.get(getNearestTagPose()).left;
+  }
+
+  public Pose2d getNearestRightPose() {
+    return ReefAutoAlignZones.tagPoses.get(getNearestTagPose()).right;
+  }
+
+  public Pose2d getNearestTagPose() {
+    ArrayList<Pose2d> list = new ArrayList<>();
+    list.addAll(ReefAutoAlignZones.tagPoses.keySet());
+
+    return drivetrain.getState().Pose.nearest(list);
   }
 
   /**
