@@ -15,6 +15,12 @@
           "data": {
             "name": "L4Score"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "GToPStation"
+          }
         }
       ]
     }
