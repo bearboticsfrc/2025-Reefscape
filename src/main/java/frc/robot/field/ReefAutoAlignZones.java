@@ -117,14 +117,14 @@ public class ReefAutoAlignZones {
                 .toPose2d()
                 .plus(
                     new Transform2d(
-                        new Translation2d(Inches.of(21), centerToBranchY), Rotation2d.k180deg));
+                        new Translation2d(Inches.of(18), centerToBranchY), Rotation2d.k180deg));
 
         tagPose.right =
             tag.pose
                 .toPose2d()
                 .plus(
                     new Transform2d(
-                        new Translation2d(Inches.of(21), centerToBranchY.unaryMinus()),
+                        new Translation2d(Inches.of(18), centerToBranchY.unaryMinus()),
                         Rotation2d.k180deg));
 
         tagPoses.put(tag.pose.toPose2d(), tagPose);

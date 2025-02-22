@@ -72,13 +72,9 @@ public class CoralSubsystem extends SubsystemBase {
         .andThen(stopIntake());
   }
 
-  
-  /**
-   *
-   */
+  /** */
   public Command reverseCoral() {
-    return runIntake(MotorSpeed.REVERSE_TENTH)
-        .alongWith(runOutake(MotorSpeed.TENTH));
+    return runIntake(MotorSpeed.REVERSE_TENTH).alongWith(runOutake(MotorSpeed.TENTH));
   }
 
   /**
