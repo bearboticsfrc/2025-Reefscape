@@ -24,18 +24,21 @@
 
 package frc.robot.vision;
 
+import static edu.wpi.first.units.Units.Meters;
 import static frc.robot.constants.VisionConstants.*;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.geometry.Pose2d;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class Vision {
   private final List<PhotonCamera> cameras = new ArrayList<>();

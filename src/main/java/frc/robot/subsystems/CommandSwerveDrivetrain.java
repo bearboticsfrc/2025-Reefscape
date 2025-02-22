@@ -59,6 +59,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
     super(drivetrainConstants, modules);
     AllianceColor.addListener(this);
     configureAutoBuilder();
+    AllianceColor.addListener(this);
   }
 
   /**
@@ -78,6 +79,19 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
     for (EstimatedRobotPose estimatedPose : estimatedPoses) {
       addVisionMeasurement(estimatedPose);
     }
+  }
+
+  public Pose2d getPose() {
+    return getState().Pose;
+  }
+
+  public void stop() {
+    this.applyRequest(
+        () ->
+            DriveConstants.FIELD_CENTRIC_SWERVE_REQUEST
+                .withVelocityX(0)
+                .withVelocityY(0)
+                .withRotationalRate(0));
   }
 
   /**

@@ -21,8 +21,10 @@ public class VisionConstants {
   private static final String FRONT_LEFT_CAMERA_NAME = "OV9281FrontLeft";
   private static final String FRONT_RIGHT_CAMERA_NAME = "OV9281FrontRight";
   private static final String REAR_CAMERA_NAME = "OV9281Rear";
+  private static final String REAR_CAMERA_NAME = "OV9281Rear";
 
   private static final Transform3d ROBOT_TO_FRONT_LEFT_CAMERA =
+      new Transform3d(new Translation3d(.1524, 0.254, 0.4617), new Rotation3d());
       new Transform3d(new Translation3d(.1524, 0.254, 0.4617), new Rotation3d());
 
   private static final Transform3d ROBOT_TO_FRONT_RIGHT_CAMERA =
