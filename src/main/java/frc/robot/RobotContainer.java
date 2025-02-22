@@ -103,8 +103,10 @@ public class RobotContainer {
         .whileTrue(BargeScoreCommand.raise(elevator, arm, algae))
         .whileFalse(BargeScoreCommand.lower(elevator, arm, algae));
 
-    driverJoystick.povRight().whileTrue(new DriveToPose(drivetrain, this::getNearestRightPose));
-    driverJoystick.povLeft().whileTrue(new DriveToPose(drivetrain, this::getNearestLeftPose));
+    driverJoystick.povLeft().whileTrue(new DriveToPose(drivetrain, this::getNearestRightPose));
+    driverJoystick.povRight().whileTrue(new DriveToPose(drivetrain, this::getNearestLeftPose));
+
+    driverJoystick.povDown().whileTrue(coral.reverseCoral()).onFalse(coral.stopIntake());
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
