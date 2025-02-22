@@ -67,7 +67,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
     super(drivetrainConstants, modules);
     AllianceColor.addListener(this);
     configureAutoBuilder();
-    AllianceColor.addListener(this);
 
     orchestra =
         new Orchestra(
