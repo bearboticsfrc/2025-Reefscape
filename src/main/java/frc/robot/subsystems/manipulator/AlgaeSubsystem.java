@@ -18,7 +18,7 @@ import java.io.IOException;
 public class AlgaeSubsystem extends SubsystemBase {
   private final int ALGAE_SENSOR_PORT = 0;
   private final Time SCORING_TIME = Seconds.of(0.5);
-  private final double IDLE_INTAKE_SPEED = 0.15;
+  private final double IDLE_INTAKE_SPEED = 0.2;
 
   @Logged(name = "Algae Motor")
   private final SparkBase motor;

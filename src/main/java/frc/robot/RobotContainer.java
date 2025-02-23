@@ -162,6 +162,17 @@ public class RobotContainer {
     NamedCommands.registerCommand(
         "L4Score", ReefScoreCommand.get(ElevatorPosition.L4, elevator, coral));
 
+    NamedCommands.registerCommand("L4ScoreToL2Algae",  
+      elevator
+        .runElevatorTo(ElevatorPosition.L4)
+        .andThen(Commands.waitUntil(elevator::isAtSetpoint))
+        .andThen(coral.scoreCoral())
+        .andThen(elevator.runElevatorTo(ElevatorPosition.L2))
+        .andThen(Commands.waitUntil(elevator::isAtSetpoint))
+        .andThen(arm.runArmTo(ArmPosition.REEF).alongWith(algae.intakeAlgae())));
+
+    NamedCommands.registerCommand("LowerElevator", elevator.runElevatorTo(ElevatorPosition.HOME).andThen(Commands.waitUntil(elevator::isAtSetpoint)));
+    NamedCommands.registerCommand("BargeScore", BargeScoreCommand.raise(elevator, arm, algae));
     autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Path", autoChooser);
   }

@@ -12,7 +12,7 @@ import frc.robot.subsystems.manipulator.ElevatorSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
 
 public class BargeScoreCommand {
-  private static final Time SCORE_WAIT = Milliseconds.of(250);
+  private static final Time SCORE_WAIT = Milliseconds.of(500);
 
   public static Command raise(ElevatorSubsystem elevator, ArmSubsystem arm, AlgaeSubsystem algae) {
     return elevator
