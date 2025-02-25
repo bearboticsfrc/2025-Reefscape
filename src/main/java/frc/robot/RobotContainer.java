@@ -11,13 +11,13 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.epilogue.NotLogged;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
+import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.DriveToPose;
@@ -34,10 +34,9 @@ import frc.robot.subsystems.manipulator.ElevatorSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
 import java.util.ArrayList;
 
-@Logged
 public class RobotContainer {
-  private final CommandXboxController driverJoystick =
-      new CommandXboxController(DriveConstants.DRIVER_JOYSTICK_PORT);
+  private final CommandPS4Controller driverJoystick =
+      new CommandPS4Controller(DriveConstants.DRIVER_JOYSTICK_PORT);
 
   private final CommandXboxController operatorJoystick =
       new CommandXboxController(DriveConstants.OPERATOR_JOYSTICK_PORT);
@@ -47,18 +46,20 @@ public class RobotContainer {
 
   private final ProcessedJoystick processedJoystick =
       new ProcessedJoystick(driverJoystick, this::getThrottleProfile, DriveConstants.MAX_VELOCITY);
-  private ThrottleProfile throttleProfile = ThrottleProfile.TURBO;
+
+  private ProcessedJoystick.ThrottleProfile throttleProfile =
+      ProcessedJoystick.ThrottleProfile.TURBO;
 
   public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-  private final CoralSubsystem coral = new CoralSubsystem();
-  private final AlgaeSubsystem algae = new AlgaeSubsystem();
-  private final ElevatorSubsystem elevator = new ElevatorSubsystem();
-  private final ArmSubsystem arm = new ArmSubsystem();
+  @Logged private final CoralSubsystem coral = new CoralSubsystem();
+  @Logged private final AlgaeSubsystem algae = new AlgaeSubsystem();
+  @Logged private final ElevatorSubsystem elevator = new ElevatorSubsystem();
+  @Logged private final ArmSubsystem arm = new ArmSubsystem();
 
-  @NotLogged private SendableChooser<Command> autoChooser;
+  private SendableChooser<Command> autoChooser;
 
-  private ElevatorPosition targetElevatorPosition = ElevatorPosition.HOME;
+  @Logged private ElevatorPosition targetElevatorPosition = ElevatorPosition.HOME;
 
   public RobotContainer() {
     configureDriverBindings();
@@ -68,31 +69,31 @@ public class RobotContainer {
 
   /** Configure the button bindings. */
   private void configureDriverBindings() {
-    driverJoystick.leftBumper().whileTrue(coral.intakeCoral()).onFalse(coral.stopIntake());
+    driverJoystick.L1().whileTrue(coral.intakeCoral()).onFalse(coral.stopIntake());
 
-    driverJoystick.rightBumper().onTrue(coral.scoreCoral()).onFalse(coral.stopIntake());
+    driverJoystick.R1().onTrue(coral.scoreCoral()).onFalse(coral.stopIntake());
 
     driverJoystick
-        .rightTrigger()
+        .R2()
         .whileTrue(
             elevator
                 .runElevatorTo(() -> targetElevatorPosition)
                 .andThen(Commands.waitUntil(elevator::isAtSetpoint)))
         .onFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
-    driverJoystick.b().whileTrue(algae.scoreAlgae()).onFalse(algae.stopMotor());
+    driverJoystick.circle().whileTrue(algae.scoreAlgae()).onFalse(algae.stopMotor());
     driverJoystick
-        .a()
+        .cross()
         .whileTrue(arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()))
         .onFalse(arm.runArmTo(ArmPosition.HOME).andThen(algae.stopMotor()));
 
-    driverJoystick.x().onTrue(Commands.runOnce(drivetrain.orchestra::play));
-    driverJoystick.y().onTrue(Commands.runOnce(drivetrain.orchestra::stop));
+    driverJoystick.square().onTrue(Commands.runOnce(drivetrain.orchestra::play));
+    driverJoystick.triangle().onTrue(Commands.runOnce(drivetrain.orchestra::stop));
 
-    driverJoystick.leftTrigger().whileTrue(algae.intakeAlgae()).onFalse(algae.stopMotor());
+    driverJoystick.L2().whileTrue(algae.intakeAlgae()).onFalse(algae.stopMotor());
 
     driverJoystick
-        .leftStick()
+        .L3()
         .toggleOnTrue(
             Commands.startEnd(
                 () -> setThrottleProfile(ThrottleProfile.TURTLE),
@@ -103,10 +104,21 @@ public class RobotContainer {
         .whileTrue(BargeScoreCommand.raise(elevator, arm, algae))
         .whileFalse(BargeScoreCommand.lower(elevator, arm, algae));
 
-    driverJoystick.povLeft().whileTrue(new DriveToPose(drivetrain, this::getNearestRightPose));
-    driverJoystick.povRight().whileTrue(new DriveToPose(drivetrain, this::getNearestLeftPose));
+    driverJoystick
+        .povLeft()
+        .whileTrue(
+            new DriveToPose(drivetrain, this::getNearestLeftPose)
+                .alongWith(elevator.runElevatorTo(() -> targetElevatorPosition)))
+        .whileFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
-    driverJoystick.povDown().whileTrue(coral.reverseCoral()).onFalse(coral.stopIntake());
+    driverJoystick
+        .povRight()
+        .whileTrue(
+            new DriveToPose(drivetrain, this::getNearestRightPose)
+                .alongWith(elevator.runElevatorTo(() -> targetElevatorPosition)))
+        .whileFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
+
+    driverJoystick.povDown().onTrue(coral.reverseCoral()).onFalse(coral.stopIntake());
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
@@ -162,17 +174,31 @@ public class RobotContainer {
     NamedCommands.registerCommand(
         "L4Score", ReefScoreCommand.get(ElevatorPosition.L4, elevator, coral));
 
-    NamedCommands.registerCommand("L4ScoreToL2Algae",  
-      elevator
-        .runElevatorTo(ElevatorPosition.L4)
-        .andThen(Commands.waitUntil(elevator::isAtSetpoint))
-        .andThen(coral.scoreCoral())
-        .andThen(elevator.runElevatorTo(ElevatorPosition.L2))
-        .andThen(Commands.waitUntil(elevator::isAtSetpoint))
-        .andThen(arm.runArmTo(ArmPosition.REEF).alongWith(algae.intakeAlgae())));
+    NamedCommands.registerCommand("L4Raise", elevator.runElevatorTo(ElevatorPosition.L4));
 
-    NamedCommands.registerCommand("LowerElevator", elevator.runElevatorTo(ElevatorPosition.HOME).andThen(Commands.waitUntil(elevator::isAtSetpoint)));
+    NamedCommands.registerCommand(
+        "L4ScoreToL2Algae",
+        elevator
+            .runElevatorTo(ElevatorPosition.L4)
+            .andThen(Commands.waitUntil(elevator::isAtSetpoint))
+            .andThen(coral.scoreCoral())
+            .andThen(elevator.runElevatorTo(ElevatorPosition.L2))
+            .andThen(Commands.waitUntil(elevator::isAtSetpoint))
+            .andThen(arm.runArmTo(ArmPosition.REEF).alongWith(algae.intakeAlgae())));
+
+    NamedCommands.registerCommand(
+        "LowerElevator",
+        elevator
+            .runElevatorTo(ElevatorPosition.HOME)
+            .andThen(Commands.waitUntil(elevator::isAtSetpoint)));
+
     NamedCommands.registerCommand("BargeScore", BargeScoreCommand.raise(elevator, arm, algae));
+
+    NamedCommands.registerCommand("CoralIntake", coral.intakeCoral());
+
+    NamedCommands.registerCommand(
+        "runElevatorToHome", elevator.runElevatorTo(ElevatorPosition.HOME));
+
     autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Path", autoChooser);
   }

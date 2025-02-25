@@ -8,33 +8,45 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.487542808219178,
-        "y": 0.7268621575342467
+        "x": 2.4274789988482808,
+        "y": 1.7061562002564727
       },
       "isLocked": false,
       "linkedName": "LowPStation"
     },
     {
       "anchor": {
-        "x": 1.8135000000000003,
-        "y": 2.094499999999999
+        "x": 3.6939571846380392,
+        "y": 2.991324461200215
       },
       "prevControl": {
-        "x": 0.8135000000000003,
-        "y": 2.094499999999999
+        "x": 2.742356243484967,
+        "y": 2.011696963247541
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "C"
     }
   ],
   "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "L4Raise",
+      "waypointRelativePos": 0.5966101694915258,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "L4Raise"
+        }
+      }
+    }
+  ],
   "globalConstraints": {
-    "maxVelocity": 1.5,
-    "maxAcceleration": 2.0,
+    "maxVelocity": 5.0,
+    "maxAcceleration": 3.5,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -42,7 +54,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": 59.8644717142621
   },
   "reversed": false,
   "folder": null,
