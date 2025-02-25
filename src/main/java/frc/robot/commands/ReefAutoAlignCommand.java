@@ -20,8 +20,8 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.reef.ReefTagPoses;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import java.util.function.Supplier;
 
 /**
  * This command, when executed, instructs the drivetrain subsystem to drive to the specified pose in
@@ -35,7 +35,7 @@ import java.util.function.Supplier;
  *
  * <p>At End: stops the drivetrain
  */
-public class DriveToPose extends Command {
+public class ReefAutoAlignCommand extends Command {
   private final double TRANSLATION_K = 6;
   private final double THETA_K = 10;
 
@@ -65,9 +65,9 @@ public class DriveToPose extends Command {
       new ProfiledPIDController(THETA_K, 0, 0, THETA_CONSTRAINTS);
 
   private final CommandSwerveDrivetrain drivetrain;
-  private final Supplier<Pose2d> poseSupplier;
+  private final ReefTagPoses.ScoreSide side;
 
-  @Logged(name = "Drive To Pose Target Pose")
+  @Logged(name = "Reef Auto Align Target Pose")
   private Pose2d targetPose;
 
   /**
@@ -78,9 +78,9 @@ public class DriveToPose extends Command {
    * @param drivetrain the drivetrain subsystem required by this command
    * @param poseSupplier a supplier that returns the pose to drive to
    */
-  public DriveToPose(CommandSwerveDrivetrain drivetrain, Supplier<Pose2d> poseSupplier) {
+  public ReefAutoAlignCommand(CommandSwerveDrivetrain drivetrain, ReefTagPoses.ScoreSide side) {
     this.drivetrain = drivetrain;
-    this.poseSupplier = poseSupplier;
+    this.side = side;
 
     xController.setTolerance(POSITION_TOLERANCE);
     yController.setTolerance(POSITION_TOLERANCE);
@@ -88,6 +88,10 @@ public class DriveToPose extends Command {
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
 
     addRequirements(drivetrain);
+  }
+
+  private Pose2d getTargetPose() {
+    return ReefTagPoses.getNearestScoringPose(drivetrain.getState().Pose, side);
   }
 
   /**
@@ -99,7 +103,7 @@ public class DriveToPose extends Command {
    */
   @Override
   public void initialize() {
-    targetPose = poseSupplier.get();
+    targetPose = getTargetPose();
 
     xController.setGoal(targetPose.getX());
     yController.setGoal(targetPose.getY());

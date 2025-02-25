@@ -11,7 +11,6 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -20,11 +19,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.BargeScoreCommand;
-import frc.robot.commands.DriveToPose;
+import frc.robot.commands.ReefAutoAlignCommand;
 import frc.robot.commands.ReefScoreCommand;
 import frc.robot.constants.DriveConstants;
-import frc.robot.field.ReefAutoAlignZones;
 import frc.robot.generated.TunerConstants;
+import frc.robot.reef.ReefTagPoses;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.manipulator.AlgaeSubsystem;
 import frc.robot.subsystems.manipulator.ArmSubsystem;
@@ -32,7 +31,6 @@ import frc.robot.subsystems.manipulator.ArmSubsystem.ArmPosition;
 import frc.robot.subsystems.manipulator.CoralSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
-import java.util.ArrayList;
 
 public class RobotContainer {
   private final CommandPS4Controller driverJoystick =
@@ -81,23 +79,23 @@ public class RobotContainer {
                 .andThen(Commands.waitUntil(elevator::isAtSetpoint)))
         .onFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
-    driverJoystick.circle().whileTrue(algae.scoreAlgae()).onFalse(algae.stopMotor());
-    driverJoystick
-        .cross()
-        .whileTrue(arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()))
-        .onFalse(arm.runArmTo(ArmPosition.HOME).andThen(algae.stopMotor()));
 
-    driverJoystick.square().onTrue(Commands.runOnce(drivetrain.orchestra::play));
-    driverJoystick.triangle().onTrue(Commands.runOnce(drivetrain.orchestra::stop));
+        driverJoystick.L2().whileTrue(algae.intakeAlgae()).onFalse(algae.stopMotor());
 
-    driverJoystick.L2().whileTrue(algae.intakeAlgae()).onFalse(algae.stopMotor());
-
-    driverJoystick
+        driverJoystick
         .L3()
         .toggleOnTrue(
             Commands.startEnd(
                 () -> setThrottleProfile(ThrottleProfile.TURTLE),
                 () -> setThrottleProfile(ThrottleProfile.TURBO)));
+
+    driverJoystick.circle().whileTrue(algae.scoreAlgae()).onFalse(algae.stopMotor());
+    driverJoystick
+        .cross()
+        .whileTrue(arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()))
+        .onFalse(arm.runArmTo(ArmPosition.HOME).andThen(algae.stopMotor()));
+    driverJoystick.square().onTrue(Commands.runOnce(drivetrain.orchestra::play));
+    driverJoystick.triangle().onTrue(Commands.runOnce(drivetrain.orchestra::stop));
 
     driverJoystick
         .povUp()
@@ -107,14 +105,14 @@ public class RobotContainer {
     driverJoystick
         .povLeft()
         .whileTrue(
-            new DriveToPose(drivetrain, this::getNearestLeftPose)
+            new ReefAutoAlignCommand(drivetrain, ReefTagPoses.ScoreSide.LEFT)
                 .alongWith(elevator.runElevatorTo(() -> targetElevatorPosition)))
         .whileFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
     driverJoystick
         .povRight()
         .whileTrue(
-            new DriveToPose(drivetrain, this::getNearestRightPose)
+            new ReefAutoAlignCommand(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
                 .alongWith(elevator.runElevatorTo(() -> targetElevatorPosition)))
         .whileFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
@@ -140,21 +138,6 @@ public class RobotContainer {
     operatorGamepad
         .button(4)
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L4)));
-  }
-
-  public Pose2d getNearestLeftPose() {
-    return ReefAutoAlignZones.tagPoses.get(getNearestTagPose()).left;
-  }
-
-  public Pose2d getNearestRightPose() {
-    return ReefAutoAlignZones.tagPoses.get(getNearestTagPose()).right;
-  }
-
-  public Pose2d getNearestTagPose() {
-    ArrayList<Pose2d> list = new ArrayList<>();
-    list.addAll(ReefAutoAlignZones.tagPoses.keySet());
-
-    return drivetrain.getState().Pose.nearest(list);
   }
 
   /**
