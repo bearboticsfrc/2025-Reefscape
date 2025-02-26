@@ -4,9 +4,6 @@
 
 package frc.robot;
 
-import bearlib.util.ProcessedJoystick;
-import bearlib.util.ProcessedJoystick.JoystickAxis;
-import bearlib.util.ProcessedJoystick.ThrottleProfile;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -18,6 +15,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.ProcessedJoystick.JoystickAxis;
+import frc.robot.ProcessedJoystick.ThrottleProfile;
 import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.ReefAutoAlignCommand;
 import frc.robot.commands.ReefScoreCommand;
@@ -79,10 +78,9 @@ public class RobotContainer {
                 .andThen(Commands.waitUntil(elevator::isAtSetpoint)))
         .onFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
+    driverJoystick.L2().whileTrue(algae.intakeAlgae()).onFalse(algae.stopMotor());
 
-        driverJoystick.L2().whileTrue(algae.intakeAlgae()).onFalse(algae.stopMotor());
-
-        driverJoystick
+    driverJoystick
         .L3()
         .toggleOnTrue(
             Commands.startEnd(
@@ -154,36 +152,22 @@ public class RobotContainer {
 
   /** Configures the PathPlanner autobuilder for publishing on NT. */
   private void configureAutoBuilder() {
-    NamedCommands.registerCommand(
-        "L4Score", ReefScoreCommand.get(ElevatorPosition.L4, elevator, coral));
-
-    NamedCommands.registerCommand("L4Raise", elevator.runElevatorTo(ElevatorPosition.L4));
-
-    NamedCommands.registerCommand(
-        "L4ScoreToL2Algae",
-        elevator
-            .runElevatorTo(ElevatorPosition.L4)
-            .andThen(Commands.waitUntil(elevator::isAtSetpoint))
-            .andThen(coral.scoreCoral())
-            .andThen(elevator.runElevatorTo(ElevatorPosition.L2))
-            .andThen(Commands.waitUntil(elevator::isAtSetpoint))
-            .andThen(arm.runArmTo(ArmPosition.REEF).alongWith(algae.intakeAlgae())));
-
-    NamedCommands.registerCommand(
-        "LowerElevator",
-        elevator
-            .runElevatorTo(ElevatorPosition.HOME)
-            .andThen(Commands.waitUntil(elevator::isAtSetpoint)));
-
-    NamedCommands.registerCommand("BargeScore", BargeScoreCommand.raise(elevator, arm, algae));
-
-    NamedCommands.registerCommand("CoralIntake", coral.intakeCoral());
-
-    NamedCommands.registerCommand(
-        "runElevatorToHome", elevator.runElevatorTo(ElevatorPosition.HOME));
+    registerNamedCommands();
 
     autoChooser = AutoBuilder.buildAutoChooser();
     SmartDashboard.putData("Auto Path", autoChooser);
+  }
+
+  private void registerNamedCommands() {
+    NamedCommands.registerCommand(
+        "L4ReefScoreCommand", ReefScoreCommand.get(ElevatorPosition.L4, elevator, coral));
+
+    NamedCommands.registerCommand("runElevatorToL4", elevator.runElevatorTo(ElevatorPosition.L4));
+    NamedCommands.registerCommand("runElevatorToL3", elevator.runElevatorTo(ElevatorPosition.L3));
+    NamedCommands.registerCommand("runElevatorToL2", elevator.runElevatorTo(ElevatorPosition.L2));
+    NamedCommands.registerCommand(
+        "runElevatorToHome", elevator.runElevatorTo(ElevatorPosition.HOME));
+    NamedCommands.registerCommand("intakeCoral", coral.intakeCoral());
   }
 
   private void setTargetElevatorPosition(ElevatorPosition position) {

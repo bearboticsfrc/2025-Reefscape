@@ -12,6 +12,7 @@ public class ReefScoreCommand {
     return elevator
         .runElevatorTo(position)
         .andThen(Commands.waitUntil(elevator::isAtSetpoint))
-        .andThen(coral.scoreCoral());
+        .andThen(coral.scoreCoral())
+        .andThen(elevator.runElevatorTo(ElevatorPosition.HOME));
   }
 }

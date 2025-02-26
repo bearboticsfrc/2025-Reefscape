@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.2655185368178254,
-        "y": 0.9043913244625799
+        "x": 7.045071765598765,
+        "y": 2.618047136620728
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.205454727446928,
-        "y": 1.883685367184806
+        "x": 6.193126626249751,
+        "y": 2.8058852312821574
       },
       "isLocked": false,
-      "linkedName": "LowPStation"
+      "linkedName": "StartF"
     },
     {
       "anchor": {
-        "x": 3.6939571846380392,
-        "y": 2.991324461200215
+        "x": 5.272688130882617,
+        "y": 2.987
       },
       "prevControl": {
-        "x": 2.742356243484967,
-        "y": 2.011696963247541
+        "x": 6.073328031148337,
+        "y": 2.8145217120786272
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "C"
+      "linkedName": "F"
     }
   ],
   "rotationTargets": [],
@@ -34,7 +34,7 @@
   "eventMarkers": [
     {
       "name": "PreRunElevatorToL4",
-      "waypointRelativePos": 0.3959044368600684,
+      "waypointRelativePos": 0.20338983050847442,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
@@ -54,13 +54,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 59.8644717142621
+    "rotation": 119.99999999999999
   },
   "reversed": false,
   "folder": "L4F-L4C-L4D-L4E",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 54.82697449321651
+    "rotation": 119.99999999999999
   },
   "useDefaultConstraints": true
 }
