@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import java.lang.reflect.Method;
+
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -18,7 +20,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
 import frc.robot.commands.BargeScoreCommand;
-import frc.robot.commands.ReefAutoAlignCommand;
+import frc.robot.commands.AutoReefAlignCommand;
 import frc.robot.commands.ReefScoreCommand;
 import frc.robot.constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
@@ -103,14 +105,14 @@ public class RobotContainer {
     driverJoystick
         .povLeft()
         .whileTrue(
-            new ReefAutoAlignCommand(drivetrain, ReefTagPoses.ScoreSide.LEFT)
+            new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.LEFT)
                 .alongWith(elevator.runElevatorTo(() -> targetElevatorPosition)))
         .whileFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
     driverJoystick
         .povRight()
         .whileTrue(
-            new ReefAutoAlignCommand(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
+            new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
                 .alongWith(elevator.runElevatorTo(() -> targetElevatorPosition)))
         .whileFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
@@ -159,15 +161,31 @@ public class RobotContainer {
   }
 
   private void registerNamedCommands() {
-    NamedCommands.registerCommand(
-        "L4ReefScoreCommand", ReefScoreCommand.get(ElevatorPosition.L4, elevator, coral));
+    Object[] subsystems = new Object[] {coral, elevator, arm, algae};
 
-    NamedCommands.registerCommand("runElevatorToL4", elevator.runElevatorTo(ElevatorPosition.L4));
-    NamedCommands.registerCommand("runElevatorToL3", elevator.runElevatorTo(ElevatorPosition.L3));
-    NamedCommands.registerCommand("runElevatorToL2", elevator.runElevatorTo(ElevatorPosition.L2));
-    NamedCommands.registerCommand(
-        "runElevatorToHome", elevator.runElevatorTo(ElevatorPosition.HOME));
-    NamedCommands.registerCommand("intakeCoral", coral.intakeCoral());
+    for (Object subsystem : subsystems) {
+        for (Method method : subsystems.getClass().getDeclaredMethods()) {
+            if (method.getAnnotatedReturnType().getType() != Command.class) {
+                continue;
+            } 
+
+            if (method.getParameterCount() > 0) {
+                continue;
+            }
+
+            NamedCommands.registerCommands(method.getName(), method.invoke(subsystem));
+        }
+    }
+
+    for (ElevatorPosition position : ElevatorPosition.values()) {
+        NamedCommands.registerCommand("runElevatorTo" + position.toString(), elevator.runElevatorTo(position));
+        NamedCommands.registerCommand(
+            position.toString() + "ReefScoreCommand", ReefScoreCommand.get(position, elevator, coral));
+    }
+
+    for (ArmPosition position : ArmPosition.values()) {
+        NamedCommands.registerCommand("runArmTo" + position.toString(), arm.runArmTo(position));
+    }
   }
 
   private void setTargetElevatorPosition(ElevatorPosition position) {

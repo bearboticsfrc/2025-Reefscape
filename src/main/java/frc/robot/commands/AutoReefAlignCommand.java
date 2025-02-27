@@ -35,7 +35,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
  *
  * <p>At End: stops the drivetrain
  */
-public class ReefAutoAlignCommand extends Command {
+public class AutoReefAlignCommand extends Command {
   private final double TRANSLATION_K = 6;
   private final double THETA_K = 10;
 
@@ -78,7 +78,7 @@ public class ReefAutoAlignCommand extends Command {
    * @param drivetrain the drivetrain subsystem required by this command
    * @param poseSupplier a supplier that returns the pose to drive to
    */
-  public ReefAutoAlignCommand(CommandSwerveDrivetrain drivetrain, ReefTagPoses.ScoreSide side) {
+  public AutoReefAlignCommand(CommandSwerveDrivetrain drivetrain, ReefTagPoses.ScoreSide side) {
     this.drivetrain = drivetrain;
     this.side = side;
 
