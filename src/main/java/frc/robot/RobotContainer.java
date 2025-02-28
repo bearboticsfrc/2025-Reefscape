@@ -4,13 +4,10 @@
 
 package frc.robot;
 
-import java.lang.reflect.Method;
-
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -20,8 +17,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
-import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.AutoReefAlignCommand;
+import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.ReefScoreCommand;
 import frc.robot.constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
@@ -33,6 +30,7 @@ import frc.robot.subsystems.manipulator.ArmSubsystem.ArmPosition;
 import frc.robot.subsystems.manipulator.CoralSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
+import java.lang.reflect.Method;
 
 public class RobotContainer {
   private final CommandPS4Controller driverJoystick =
@@ -120,7 +118,7 @@ public class RobotContainer {
     driverJoystick.povDown().onTrue(coral.reverseCoral()).onFalse(coral.stopIntake());
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
-    //drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
+    // drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
   }
 
   private void configureOperatorBindings() {
@@ -141,9 +139,7 @@ public class RobotContainer {
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L4)));
   }
 
-  public void robotPeriodic() {
-    arm.set(processedJoystick.get(JoystickAxis.Ly));
-  }
+  public void robotPeriodic() {}
 
   /**
    * Gets the default drive request using field centric mode.
@@ -169,31 +165,33 @@ public class RobotContainer {
     Object[] subsystems = new Object[] {coral, elevator, arm, algae};
 
     for (Object subsystem : subsystems) {
-        for (Method method : subsystems.getClass().getDeclaredMethods()) {
-            if (method.getAnnotatedReturnType().getType() != Command.class) {
-                continue;
-            } 
-
-            if (method.getParameterCount() > 0) {
-                continue;
-            }
-
-            try {
-            NamedCommands.registerCommand(method.getName(), (Command) method.invoke(subsystem));
-            } catch (Exception exception) {
-                throw new RuntimeException(exception);
-            }
+      for (Method method : subsystems.getClass().getDeclaredMethods()) {
+        if (method.getAnnotatedReturnType().getType() != Command.class) {
+          continue;
         }
+
+        if (method.getParameterCount() > 0) {
+          continue;
+        }
+
+        try {
+          NamedCommands.registerCommand(method.getName(), (Command) method.invoke(subsystem));
+        } catch (Exception exception) {
+          throw new RuntimeException(exception);
+        }
+      }
     }
 
     for (ElevatorPosition position : ElevatorPosition.values()) {
-        NamedCommands.registerCommand("runElevatorTo" + position.toString(), elevator.runElevatorTo(position));
-        NamedCommands.registerCommand(
-            position.toString() + "ReefScoreCommand", ReefScoreCommand.get(position, elevator, coral));
+      NamedCommands.registerCommand(
+          "runElevatorTo" + position.toString(), elevator.runElevatorTo(position));
+      NamedCommands.registerCommand(
+          position.toString() + "ReefScoreCommand",
+          ReefScoreCommand.get(position, elevator, coral));
     }
 
     for (ArmPosition position : ArmPosition.values()) {
-        NamedCommands.registerCommand("runArmTo" + position.toString(), arm.runArmTo(position));
+      NamedCommands.registerCommand("runArmTo" + position.toString(), arm.runArmTo(position));
     }
   }
 

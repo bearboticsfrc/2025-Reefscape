@@ -7,7 +7,7 @@
     "soft_limits": [
         {
             "direction": "forward",
-            "limit": 4
+            "limit": 16
         },
         {
             "direction": "reverse",
