@@ -18,7 +18,7 @@ import java.io.IOException;
 public class AlgaeSubsystem extends SubsystemBase {
   private final int ALGAE_SENSOR_PORT = 0;
   private final Time SCORING_TIME = Seconds.of(0.5);
-  private final double IDLE_INTAKE_SPEED = 0.2;
+  private final double IDLE_INTAKE_SPEED = 0.1;
 
   @Logged(name = "Algae Motor")
   private final SparkBase motor;
@@ -61,9 +61,7 @@ public class AlgaeSubsystem extends SubsystemBase {
    * @return A {@link Command} intaking the algae.
    */
   public Command intakeAlgae() {
-    return run(MotorSpeed.QUARTER)
-        .andThen(Commands.waitUntil(this::hasAlgae))
-        .andThen(run(MotorSpeed.TENTH));
+    return run(MotorSpeed.QUARTER);
   }
 
   public Command scoreAlgae() {
