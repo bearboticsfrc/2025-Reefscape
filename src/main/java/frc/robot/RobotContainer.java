@@ -10,6 +10,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -119,7 +120,7 @@ public class RobotContainer {
     driverJoystick.povDown().onTrue(coral.reverseCoral()).onFalse(coral.stopIntake());
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
-    drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
+    //drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
   }
 
   private void configureOperatorBindings() {
@@ -138,6 +139,10 @@ public class RobotContainer {
     operatorGamepad
         .button(4)
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L4)));
+  }
+
+  public void robotPeriodic() {
+    arm.set(processedJoystick.get(JoystickAxis.Ly));
   }
 
   /**
@@ -173,7 +178,11 @@ public class RobotContainer {
                 continue;
             }
 
-            NamedCommands.registerCommands(method.getName(), method.invoke(subsystem));
+            try {
+            NamedCommands.registerCommand(method.getName(), (Command) method.invoke(subsystem));
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
         }
     }
 

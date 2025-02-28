@@ -47,10 +47,10 @@ public class ArmSubsystem extends SubsystemBase {
       new TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
   private final TrapezoidProfile trapezoidProfile = new TrapezoidProfile(trapezoidConstraints);
 
-  @Logged(name = "Arm Goal")
+ // @Logged(name = "Arm Goal")
   private TrapezoidProfile.State goal = new TrapezoidProfile.State();
 
-  @Logged(name = "Arm Setpoint")
+//  @Logged(name = "Arm Setpoint")
   private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
   /** Constructs a new ArmSubsystem by configuring the leader and follower motors. */
@@ -66,7 +66,7 @@ public class ArmSubsystem extends SubsystemBase {
     }
   }
 
-  @Logged(name = "Arm At Setpoint")
+  //@Logged(name = "Arm At Setpoint")
   public boolean isAtSetpoint() {
     return trapezoidProfile.timeLeftUntil(goal.position) == 0;
   }
@@ -84,9 +84,13 @@ public class ArmSubsystem extends SubsystemBase {
     goal = new TrapezoidProfile.State(position.getPosition(), 0);
   }
 
+  public void set(double speed) {
+    motor.set(speed);
+  }
+
   @Override
   public void periodic() {
-    updateTrapezoidProfile();
+    //updateTrapezoidProfile();
   }
 
   private void updateTrapezoidProfile() {
@@ -120,8 +124,8 @@ public class ArmSubsystem extends SubsystemBase {
 
   /** Enum representing preset arm positions. */
   public enum ArmPosition {
-    BARGE(20),
-    REEF(5),
+    BARGE(4),
+    REEF(0.5),
     HOME(0);
 
     private final double position;
