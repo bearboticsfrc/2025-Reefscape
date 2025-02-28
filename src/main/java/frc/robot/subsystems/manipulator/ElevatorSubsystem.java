@@ -22,8 +22,8 @@ public class ElevatorSubsystem extends SubsystemBase {
   private final double G = 0.065;
   private final double V = 0;
 
-  public final double MAX_ACCELERATION = 100; // was 35 on Tuesday;
-  public final double MAX_VELOCITY = 70; // was 50 on Tuesday;
+  public final double MAX_ACCELERATION = 180; // was 35 on Tuesday;
+  public final double MAX_VELOCITY = 80; // was 50 on Tuesday;
 
   // Spark motor controller instance
   @Logged(name = "Elevator Motor")
@@ -38,12 +38,12 @@ public class ElevatorSubsystem extends SubsystemBase {
   // Trapezoidal motion profile constraints and instance
   private final TrapezoidProfile.Constraints trapezoidConstraints =
       new TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
-  private final TrapezoidProfile trapezoidProfile = new TrapezoidProfile(trapezoidConstraints);
+  private TrapezoidProfile trapezoidProfile = new TrapezoidProfile(trapezoidConstraints);
 
-  @Logged(name = "Arm Goal")
+  @Logged(name = "Elevator Goal")
   private TrapezoidProfile.State goal = new TrapezoidProfile.State();
 
-  @Logged(name = "Arm Setpoint")
+  @Logged(name = "Elevator Setpoint")
   private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
   /** Constructs a new ElevatorSubsystem by configuring the leader and follower motors. */
@@ -126,7 +126,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   /** Enum representing preset elevator positions. */
   public enum ElevatorPosition {
-    L4(39.6),
+    L4(39.4),
     L3(23.2),
     L2(12.5),
     L1(5),

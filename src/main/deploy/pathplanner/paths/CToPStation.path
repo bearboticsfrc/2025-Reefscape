@@ -1,0 +1,66 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 3.6939571846380392,
+        "y": 2.991324461200215
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 4.071072817586368,
+        "y": 3.339850677763802
+      },
+      "isLocked": false,
+      "linkedName": "C"
+    },
+    {
+      "anchor": {
+        "x": 1.2655185368178254,
+        "y": 0.9043913244625799
+      },
+      "prevControl": {
+        "x": 2.133635352357537,
+        "y": 1.8145283895394813
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "LowPStation"
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [
+    {
+      "name": "PreIntakeCoral",
+      "waypointRelativePos": 0.4948805460750847,
+      "endWaypointRelativePos": null,
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "intakeCoral"
+        }
+      }
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 1.5,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 54.82697449321651
+  },
+  "reversed": false,
+  "folder": "L4F-L4C-L4D-L4E",
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 59.8644717142621
+  },
+  "useDefaultConstraints": true
+}
