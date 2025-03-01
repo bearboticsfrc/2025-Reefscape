@@ -28,7 +28,6 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
     DriverStation.getAlliance().ifPresent(AllianceColor::setAllianceColor);
     CommandScheduler.getInstance().run();
-    m_robotContainer.robotPeriodic();
   }
 
   @Override
