@@ -25,6 +25,7 @@ import frc.robot.constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.reef.ReefTagPoses;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.NTSubsystem;
 import frc.robot.subsystems.manipulator.AlgaeSubsystem;
 import frc.robot.subsystems.manipulator.ArmSubsystem;
 import frc.robot.subsystems.manipulator.ArmSubsystem.ArmPosition;
@@ -55,6 +56,8 @@ public class RobotContainer {
   @Logged private final AlgaeSubsystem algae = new AlgaeSubsystem();
   @Logged private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   @Logged private final ArmSubsystem arm = new ArmSubsystem();
+
+  @Logged private final NTSubsystem NTSubsystem = new NTSubsystem(drivetrain);
 
   private SendableChooser<Command> autoChooser;
 
