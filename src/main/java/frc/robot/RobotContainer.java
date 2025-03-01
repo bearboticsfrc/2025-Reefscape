@@ -16,7 +16,7 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public class RobotContainer {
-  private final CommandXboxController driverJoystick = new CommandXboxController(0);
+  private final CommandXboxController driverJoystick = new CommandXboxController(1);
 
   private final ProcessedJoystick processedJoystick =
       new ProcessedJoystick(driverJoystick, this::getThrottleProfile, DriveConstants.MAX_VELOCITY);
