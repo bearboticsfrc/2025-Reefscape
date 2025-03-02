@@ -9,12 +9,15 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.DoubleSupplier;
+import java.util.stream.Collectors;
 
 public class AutoCoralStationAlign extends Command {
+  private static final Set<Integer> VALID_TAG_IDS = Set.of(1, 2, 12, 13);
+
   private final CommandSwerveDrivetrain drivetrain;
 
   private final FieldCentricFacingAngle swerveRequest = new FieldCentricFacingAngle();
@@ -23,7 +26,7 @@ public class AutoCoralStationAlign extends Command {
   private final DoubleSupplier ySupplier;
 
   private final Map<Pose2d, Rotation2d> poseToRotation;
-  private List<Pose2d> tagPoses = new ArrayList<>();
+  private final List<Pose2d> tagPoses = new ArrayList<>();
 
   private Rotation2d targetRotation;
 
@@ -33,26 +36,24 @@ public class AutoCoralStationAlign extends Command {
     this.xSupplier = xSupplier;
     this.ySupplier = ySupplier;
 
-    this.poseToRotation = getPoseToRotation();
+    this.poseToRotation = generatePoseToRotation();
+    this.tagPoses.addAll(poseToRotation.keySet());
 
     addRequirements(drivetrain);
   }
 
-  private Map<Pose2d, Rotation2d> getPoseToRotation() {
-    Map<Pose2d, Rotation2d> poseToRotation = new HashMap<>();
+  private Map<Pose2d, Rotation2d> generatePoseToRotation() {
+    return APRIL_TAG_FIELD_LAYOUT.getTags().stream()
+        .filter(tag -> VALID_TAG_IDS.contains(tag.ID))
+        .collect(Collectors.toMap(this::mapKey, this::mapValue));
+  }
 
-    for (AprilTag tag : APRIL_TAG_FIELD_LAYOUT.getTags()) {
-      if (tag.ID != 1 || tag.ID != 2 || tag.ID != 12 || tag.ID != 13) {
-        continue;
-      }
+  private Pose2d mapKey(AprilTag tag) {
+    return tag.pose.toPose2d();
+  }
 
-      Pose2d tagPose = tag.pose.toPose2d();
-
-      tagPoses.add(tagPose);
-      poseToRotation.put(tagPose, Rotation2d.fromDegrees(180 - tagPose.getRotation().getDegrees()));
-    }
-
-    return poseToRotation;
+  private Rotation2d mapValue(AprilTag tag) {
+    return Rotation2d.k180deg.minus(tag.pose.toPose2d().getRotation());
   }
 
   @Override

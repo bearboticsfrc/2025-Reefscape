@@ -176,7 +176,7 @@ public class RobotContainer {
 
     for (Object subsystem : subsystems) {
       for (Method method : subsystems.getClass().getDeclaredMethods()) {
-        if (method.getAnnotatedReturnType().getType() != Command.class) {
+        if (!method.getAnnotatedReturnType().getType().equals(Command.class)) {
           continue;
         }
 
