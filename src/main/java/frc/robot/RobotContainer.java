@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
+import frc.robot.commands.AutoCoralStationAlign;
 import frc.robot.commands.AutoReefAlignCommand;
 import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.ReefScoreCommand;
@@ -24,6 +25,7 @@ import frc.robot.constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.reef.ReefTagPoses;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.NTSubsystem;
 import frc.robot.subsystems.manipulator.AlgaeSubsystem;
 import frc.robot.subsystems.manipulator.ArmSubsystem;
 import frc.robot.subsystems.manipulator.ArmSubsystem.ArmPosition;
@@ -55,6 +57,8 @@ public class RobotContainer {
   @Logged private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   @Logged private final ArmSubsystem arm = new ArmSubsystem();
 
+  @Logged private final NTSubsystem NTSubsystem = new NTSubsystem(drivetrain);
+
   private SendableChooser<Command> autoChooser;
 
   @Logged private ElevatorPosition targetElevatorPosition = ElevatorPosition.HOME;
@@ -67,9 +71,19 @@ public class RobotContainer {
 
   /** Configure the button bindings. */
   private void configureDriverBindings() {
-    driverJoystick.L1().whileTrue(coral.intakeCoral()).onFalse(coral.stopIntake());
+    driverJoystick
+        .L1()
+        .whileTrue(
+            coral
+                .intakeCoral()
+                .alongWith(
+                    new AutoCoralStationAlign(
+                        drivetrain,
+                        () -> processedJoystick.get(JoystickAxis.Ly),
+                        () -> processedJoystick.get(JoystickAxis.Lx))))
+        .onFalse(coral.stop());
 
-    driverJoystick.R1().onTrue(coral.scoreCoral()).onFalse(coral.stopIntake());
+    driverJoystick.R1().onTrue(coral.scoreCoral()).onFalse(coral.stop());
 
     driverJoystick
         .R2()
@@ -115,10 +129,8 @@ public class RobotContainer {
                 .alongWith(elevator.runElevatorTo(() -> targetElevatorPosition)))
         .whileFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
-    driverJoystick.povDown().onTrue(coral.reverseCoral()).onFalse(coral.stopIntake());
-
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
-    // drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
+    drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
   }
 
   private void configureOperatorBindings() {
@@ -138,8 +150,6 @@ public class RobotContainer {
         .button(4)
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L4)));
   }
-
-  public void robotPeriodic() {}
 
   /**
    * Gets the default drive request using field centric mode.
@@ -166,7 +176,7 @@ public class RobotContainer {
 
     for (Object subsystem : subsystems) {
       for (Method method : subsystems.getClass().getDeclaredMethods()) {
-        if (method.getAnnotatedReturnType().getType() != Command.class) {
+        if (!method.getAnnotatedReturnType().getType().equals(Command.class)) {
           continue;
         }
 

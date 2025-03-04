@@ -28,7 +28,6 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
     DriverStation.getAlliance().ifPresent(AllianceColor::setAllianceColor);
     CommandScheduler.getInstance().run();
-    m_robotContainer.robotPeriodic();
   }
 
   @Override
@@ -50,5 +49,10 @@ public class Robot extends TimedRobot {
   @Override
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
+  }
+
+  @Logged
+  public double getMatchTime() {
+    return DriverStation.getMatchTime();
   }
 }

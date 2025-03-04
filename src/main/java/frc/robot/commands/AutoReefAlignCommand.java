@@ -10,7 +10,6 @@
 package frc.robot.commands;
 
 import static edu.wpi.first.units.Units.*;
-// import static frc.robot.constants.*;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentric;
