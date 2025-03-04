@@ -7,7 +7,9 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -25,13 +27,13 @@ import frc.robot.constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.reef.ReefTagPoses;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.NTSubsystem;
 import frc.robot.subsystems.manipulator.AlgaeSubsystem;
 import frc.robot.subsystems.manipulator.ArmSubsystem;
 import frc.robot.subsystems.manipulator.ArmSubsystem.ArmPosition;
 import frc.robot.subsystems.manipulator.CoralSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
+import frc.robot.utils.AllianceFlipUtil;
 import java.lang.reflect.Method;
 
 public class RobotContainer {
@@ -57,9 +59,9 @@ public class RobotContainer {
   @Logged private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   @Logged private final ArmSubsystem arm = new ArmSubsystem();
 
-  @Logged private final NTSubsystem NTSubsystem = new NTSubsystem(drivetrain);
-
   private SendableChooser<Command> autoChooser;
+  private Command introspectedAutoCommand;
+  @Logged private Pose2d autoStartPose;
 
   @Logged private ElevatorPosition targetElevatorPosition = ElevatorPosition.HOME;
 
@@ -120,14 +122,22 @@ public class RobotContainer {
         .whileTrue(
             new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.LEFT)
                 .alongWith(elevator.runElevatorTo(() -> targetElevatorPosition)))
-        .whileFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
+        .whileFalse(
+            Commands.either(
+                Commands.idle(),
+                elevator.runElevatorTo(ElevatorPosition.HOME),
+                driverJoystick.R2()::getAsBoolean));
 
     driverJoystick
         .povRight()
         .whileTrue(
             new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
                 .alongWith(elevator.runElevatorTo(() -> targetElevatorPosition)))
-        .whileFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
+        .whileFalse(
+            Commands.either(
+                Commands.idle(),
+                elevator.runElevatorTo(ElevatorPosition.HOME),
+                driverJoystick.R2()::getAsBoolean));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
@@ -175,7 +185,9 @@ public class RobotContainer {
     Object[] subsystems = new Object[] {coral, elevator, arm, algae};
 
     for (Object subsystem : subsystems) {
-      for (Method method : subsystems.getClass().getDeclaredMethods()) {
+      for (int i = 0; i < subsystem.getClass().getDeclaredMethods().length; i++) {
+        Method method = subsystem.getClass().getDeclaredMethods()[i];
+
         if (!method.getAnnotatedReturnType().getType().equals(Command.class)) {
           continue;
         }
@@ -195,13 +207,27 @@ public class RobotContainer {
     for (ElevatorPosition position : ElevatorPosition.values()) {
       NamedCommands.registerCommand(
           "runElevatorTo" + position.toString(), elevator.runElevatorTo(position));
+
       NamedCommands.registerCommand(
           position.toString() + "ReefScoreCommand",
           ReefScoreCommand.get(position, elevator, coral));
+
+      NamedCommands.registerCommand("intakeCoral", coral.intakeCoral());
     }
 
     for (ArmPosition position : ArmPosition.values()) {
       NamedCommands.registerCommand("runArmTo" + position.toString(), arm.runArmTo(position));
+    }
+  }
+
+  public void disabledPeriodic() {
+    Command selectedAutoCommand = autoChooser.getSelected();
+
+    if (introspectedAutoCommand != selectedAutoCommand
+        && selectedAutoCommand instanceof PathPlannerAuto) {
+      autoStartPose =
+          AllianceFlipUtil.apply(((PathPlannerAuto) selectedAutoCommand).getStartingPose());
+      introspectedAutoCommand = selectedAutoCommand;
     }
   }
 

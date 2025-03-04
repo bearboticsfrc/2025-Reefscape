@@ -51,6 +51,11 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().cancelAll();
   }
 
+  @Override
+  public void disabledPeriodic() {
+    m_robotContainer.disabledPeriodic();
+  }
+
   @Logged
   public double getMatchTime() {
     return DriverStation.getMatchTime();

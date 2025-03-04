@@ -12,10 +12,10 @@ public class ReefScorePose {
   private final Distance CENTER_TO_BRANCH_Y = Inches.of(6.469);
 
   private final Transform2d LEFT_POSE_TRANSFORM =
-      new Transform2d(new Translation2d(Inches.of(18), CENTER_TO_BRANCH_Y), Rotation2d.k180deg);
-  private final Transform2d RIGHT_POSE_TRANSFORM =
       new Transform2d(
           new Translation2d(Inches.of(18), CENTER_TO_BRANCH_Y.unaryMinus()), Rotation2d.k180deg);
+  private final Transform2d RIGHT_POSE_TRANSFORM =
+      new Transform2d(new Translation2d(Inches.of(18), CENTER_TO_BRANCH_Y), Rotation2d.k180deg);
 
   private Pose2d leftPose;
   private Pose2d rightPose;

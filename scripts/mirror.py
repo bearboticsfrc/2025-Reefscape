@@ -3,8 +3,6 @@ from pathlib import Path
 import time
 import json
 
-MIRRORED_FILE_EXTENSION = ".mirrored"
-
 def mirror_rotation(rotation: float) -> float:
     return -rotation
 
@@ -55,7 +53,7 @@ def mirror_path(file: Path) -> None:
     path["goalEndState"]["rotation"] = mirror_rotation(end_rotation)
     path["idealStartingState"]["rotation"] = mirror_rotation(ideal_rotation)
 
-    new_path = str(file.resolve())[:-5] + f"{MIRRORED_FILE_EXTENSION}.path"
+    new_path = "M-"+ str(file.resolve())[:-5] + ".path"
 
     with open(new_path, "w") as fp:
         json.dump(path, fp)
@@ -82,7 +80,7 @@ def mirror_auto(file: Path) -> None:
         new_path = mirror_path(path)
         auto["command"]["data"]["commands"][i]["data"]["pathName"] = new_path.name[:-5]
 
-    new_auto = str(file.resolve())[:-5] + f"{MIRRORED_FILE_EXTENSION}.auto"
+    new_auto = "M-" + str(file.resolve())[:-5] + ".auto"
 
     with open(new_auto, "w") as fp:
         json.dump(auto, fp)
@@ -98,7 +96,7 @@ def main() -> None:
 
     if args.path.is_dir():
         for file in args.path.rglob("*"):
-            if not file.is_file() or file.suffix != ".auto" or MIRRORED_FILE_EXTENSION in file.name:
+            if not file.is_file() or file.suffix != ".auto" or file.name.startswith("M-"):
                 continue
 
             count += 1

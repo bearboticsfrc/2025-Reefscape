@@ -41,7 +41,6 @@ public class VisionConstants {
       new VisionCamera(FRONT_LEFT_CAMERA_NAME, ROBOT_TO_FRONT_LEFT_CAMERA);
   public static final VisionCamera FRONT_RIGHT_CAMERA =
       new VisionCamera(FRONT_RIGHT_CAMERA_NAME, ROBOT_TO_FRONT_RIGHT_CAMERA);
-
   public static final VisionCamera REAR_CAMERA =
       new VisionCamera(REAR_CAMERA_NAME, ROBOT_TO_REAR_CAMERA);
 

@@ -16,7 +16,7 @@ import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
  * manipulator subsystems.
  */
 public class BargeScoreCommand {
-  private static final Time SCORE_WAIT = Milliseconds.of(500);
+  private static final Time SCORE_WAIT = Milliseconds.of(200);
 
   /**
    * Creates a command sequence to perform the "raise" portion of a barge score.
