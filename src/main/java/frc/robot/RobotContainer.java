@@ -11,12 +11,10 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
 import frc.robot.commands.AutoCoralStationAlign;
@@ -40,30 +38,32 @@ public class RobotContainer {
   private final CommandPS4Controller driverJoystick =
       new CommandPS4Controller(DriveConstants.DRIVER_JOYSTICK_PORT);
 
-  private final CommandXboxController operatorJoystick =
-      new CommandXboxController(DriveConstants.OPERATOR_JOYSTICK_PORT);
-
   private final CommandGenericHID operatorGamepad =
       new CommandGenericHID(DriveConstants.OPERATOR_GAMEPAD_PORT);
 
   private final ProcessedJoystick processedJoystick =
       new ProcessedJoystick(driverJoystick, this::getThrottleProfile, DriveConstants.MAX_VELOCITY);
 
-  private ProcessedJoystick.ThrottleProfile throttleProfile =
-      ProcessedJoystick.ThrottleProfile.TURBO;
-
-  public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+  private final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
   @Logged private final CoralSubsystem coral = new CoralSubsystem();
   @Logged private final AlgaeSubsystem algae = new AlgaeSubsystem();
   @Logged private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   @Logged private final ArmSubsystem arm = new ArmSubsystem();
 
-  private SendableChooser<Command> autoChooser;
-  private Command introspectedAutoCommand;
-  @Logged private Pose2d autoStartPose;
+  private ProcessedJoystick.ThrottleProfile throttleProfile =
+      ProcessedJoystick.ThrottleProfile.TURBO;
 
-  @Logged private ElevatorPosition targetElevatorPosition = ElevatorPosition.HOME;
+  @Logged(name = "Auto Chooser")
+  private SendableChooser<Command> autoChooser;
+
+  @Logged(name = "Auto Start Pose")
+  private Pose2d autoStartPose;
+
+  private Command introspectedAutoCommand;
+
+  @Logged(name = "Target Elevator Position")
+  private ElevatorPosition targetElevatorPosition = ElevatorPosition.HOME;
 
   public RobotContainer() {
     configureDriverBindings();
@@ -76,13 +76,11 @@ public class RobotContainer {
     driverJoystick
         .L1()
         .whileTrue(
-            coral
-                .intakeCoral()
-                .alongWith(
-                    new AutoCoralStationAlign(
-                        drivetrain,
-                        () -> processedJoystick.get(JoystickAxis.Ly),
-                        () -> processedJoystick.get(JoystickAxis.Lx))))
+            new AutoCoralStationAlign(
+                    drivetrain,
+                    () -> processedJoystick.get(JoystickAxis.Ly),
+                    () -> processedJoystick.get(JoystickAxis.Lx))
+                .alongWith(coral.intakeCoral()))
         .onFalse(coral.stop());
 
     driverJoystick.R1().onTrue(coral.scoreCoral()).onFalse(coral.stop());
@@ -91,7 +89,7 @@ public class RobotContainer {
         .R2()
         .whileTrue(
             elevator
-                .runElevatorTo(() -> targetElevatorPosition)
+                .runElevatorTo(this::getTargetElevatorPosition)
                 .andThen(Commands.waitUntil(elevator::isAtSetpoint)))
         .onFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
@@ -120,8 +118,9 @@ public class RobotContainer {
     driverJoystick
         .povLeft()
         .whileTrue(
-            new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.LEFT)
-                .alongWith(elevator.runElevatorTo(() -> targetElevatorPosition)))
+            elevator
+                .runElevatorTo(this::getTargetElevatorPosition)
+                .alongWith(new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.LEFT)))
         .whileFalse(
             Commands.either(
                 Commands.idle(),
@@ -132,7 +131,7 @@ public class RobotContainer {
         .povRight()
         .whileTrue(
             new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
-                .alongWith(elevator.runElevatorTo(() -> targetElevatorPosition)))
+                .alongWith(elevator.runElevatorTo(this::getTargetElevatorPosition)))
         .whileFalse(
             Commands.either(
                 Commands.idle(),
@@ -178,30 +177,13 @@ public class RobotContainer {
     registerNamedCommands();
 
     autoChooser = AutoBuilder.buildAutoChooser();
-    SmartDashboard.putData("Auto Path", autoChooser);
   }
 
   private void registerNamedCommands() {
     Object[] subsystems = new Object[] {coral, elevator, arm, algae};
 
     for (Object subsystem : subsystems) {
-      for (int i = 0; i < subsystem.getClass().getDeclaredMethods().length; i++) {
-        Method method = subsystem.getClass().getDeclaredMethods()[i];
-
-        if (!method.getAnnotatedReturnType().getType().equals(Command.class)) {
-          continue;
-        }
-
-        if (method.getParameterCount() > 0) {
-          continue;
-        }
-
-        try {
-          NamedCommands.registerCommand(method.getName(), (Command) method.invoke(subsystem));
-        } catch (Exception exception) {
-          throw new RuntimeException(exception);
-        }
-      }
+      registerNamedCommandsForSubsystem(subsystem);
     }
 
     for (ElevatorPosition position : ElevatorPosition.values()) {
@@ -217,6 +199,26 @@ public class RobotContainer {
 
     for (ArmPosition position : ArmPosition.values()) {
       NamedCommands.registerCommand("runArmTo" + position.toString(), arm.runArmTo(position));
+    }
+  }
+
+  private void registerNamedCommandsForSubsystem(Object subsystem) {
+    for (int i = 0; i < subsystem.getClass().getDeclaredMethods().length; i++) {
+      Method method = subsystem.getClass().getDeclaredMethods()[i];
+
+      if (!method.getAnnotatedReturnType().getType().equals(Command.class)) {
+        continue;
+      }
+
+      if (method.getParameterCount() > 0) {
+        continue;
+      }
+
+      try {
+        NamedCommands.registerCommand(method.getName(), (Command) method.invoke(subsystem));
+      } catch (Exception exception) {
+        throw new RuntimeException(exception);
+      }
     }
   }
 
@@ -260,5 +262,14 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return autoChooser.getSelected();
+  }
+
+  /**
+   * Get the target elevator position.
+   *
+   * @return The position.
+   */
+  public ElevatorPosition getTargetElevatorPosition() {
+    return targetElevatorPosition;
   }
 }
