@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.ProcessedJoystick.JoystickAxis;
@@ -70,7 +71,7 @@ public class RobotContainer {
     configureAutoBuilder();
   }
 
-  /** Configure the button bindings. */
+  /** Configure the driver control bindings. */
   private void configureDriverBindings() {
     driverJoystick.L1().whileTrue(coral.intakeCoral()).onFalse(coral.stop());
 
@@ -131,6 +132,7 @@ public class RobotContainer {
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
   }
 
+  /** Configure the operator control bindings. */
   private void configureOperatorBindings() {
     operatorGamepad
         .button(1)
@@ -169,26 +171,31 @@ public class RobotContainer {
     SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
+  /**
+   * Register all named commands for each subsystem.
+   */
   private void registerNamedCommands() {
-    Object[] subsystems = new Object[] {coral, elevator, arm, algae};
+    SubsystemBase[] subsystems = new SubsystemBase[] {coral, elevator, arm, algae};
 
-    for (Object subsystem : subsystems) {
+    for (SubsystemBase subsystem : subsystems) {
       registerNamedCommandsForSubsystem(subsystem);
     }
 
     for (ElevatorPosition position : ElevatorPosition.values()) {
-      NamedCommands.registerCommand(
-          "runElevatorTo" + position.toString(), elevator.runElevatorTo(position));
+      String elevatorPosition = position.toString();
 
       NamedCommands.registerCommand(
-          position.toString() + "ReefScoreCommand",
+          "runElevatorTo" + elevatorPosition, elevator.runElevatorTo(position));
+
+      NamedCommands.registerCommand(
+        elevatorPosition + "ReefScoreCommand",
           ReefScoreCommand.get(position, elevator, coral));
-
-      NamedCommands.registerCommand("intakeCoral", coral.intakeCoral());
     }
 
     for (ArmPosition position : ArmPosition.values()) {
-      NamedCommands.registerCommand("runArmTo" + position.toString(), arm.runArmTo(position));
+      String armPosition = position.toString();
+
+      NamedCommands.registerCommand("runArmTo" + armPosition, arm.runArmTo(position));
     }
   }
 
@@ -205,7 +212,7 @@ public class RobotContainer {
    *
    * @param subsystem The subsystem to check,
    */
-  private void registerNamedCommandsForSubsystem(Object subsystem) {
+  private void registerNamedCommandsForSubsystem(SubsystemBase subsystem) {
     for (int i = 0; i < subsystem.getClass().getDeclaredMethods().length; i++) {
       Method method = subsystem.getClass().getDeclaredMethods()[i];
 

@@ -2,13 +2,17 @@ package frc.robot.commands;
 
 import static frc.robot.constants.VisionConstants.APRIL_TAG_FIELD_LAYOUT;
 
+import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
+import com.ctre.phoenix6.swerve.utility.PhoenixPIDController;
+
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +25,7 @@ public class AutoCoralStationAlign extends Command {
   private final CommandSwerveDrivetrain drivetrain;
 
   private final FieldCentricFacingAngle swerveRequest = new FieldCentricFacingAngle();
+  private final PhoenixPIDController headingPIDController = new PhoenixPIDController(1, 0, 0);
 
   private final DoubleSupplier xSupplier;
   private final DoubleSupplier ySupplier;
@@ -36,37 +41,74 @@ public class AutoCoralStationAlign extends Command {
     this.xSupplier = xSupplier;
     this.ySupplier = ySupplier;
 
-    this.poseToRotation = generatePoseToRotation();
+    this.poseToRotation = generatePoseToRotation(VALID_TAG_IDS);
     this.tagPoses.addAll(poseToRotation.keySet());
+
+    swerveRequest.HeadingController = headingPIDController;
 
     addRequirements(drivetrain);
   }
 
-  private Map<Pose2d, Rotation2d> generatePoseToRotation() {
+  /**
+   * Generate a mapping of all April Tag poses' which IDs are in {@code validTagIDs} to the tag's refleted rotation.
+   * 
+   * @param validTagIDs The tag IDs to use.
+   * @return The mapping.
+   */
+  private Map<Pose2d, Rotation2d> generatePoseToRotation(Collection<Integer> validTagIDs) {
     return APRIL_TAG_FIELD_LAYOUT.getTags().stream()
-        .filter(tag -> VALID_TAG_IDS.contains(tag.ID))
+        .filter(tag -> validTagIDs.contains(tag.ID))
         .collect(Collectors.toMap(this::mapKey, this::mapValue));
   }
 
+  /**
+   * Map the April Tag to its pose.
+   * 
+   * @param tag The April Tag.
+   * @return The April Tag pose
+   */
   private Pose2d mapKey(AprilTag tag) {
     return tag.pose.toPose2d();
   }
 
+  /**
+   * Map the April Tag to its reflected rotation {@code (180 - AprilTagPoseRotation)}.
+   * 
+   * @param tag The April Tag.
+   * @return The April Tag's reflected rotation.
+   */
   private Rotation2d mapValue(AprilTag tag) {
     return Rotation2d.k180deg.minus(tag.pose.toPose2d().getRotation());
   }
 
+  /**
+   * Initialize this command by setting the target rotation to the nearest April Tag's reflected rotation.
+   */
   @Override
   public void initialize() {
-    targetRotation = poseToRotation.get(drivetrain.getState().Pose.nearest(tagPoses));
+    Pose2d nearestTag = drivetrain.getState().Pose.nearest(tagPoses);
+    targetRotation = poseToRotation.get(nearestTag);
+
     swerveRequest.TargetDirection = targetRotation;
   }
 
+  /**
+   * Apply the swerve request using {@code xSupplier} and {@code ySupplier} 
+   * as input to {@code SwerveRequest.withVelocityX} and {@code SwerveRequest.withVelocityY}, respectivly.
+   */
   @Override
   public void execute() {
     drivetrain.setControl(
         swerveRequest
             .withVelocityX(xSupplier.getAsDouble())
             .withVelocityY(ySupplier.getAsDouble()));
+  }
+
+  /**
+   * Apply a {@link SwerveRequest.Idle} to the drivetrain on command end.
+   */
+  @Override
+  public void end(boolean interrupted) {
+    drivetrain.setControl(new SwerveRequest.Idle());
   }
 }

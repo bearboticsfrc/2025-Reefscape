@@ -19,10 +19,10 @@ public class SparkBaseLogger extends ClassSpecificLogger<SparkBase> {
       backend.log("Forward Limit Pressed?", spark.getForwardLimitSwitch().isPressed());
       backend.log("Reversed Limit Pressed?", spark.getReverseLimitSwitch().isPressed());
       backend.log("Bus Voltage (V)", spark.getBusVoltage());
-      backend.log("Requested Speed (Duty Cycle)", spark.get());
       backend.log("Applied Output (Duty Cycle)", spark.getAppliedOutput());
     }
-
+    
+    backend.log("Requested Speed (Duty Cycle)", spark.get());
     backend.log("Temperature (C)", spark.getMotorTemperature());
     backend.log("Output Current (A)", spark.getOutputCurrent());
   }
