@@ -2,12 +2,8 @@ package frc.robot.subsystems;
 
 import bearlib.fms.AllianceColor;
 import bearlib.fms.AllianceReadyListener;
-import com.ctre.phoenix6.Orchestra;
 import com.ctre.phoenix6.Utils;
-import com.ctre.phoenix6.hardware.CANcoder;
-import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
-import com.ctre.phoenix6.swerve.SwerveModule;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -20,13 +16,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.constants.VisionConstants;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.vision.Vision;
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
@@ -51,8 +45,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
       new Vision(
           Arrays.asList(VisionConstants.FRONT_LEFT_CAMERA, VisionConstants.FRONT_RIGHT_CAMERA));
 
-  public final Orchestra orchestra;
-
   /**
    * Constructs a CTRE SwerveDrivetrain using the specified constants.
    *
@@ -67,15 +59,6 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
     super(drivetrainConstants, modules);
     AllianceColor.addListener(this);
     configureAutoBuilder();
-
-    orchestra =
-        new Orchestra(
-            new File(Filesystem.getDeployDirectory(), "bearracuda.chrp").getAbsolutePath());
-
-    for (SwerveModule<TalonFX, TalonFX, CANcoder> module : getModules()) {
-      orchestra.addInstrument(module.getDriveMotor());
-      orchestra.addInstrument(module.getSteerMotor());
-    }
   }
 
   /**

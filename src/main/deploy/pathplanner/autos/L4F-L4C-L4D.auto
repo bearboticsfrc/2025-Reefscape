@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "4StartF"
+            "pathName": "3StartF"
           }
         },
         {
@@ -19,7 +19,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "4FToPStation"
+            "pathName": "3FToPStation"
           }
         },
         {
@@ -31,7 +31,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "4PStationToC"
+            "pathName": "3PStationToC"
           }
         },
         {
@@ -43,7 +43,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "4CToPStation"
+            "pathName": "3CToPStation"
           }
         },
         {
@@ -55,7 +55,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "4PStationToD"
+            "pathName": "3PStationToD"
           }
         },
         {
@@ -67,25 +67,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "4DToPStation"
+            "pathName": "3DToPStation"
           }
         },
         {
           "type": "named",
           "data": {
             "name": "intakeCoral"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "4PStationToE"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "L4ReefScoreCommand"
           }
         }
       ]

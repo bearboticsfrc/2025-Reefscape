@@ -11,13 +11,13 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
-import frc.robot.commands.AutoCoralStationAlign;
 import frc.robot.commands.AutoReefAlignCommand;
 import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.ReefScoreCommand;
@@ -54,7 +54,6 @@ public class RobotContainer {
   private ProcessedJoystick.ThrottleProfile throttleProfile =
       ProcessedJoystick.ThrottleProfile.TURBO;
 
-  @Logged(name = "Auto Chooser")
   private SendableChooser<Command> autoChooser;
 
   @Logged(name = "Auto Start Pose")
@@ -73,15 +72,7 @@ public class RobotContainer {
 
   /** Configure the button bindings. */
   private void configureDriverBindings() {
-    driverJoystick
-        .L1()
-        .whileTrue(
-            new AutoCoralStationAlign(
-                    drivetrain,
-                    () -> processedJoystick.get(JoystickAxis.Ly),
-                    () -> processedJoystick.get(JoystickAxis.Lx))
-                .alongWith(coral.intakeCoral()))
-        .onFalse(coral.stop());
+    driverJoystick.L1().whileTrue(coral.intakeCoral()).onFalse(coral.stop());
 
     driverJoystick.R1().onTrue(coral.scoreCoral()).onFalse(coral.stop());
 
@@ -107,9 +98,7 @@ public class RobotContainer {
         .cross()
         .whileTrue(arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()))
         .onFalse(arm.runArmTo(ArmPosition.HOME).andThen(algae.stopMotor()));
-    driverJoystick.square().onTrue(Commands.runOnce(drivetrain.orchestra::play));
-    driverJoystick.triangle().onTrue(Commands.runOnce(drivetrain.orchestra::stop));
-
+        
     driverJoystick
         .povUp()
         .whileTrue(BargeScoreCommand.raise(elevator, arm, algae))
@@ -177,6 +166,7 @@ public class RobotContainer {
     registerNamedCommands();
 
     autoChooser = AutoBuilder.buildAutoChooser();
+    SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
   private void registerNamedCommands() {
@@ -202,6 +192,19 @@ public class RobotContainer {
     }
   }
 
+  /**
+   * Register all named commands for the subsystems.
+   *
+   * <p>This iterates over all declared methods in the subsystem and registers commands which adhear
+   * to the conditions:
+   *
+   * <ul>
+   *   <li>The annotated return type is {@link Command}.
+   *   <li>The parameter count is 0.
+   * </ul>
+   *
+   * @param subsystem The subsystem to check,
+   */
   private void registerNamedCommandsForSubsystem(Object subsystem) {
     for (int i = 0; i < subsystem.getClass().getDeclaredMethods().length; i++) {
       Method method = subsystem.getClass().getDeclaredMethods()[i];
@@ -222,6 +225,7 @@ public class RobotContainer {
     }
   }
 
+  /** Disabled periodic which updates the autonomous starting pose. */
   public void disabledPeriodic() {
     Command selectedAutoCommand = autoChooser.getSelected();
 
@@ -233,6 +237,11 @@ public class RobotContainer {
     }
   }
 
+  /**
+   * Sets the target elevator position.
+   *
+   * @param position The target position.
+   */
   private void setTargetElevatorPosition(ElevatorPosition position) {
     targetElevatorPosition = position;
   }
