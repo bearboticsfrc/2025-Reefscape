@@ -1,0 +1,97 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "4StartF"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "L4ReefScoreCommand"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "4FToPStation"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeCoral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "4PStationToC"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "L4ReefScoreCommand"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "4CToPStation"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeCoral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "4PStationToD"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "L4ReefScoreCommand"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "4DToPStation"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeCoral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "4PStationToE"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "L4ReefScoreCommand"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

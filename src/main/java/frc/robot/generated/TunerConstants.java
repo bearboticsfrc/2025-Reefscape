@@ -50,7 +50,7 @@ public class TunerConstants {
       SteerMotorArrangement.TalonFX_Integrated;
 
   // The remote sensor feedback type to use for the steer motors;
-  // When not Pro-licensed, FusedCANcoder/SyncCANcoder automatically fall back to RemoteCANcoder
+  // When not Pro-licensed, Fused*/Sync* automatically fall back to Remote*
   private static final SteerFeedbackType kSteerFeedbackType = SteerFeedbackType.FusedCANcoder;
 
   // The stator current at which the wheels start to slip;
@@ -148,7 +148,7 @@ public class TunerConstants {
   private static final int kFrontRightDriveMotorId = 3;
   private static final int kFrontRightSteerMotorId = 4;
   private static final int kFrontRightEncoderId = 10;
-  private static final Angle kFrontRightEncoderOffset = Rotations.of(-0.35107421875);
+  private static final Angle kFrontRightEncoderOffset = Rotations.of(-0.35205078125);
   private static final boolean kFrontRightSteerMotorInverted = true;
   private static final boolean kFrontRightEncoderInverted = false;
 
@@ -156,10 +156,10 @@ public class TunerConstants {
   private static final Distance kFrontRightYPos = Inches.of(-11.375);
 
   // Back Left
-  private static final int kBackLeftDriveMotorId = 7;
-  private static final int kBackLeftSteerMotorId = 8;
-  private static final int kBackLeftEncoderId = 12;
-  private static final Angle kBackLeftEncoderOffset = Rotations.of(0.291748046875);
+  private static final int kBackLeftDriveMotorId = 1;
+  private static final int kBackLeftSteerMotorId = 2;
+  private static final int kBackLeftEncoderId = 9;
+  private static final Angle kBackLeftEncoderOffset = Rotations.of(-0.22900390625);
   private static final boolean kBackLeftSteerMotorInverted = true;
   private static final boolean kBackLeftEncoderInverted = false;
 
@@ -167,10 +167,10 @@ public class TunerConstants {
   private static final Distance kBackLeftYPos = Inches.of(11.375);
 
   // Back Right
-  private static final int kBackRightDriveMotorId = 1;
-  private static final int kBackRightSteerMotorId = 2;
-  private static final int kBackRightEncoderId = 9;
-  private static final Angle kBackRightEncoderOffset = Rotations.of(-0.477783203125);
+  private static final int kBackRightDriveMotorId = 7;
+  private static final int kBackRightSteerMotorId = 8;
+  private static final int kBackRightEncoderId = 12;
+  private static final Angle kBackRightEncoderOffset = Rotations.of(0.04736328125);
   private static final boolean kBackRightSteerMotorInverted = true;
   private static final boolean kBackRightEncoderInverted = false;
 
@@ -289,9 +289,9 @@ public class TunerConstants {
      * @param odometryUpdateFrequency The frequency to run the odometry loop. If unspecified or set
      *     to 0 Hz, this is 250 Hz on CAN FD, and 100 Hz on CAN 2.0.
      * @param odometryStandardDeviation The standard deviation for odometry calculation in the form
-     *     [x, y, theta]ᵀ, with units in meters and radians
+     *     [x, y, theta]áµ€, with units in meters and radians
      * @param visionStandardDeviation The standard deviation for vision calculation in the form [x,
-     *     y, theta]ᵀ, with units in meters and radians
+     *     y, theta]áµ€, with units in meters and radians
      * @param modules Constants for each specific module
      */
     public TunerSwerveDrivetrain(
