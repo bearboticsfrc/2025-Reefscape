@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -51,7 +50,10 @@ public class RobotContainer {
 
   // TODO: update g-force value
   private Trigger trigger =
-      new Trigger(() -> drivetrain.getPigeon2().getGravityVectorX().getValue() >= 0.9);
+      new Trigger(
+          () ->
+              drivetrain.getPigeon2().getGravityVectorX().getValue() >= 0.9
+                  || drivetrain.getPigeon2().getGravityVectorY().getValue() >= 0.9);
 
   @Logged private final CoralSubsystem coral = new CoralSubsystem();
   @Logged private final AlgaeSubsystem algae = new AlgaeSubsystem();
@@ -148,12 +150,8 @@ public class RobotContainer {
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
 
-    if (drivetrain.getPigeon2().getGravityVectorZ().getValue() >= 0.9) {
-      driverJoystick.setRumble(RumbleType.kBothRumble, 0.5);
-    }
-
     trigger.whileTrue(
-        new InstantCommand(() -> driverJoystick.setRumble(RumbleType.kBothRumble, 0.5)));
+        Commands.runOnce(() -> driverJoystick.setRumble(RumbleType.kBothRumble, 0.5)));
   }
 
   private void configureOperatorBindings() {
