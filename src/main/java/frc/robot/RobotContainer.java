@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -18,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
 import frc.robot.commands.AutoCoralStationAlign;
@@ -50,7 +50,8 @@ public class RobotContainer {
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
   // TODO: update g-force value
-  private Trigger trigger = new Trigger(() -> drivetrain.getPigeon2().getGravityVectorX().getValue() >= 0.9);
+  private Trigger trigger =
+      new Trigger(() -> drivetrain.getPigeon2().getGravityVectorX().getValue() >= 0.9);
 
   @Logged private final CoralSubsystem coral = new CoralSubsystem();
   @Logged private final AlgaeSubsystem algae = new AlgaeSubsystem();
@@ -147,12 +148,12 @@ public class RobotContainer {
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
 
-    if (drivetrain.getPigeon2().getGravityVectorZ().getValue() >= 0.9){
+    if (drivetrain.getPigeon2().getGravityVectorZ().getValue() >= 0.9) {
       driverJoystick.setRumble(RumbleType.kBothRumble, 0.5);
     }
-    
-    trigger
-      .whileTrue(new InstantCommand(() -> driverJoystick.setRumble(RumbleType.kBothRumble, 0.5)));
+
+    trigger.whileTrue(
+        new InstantCommand(() -> driverJoystick.setRumble(RumbleType.kBothRumble, 0.5)));
   }
 
   private void configureOperatorBindings() {
