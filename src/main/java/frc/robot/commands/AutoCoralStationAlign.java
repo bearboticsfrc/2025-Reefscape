@@ -5,7 +5,6 @@ import static frc.robot.constants.VisionConstants.APRIL_TAG_FIELD_LAYOUT;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
 import com.ctre.phoenix6.swerve.utility.PhoenixPIDController;
-
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -50,8 +49,9 @@ public class AutoCoralStationAlign extends Command {
   }
 
   /**
-   * Generate a mapping of all April Tag poses' which IDs are in {@code validTagIDs} to the tag's refleted rotation.
-   * 
+   * Generate a mapping of all April Tag poses' which IDs are in {@code validTagIDs} to the tag's
+   * refleted rotation.
+   *
    * @param validTagIDs The tag IDs to use.
    * @return The mapping.
    */
@@ -63,7 +63,7 @@ public class AutoCoralStationAlign extends Command {
 
   /**
    * Map the April Tag to its pose.
-   * 
+   *
    * @param tag The April Tag.
    * @return The April Tag pose
    */
@@ -73,7 +73,7 @@ public class AutoCoralStationAlign extends Command {
 
   /**
    * Map the April Tag to its reflected rotation {@code (180 - AprilTagPoseRotation)}.
-   * 
+   *
    * @param tag The April Tag.
    * @return The April Tag's reflected rotation.
    */
@@ -82,7 +82,8 @@ public class AutoCoralStationAlign extends Command {
   }
 
   /**
-   * Initialize this command by setting the target rotation to the nearest April Tag's reflected rotation.
+   * Initialize this command by setting the target rotation to the nearest April Tag's reflected
+   * rotation.
    */
   @Override
   public void initialize() {
@@ -93,8 +94,8 @@ public class AutoCoralStationAlign extends Command {
   }
 
   /**
-   * Apply the swerve request using {@code xSupplier} and {@code ySupplier} 
-   * as input to {@code SwerveRequest.withVelocityX} and {@code SwerveRequest.withVelocityY}, respectivly.
+   * Apply the swerve request using {@code xSupplier} and {@code ySupplier} as input to {@code
+   * SwerveRequest.withVelocityX} and {@code SwerveRequest.withVelocityY}, respectivly.
    */
   @Override
   public void execute() {
@@ -104,9 +105,7 @@ public class AutoCoralStationAlign extends Command {
             .withVelocityY(ySupplier.getAsDouble()));
   }
 
-  /**
-   * Apply a {@link SwerveRequest.Idle} to the drivetrain on command end.
-   */
+  /** Apply a {@link SwerveRequest.Idle} to the drivetrain on command end. */
   @Override
   public void end(boolean interrupted) {
     drivetrain.setControl(new SwerveRequest.Idle());

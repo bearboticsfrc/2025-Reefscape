@@ -171,9 +171,7 @@ public class RobotContainer {
     SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
-  /**
-   * Register all named commands for each subsystem.
-   */
+  /** Register all named commands for each subsystem. */
   private void registerNamedCommands() {
     SubsystemBase[] subsystems = new SubsystemBase[] {coral, elevator, arm, algae};
 
@@ -188,8 +186,7 @@ public class RobotContainer {
           "runElevatorTo" + elevatorPosition, elevator.runElevatorTo(position));
 
       NamedCommands.registerCommand(
-        elevatorPosition + "ReefScoreCommand",
-          ReefScoreCommand.get(position, elevator, coral));
+          elevatorPosition + "ReefScoreCommand", ReefScoreCommand.get(position, elevator, coral));
     }
 
     for (ArmPosition position : ArmPosition.values()) {
