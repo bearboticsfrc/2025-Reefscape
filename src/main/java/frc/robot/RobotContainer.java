@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
+import frc.robot.commands.AutoCoralStationAlign;
 import frc.robot.commands.AutoReefAlignCommand;
 import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.ReefScoreCommand;
@@ -73,7 +74,17 @@ public class RobotContainer {
 
   /** Configure the driver control bindings. */
   private void configureDriverBindings() {
-    driverJoystick.L1().whileTrue(coral.intakeCoral()).onFalse(coral.stop());
+    driverJoystick
+        .L1()
+        .whileTrue(
+            coral
+                .intakeCoral()
+                .alongWith(
+                    new AutoCoralStationAlign(
+                        drivetrain,
+                        () -> processedJoystick.get(JoystickAxis.Ly),
+                        () -> processedJoystick.get(JoystickAxis.Lx))))
+        .onFalse(coral.stop());
 
     driverJoystick.R1().onTrue(coral.scoreCoral()).onFalse(coral.stop());
 
@@ -171,9 +182,7 @@ public class RobotContainer {
     SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
-  /**
-   * Register all named commands for each subsystem.
-   */
+  /** Register all named commands for each subsystem. */
   private void registerNamedCommands() {
     SubsystemBase[] subsystems = new SubsystemBase[] {coral, elevator, arm, algae};
 
@@ -188,8 +197,7 @@ public class RobotContainer {
           "runElevatorTo" + elevatorPosition, elevator.runElevatorTo(position));
 
       NamedCommands.registerCommand(
-        elevatorPosition + "ReefScoreCommand",
-          ReefScoreCommand.get(position, elevator, coral));
+          elevatorPosition + "ReefScoreCommand", ReefScoreCommand.get(position, elevator, coral));
     }
 
     for (ArmPosition position : ArmPosition.values()) {

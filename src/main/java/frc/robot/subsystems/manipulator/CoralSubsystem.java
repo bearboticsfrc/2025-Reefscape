@@ -20,7 +20,7 @@ public class CoralSubsystem extends SubsystemBase {
   private final int INTAKE_SENSOR_PORT = 1;
 
   private final Time SCORING_TIME = Seconds.of(0.5);
-  private final double RETRACT_THRESHOLD = -0.85;
+  private final double RETRACT_THRESHOLD = -0.8;
 
   @Logged(name = "Coral Intake Motor")
   private final SparkBase intake;
