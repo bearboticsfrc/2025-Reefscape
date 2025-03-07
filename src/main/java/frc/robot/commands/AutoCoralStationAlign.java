@@ -21,10 +21,13 @@ import java.util.stream.Collectors;
 public class AutoCoralStationAlign extends Command {
   private static final Set<Integer> VALID_TAG_IDS = Set.of(1, 2, 12, 13);
 
+  private static final double P = 10; 
+  private static final double I = 0; 
+  private static final double D = 0;
+
   private final CommandSwerveDrivetrain drivetrain;
 
   private final FieldCentricFacingAngle swerveRequest = new FieldCentricFacingAngle();
-  private final PhoenixPIDController headingPIDController = new PhoenixPIDController(10, 0, 0);
 
   private final DoubleSupplier xSupplier;
   private final DoubleSupplier ySupplier;
@@ -42,8 +45,6 @@ public class AutoCoralStationAlign extends Command {
 
     this.poseToRotation = generatePoseToRotation(VALID_TAG_IDS);
     this.tagPoses.addAll(poseToRotation.keySet());
-
-    swerveRequest.HeadingController = headingPIDController;
 
     addRequirements(drivetrain);
   }
@@ -102,7 +103,8 @@ public class AutoCoralStationAlign extends Command {
     drivetrain.setControl(
         swerveRequest
             .withVelocityX(xSupplier.getAsDouble())
-            .withVelocityY(ySupplier.getAsDouble()));
+            .withVelocityY(ySupplier.getAsDouble())
+            .withHeadingPID(P, I, D));
   }
 
   /** Apply a {@link SwerveRequest.Idle} to the drivetrain on command end. */
