@@ -83,6 +83,10 @@ public class ElevatorSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     updateTrapezoidProfile();
+
+    if (isAtSetpoint() && motor.getReverseLimitSwitch().isPressed()) {
+      encoder.setPosition(0);
+    }
   }
 
   /** Update the trapezoid motion profile setpoint. */
@@ -126,7 +130,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   /** Enum representing preset elevator positions. */
   public enum ElevatorPosition {
-    L4(39.4),
+    L4(39.6),
     L3(23.2),
     L2(12.5),
     L1(5),
