@@ -126,7 +126,7 @@ public class ArmSubsystem extends SubsystemBase {
   public enum ArmPosition {
     BARGE(15),
     REEF(3),
-    HOME(0);
+    HOME(-5);
 
     private final double position;
 

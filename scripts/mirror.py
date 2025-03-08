@@ -1,7 +1,9 @@
 import argparse
-from pathlib import Path
 import time
 import json
+
+from pathlib import Path
+from typing import Any
 
 def mirror_rotation(rotation: float) -> float:
     return -rotation
@@ -9,10 +11,26 @@ def mirror_rotation(rotation: float) -> float:
 def mirror_translation(x: float, y: float) -> tuple[float, float]:
     return x, 8.0519016 - y
 
+def get_mirrored_file_name(original: str) -> str:
+    # Assuming format is '# - Auto/Path Name'
+    mutable_original = list(original.split("\\")[-1])
+
+    if original.endswith(".auto") and (not mutable_original[0].isnumeric() or mutable_original[1] != " "):
+        raise ValueError(f"Unexpected name format! Should be '# - {original}' not {original!r}")
+    else: 
+        mutable_original[1] = "M "
+
+    return "\\".join(original.split("\\")[:-1]) + "\\" + "".join(mutable_original)
+
+def get_file_json(file: Path) -> dict[Any, Any]:
+    with file.open() as fp:
+        return json.load(fp)
+
+
 def mirror_path(file: Path) -> None:
     print(f"  Mirroring: {file.name!r}")
-    with file.open() as fp:
-        path = json.load(fp)
+
+    path = get_file_json(file)
 
     end_rotation = path["goalEndState"]["rotation"]
     ideal_rotation = path["idealStartingState"]["rotation"]
@@ -53,7 +71,7 @@ def mirror_path(file: Path) -> None:
     path["goalEndState"]["rotation"] = mirror_rotation(end_rotation)
     path["idealStartingState"]["rotation"] = mirror_rotation(ideal_rotation)
 
-    new_path = "M-"+ str(file.resolve())[:-5] + ".path"
+    new_path = get_mirrored_file_name(str(file.resolve()))
 
     with open(new_path, "w") as fp:
         json.dump(path, fp)
@@ -63,8 +81,7 @@ def mirror_path(file: Path) -> None:
 def mirror_auto(file: Path) -> None:
     print(f"\nMirroring: {file.name!r}:")
 
-    with file.open() as fp:
-        auto = json.load(fp)
+    auto = get_file_json(file)
 
     for i, path in enumerate(auto["command"]["data"]["commands"]):
         if path["type"] != "path":
@@ -80,7 +97,7 @@ def mirror_auto(file: Path) -> None:
         new_path = mirror_path(path)
         auto["command"]["data"]["commands"][i]["data"]["pathName"] = new_path.name[:-5]
 
-    new_auto = "M-" + str(file.resolve())[:-5] + ".auto"
+    new_auto = get_mirrored_file_name(str(file.resolve()))
 
     with open(new_auto, "w") as fp:
         json.dump(auto, fp)

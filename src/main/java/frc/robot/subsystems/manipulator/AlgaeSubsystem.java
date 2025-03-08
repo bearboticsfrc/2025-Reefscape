@@ -65,7 +65,7 @@ public class AlgaeSubsystem extends SubsystemBase {
   }
 
   public Command scoreAlgae() {
-    return run(MotorSpeed.REVERSE_FULL)
+    return run(MotorSpeed.REVERSE_THREE_QUARTERS)
         .andThen(Commands.waitTime(SCORING_TIME))
         .andThen(stopMotor());
   }

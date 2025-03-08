@@ -2,6 +2,7 @@ package frc.robot.commands;
 
 import static edu.wpi.first.units.Units.Milliseconds;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -44,7 +45,11 @@ public class BargeScoreCommand {
   public static Command raise(ElevatorSubsystem elevator, ArmSubsystem arm, AlgaeSubsystem algae) {
     return elevator
         .runElevatorTo(ElevatorPosition.L4)
-        .alongWith(arm.runArmTo(ArmPosition.BARGE))
+        .alongWith(
+            Commands.waitUntil(
+                () ->
+                    MathUtil.isNear(ElevatorPosition.L3.getPosition(), elevator.getPosition(), 1)))
+        .andThen(arm.runArmTo(ArmPosition.BARGE))
         .andThen(Commands.waitUntil(() -> elevatorAndArmAtSetpoint(elevator, arm)))
         .andThen(Commands.waitTime(SCORE_WAIT))
         .andThen(algae.scoreAlgae())

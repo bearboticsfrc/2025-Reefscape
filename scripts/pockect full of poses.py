@@ -3,6 +3,7 @@ from time import sleep
 from itertools import cycle
 from os import system
 import platform
+import struct
 import math
 
 TEAM_NUMBER = 40, 68
@@ -10,9 +11,9 @@ TEAM_NUMBER = 40, 68
 DISCONNECTED_WAIT = 1
 
 CURRENT_POSE_PATH = "/DriveState/Pose"
-TARGET_POSE_PATH = "/Robot/m_robotContainer/Auto Start Pose"
+TARGET_POSE_PATH = "Robot/m_robotContainer/Auto Start Pose"
 
-POSE_DELTA_TOLERANCE = 0.15
+POSE_DELTA_TOLERANCE = 0.05
 
 WAIT_ICON_CYCLE = cycle(("|", "/", "-", "\\"))
 
@@ -24,14 +25,25 @@ def get_target_pose() -> tuple[float, float, float] | None:
     
     :return: tuple[float, float, float] The Pose represented as a tuple of (x, y, theta)"""
     
-    return NetworkTables.getEntry(TARGET_POSE_PATH).value
+    # Have to use ._api since assertion 
+    # within getEntry only allows paths to start / 
+    value = NetworkTables._api.getEntry(TARGET_POSE_PATH).value
+
+    if value is None:
+        return None
+
+    return struct.unpack("<ddd", value)
 
 def get_current_pose() -> tuple[float, float, float] | None:
     """Get the current pose from NT using CURRENT_POSE_PATH as the entry path.
     
     :return: tuple[float, float, float] The Pose represented as a tuple of (x, y, theta)"""
-    
-    return NetworkTables.getEntry(CURRENT_POSE_PATH).value
+    value = NetworkTables._api.getEntry(CURRENT_POSE_PATH).value
+
+    if value is None:
+        return None
+
+    return struct.unpack("<ddd", value)
 
 def main() -> None:
     clear_screen()
@@ -51,10 +63,9 @@ def main() -> None:
         target_pose = get_target_pose()
 
         if target_pose is None or current_pose is None:
-            print(f"Target pose None? {target_pose is None}\nCurrent pose None? {current_pose is None}")
             print(f"[{next(WAIT_ICON_CYCLE)}] Target Pose / Current Pose is empty!", end="\r")
             continue
-
+        
         delta_pose = [p_1 - p_2 for p_1, p_2 in zip(current_pose, target_pose)]
 
         if abs(sum(delta_pose)) < POSE_DELTA_TOLERANCE:

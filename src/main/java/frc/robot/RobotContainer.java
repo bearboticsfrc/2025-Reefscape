@@ -9,6 +9,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -58,7 +59,7 @@ public class RobotContainer {
 
   private SendableChooser<Command> autoChooser;
 
-  @Logged(name = "Auto Start Pose")
+  @Logged(name = "Auto Start Pose", importance = Importance.CRITICAL)
   private Pose2d autoStartPose;
 
   private Command introspectedAutoCommand;
@@ -176,7 +177,7 @@ public class RobotContainer {
 
   /** Register all named commands for each subsystem. */
   private void registerNamedCommands() {
-    SubsystemBase[] subsystems = new SubsystemBase[] {coral, elevator, arm, algae};
+    SubsystemBase[] subsystems = new SubsystemBase[] {coral, elevator};
 
     for (SubsystemBase subsystem : subsystems) {
       registerNamedCommandsForSubsystem(subsystem);
@@ -187,6 +188,10 @@ public class RobotContainer {
 
       NamedCommands.registerCommand(
           "runElevatorTo" + elevatorPosition, elevator.runElevatorTo(position));
+
+      NamedCommands.registerCommand(
+          "fullyRunElevatorTo" + elevatorPosition,
+          elevator.runElevatorTo(position).andThen(Commands.waitUntil(elevator::isAtSetpoint)));
 
       NamedCommands.registerCommand(
           elevatorPosition + "ReefScoreCommand", ReefScoreCommand.get(position, elevator, coral));
@@ -200,6 +205,15 @@ public class RobotContainer {
 
     NamedCommands.registerCommand(
         "intakeCoralNoWait", Commands.runOnce(() -> coral.intakeCoral().schedule()));
+
+    NamedCommands.registerCommand(
+        "BargeScoreCommand", BargeScoreCommand.raise(elevator, arm, algae));
+
+    NamedCommands.registerCommand(
+        "intakeAlgae",
+        arm.runArmTo(ArmPosition.REEF)
+            .alongWith(algae.intakeAlgae())
+            .andThen(Commands.waitUntil(algae::hasAlgae)));
   }
 
   /**

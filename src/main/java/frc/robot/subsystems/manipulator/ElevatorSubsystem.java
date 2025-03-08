@@ -1,6 +1,7 @@
 package frc.robot.subsystems.manipulator;
 
 import bearlib.motor.deserializer.MotorParser;
+import bearlib.util.TunableNumber;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
@@ -46,6 +47,8 @@ public class ElevatorSubsystem extends SubsystemBase {
   @Logged(name = "Elevator Setpoint")
   private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
+  private TunableNumber tunablePosition = new TunableNumber("Elevator Position", 0);
+
   /** Constructs a new ElevatorSubsystem by configuring the leader and follower motors. */
   public ElevatorSubsystem() {
     File directory = new File(Filesystem.getDeployDirectory(), "motors/elevator");
@@ -71,6 +74,10 @@ public class ElevatorSubsystem extends SubsystemBase {
     return trapezoidProfile.timeLeftUntil(goal.position) == 0;
   }
 
+  public double getPosition() {
+    return encoder.getPosition();
+  }
+
   /**
    * Sets the target elevator position and updates the motor controller reference.
    *
@@ -82,6 +89,10 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
+    if (tunablePosition.hasChanged()) {
+      goal = new TrapezoidProfile.State(tunablePosition.get(), 0);
+    }
+
     updateTrapezoidProfile();
 
     if (isAtSetpoint() && motor.getReverseLimitSwitch().isPressed()) {
@@ -129,7 +140,7 @@ public class ElevatorSubsystem extends SubsystemBase {
   }
 
   public void tareClosedLoopController() {
-    motor.getClosedLoopController().setReference(encoder.getPosition(), ControlType.kPosition);
+    setpoint = new TrapezoidProfile.State(encoder.getPosition(), 0);
     set(ElevatorPosition.HOME);
   }
 
@@ -138,7 +149,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     L4(39.6),
     L3(23.2),
     L2(12.5),
-    L1(5),
+    L1(15),
     HOME(0);
 
     private final double position;

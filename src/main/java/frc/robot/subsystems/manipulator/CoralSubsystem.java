@@ -1,13 +1,10 @@
 package frc.robot.subsystems.manipulator;
 
-import static edu.wpi.first.units.Units.Seconds;
-
 import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,7 +16,6 @@ import java.io.IOException;
 public class CoralSubsystem extends SubsystemBase {
   private final int INTAKE_SENSOR_PORT = 1;
 
-  private final Time SCORING_TIME = Seconds.of(0.5);
   private final double RETRACT_THRESHOLD = -0.8;
 
   @Logged(name = "Coral Intake Motor")
@@ -79,8 +75,8 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} scoring the coral.
    */
   public Command scoreCoral() {
-    return runOutake(MotorSpeed.REVERSE_HALF)
-        .andThen(Commands.waitTime(SCORING_TIME))
+    return runOutake(MotorSpeed.REVERSE_FULL)
+        .andThen(Commands.waitUntil(() -> !hasCoral()))
         .andThen(runOutake(MotorSpeed.OFF));
   }
 

@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "3StartF"
+            "pathName": "StartG"
           }
         },
         {
@@ -17,63 +17,57 @@
           }
         },
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "3FToPStation"
+            "name": "fullyRunElevatorToL2"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "intakeCoral"
+            "name": "intakeAlgae"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "3PStationToC"
+            "pathName": "GToNet"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "L4ReefScoreCommand"
+            "name": "BargeScoreCommand"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "3CToPStation"
+            "pathName": "NetToI"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "intakeCoral"
+            "name": "fullyRunElevatorToL3"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeAlgae"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "3PStationToD"
+            "pathName": "IToNet"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "L4ReefScoreCommand"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "3DToPStation"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intakeCoral"
+            "name": "BargeScoreCommand"
           }
         }
       ]

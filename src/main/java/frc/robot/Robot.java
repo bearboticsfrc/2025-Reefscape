@@ -7,6 +7,7 @@ package frc.robot;
 import bearlib.fms.AllianceColor;
 import edu.wpi.first.epilogue.Epilogue;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -16,10 +17,16 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
-  @Logged private final RobotContainer m_robotContainer;
+  @Logged(importance = Importance.CRITICAL)
+  private final RobotContainer m_robotContainer;
 
   public Robot() {
     m_robotContainer = new RobotContainer();
+    configureLogging();
+  }
+
+  public void configureLogging() {
+    Epilogue.configure(config -> config.minimumImportance = Importance.CRITICAL);
     DataLogManager.start();
     Epilogue.bind(this);
   }
