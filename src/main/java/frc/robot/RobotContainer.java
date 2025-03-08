@@ -19,7 +19,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
-import frc.robot.commands.AutoCoralStationAlign;
+import frc.robot.commands.AutoBargeAlignCommand;
 import frc.robot.commands.AutoReefAlignCommand;
 import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.ReefScoreCommand;
@@ -74,17 +74,7 @@ public class RobotContainer {
 
   /** Configure the driver control bindings. */
   private void configureDriverBindings() {
-    driverJoystick
-        .L1()
-        .whileTrue(
-            coral
-                .intakeCoral()
-                .alongWith(
-                    new AutoCoralStationAlign(
-                        drivetrain,
-                        () -> processedJoystick.get(JoystickAxis.Ly),
-                        () -> processedJoystick.get(JoystickAxis.Lx))))
-        .onFalse(coral.stop());
+    driverJoystick.L1().whileTrue(coral.intakeCoral()).onFalse(coral.stop());
 
     driverJoystick.R1().onTrue(coral.scoreCoral()).onFalse(coral.stop());
 
@@ -113,7 +103,9 @@ public class RobotContainer {
 
     driverJoystick
         .povUp()
-        .whileTrue(BargeScoreCommand.raise(elevator, arm, algae))
+        .whileTrue(
+            new AutoBargeAlignCommand(drivetrain)
+                .andThen(BargeScoreCommand.raise(elevator, arm, algae)))
         .whileFalse(BargeScoreCommand.lower(elevator, arm, algae));
 
     driverJoystick
@@ -205,6 +197,9 @@ public class RobotContainer {
 
       NamedCommands.registerCommand("runArmTo" + armPosition, arm.runArmTo(position));
     }
+
+    NamedCommands.registerCommand(
+        "intakeCoralNoWait", Commands.runOnce(() -> coral.intakeCoral().schedule()));
   }
 
   /**
@@ -238,6 +233,10 @@ public class RobotContainer {
         throw new RuntimeException(exception);
       }
     }
+  }
+
+  public void teleopInit() {
+    elevator.tareClosedLoopController();
   }
 
   /** Disabled periodic which updates the autonomous starting pose. */

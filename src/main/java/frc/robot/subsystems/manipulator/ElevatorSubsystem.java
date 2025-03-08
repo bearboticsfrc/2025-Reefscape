@@ -128,6 +128,11 @@ public class ElevatorSubsystem extends SubsystemBase {
     return runOnce(() -> motor.stopMotor());
   }
 
+  public void tareClosedLoopController() {
+    motor.getClosedLoopController().setReference(encoder.getPosition(), ControlType.kPosition);
+    set(ElevatorPosition.HOME);
+  }
+
   /** Enum representing preset elevator positions. */
   public enum ElevatorPosition {
     L4(39.6),
