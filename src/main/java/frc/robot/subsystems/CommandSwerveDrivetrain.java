@@ -11,6 +11,7 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.util.DriveFeedforwards;
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -41,9 +42,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
   private final SwerveRequest.ApplyRobotSpeeds pathApplyRobotSpeeds =
       new SwerveRequest.ApplyRobotSpeeds();
 
+  @Logged
   private final Vision vision =
       new Vision(
-          Arrays.asList(VisionConstants.FRONT_LEFT_CAMERA, VisionConstants.FRONT_RIGHT_CAMERA));
+          Arrays.asList(
+              VisionConstants.FRONT_LEFT_CAMERA,
+              VisionConstants.FRONT_RIGHT_CAMERA,
+              VisionConstants.REAR_CAMERA));
 
   /**
    * Constructs a CTRE SwerveDrivetrain using the specified constants.

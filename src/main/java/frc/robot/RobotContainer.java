@@ -46,7 +46,7 @@ public class RobotContainer {
   private final ProcessedJoystick processedJoystick =
       new ProcessedJoystick(driverJoystick, this::getThrottleProfile, DriveConstants.MAX_VELOCITY);
 
-  private final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+  @Logged private final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
   @Logged private final CoralSubsystem coral = new CoralSubsystem();
   @Logged private final AlgaeSubsystem algae = new AlgaeSubsystem();

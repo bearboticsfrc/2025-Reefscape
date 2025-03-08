@@ -15,7 +15,7 @@ import edu.wpi.first.units.measure.Distance;
 import frc.robot.vision.VisionCamera;
 
 public class VisionConstants {
-  public static final Distance CULLING_DISTANCE = Meters.of(2);
+  public static final Distance CULLING_DISTANCE = Meters.of(2.5);
   public static final double CULLING_AMBIGUITY = 0.2;
 
   private static final String FRONT_LEFT_CAMERA_NAME = "OV9281FrontLeft";
