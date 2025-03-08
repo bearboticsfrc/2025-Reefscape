@@ -2,7 +2,6 @@ package frc.robot.commands;
 
 import static edu.wpi.first.units.Units.Milliseconds;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -20,7 +19,7 @@ public class BargeScoreCommand {
   private static final Time SCORE_WAIT = Milliseconds.of(200);
 
   /**
-   * Creates a command sequence to perform the "raise" portion of a barge score.
+   * d Creates a command sequence to perform the "raise" portion of a barge score.
    *
    * <p>This command sequence does the following:
    *
@@ -46,9 +45,7 @@ public class BargeScoreCommand {
     return elevator
         .runElevatorTo(ElevatorPosition.L4)
         .alongWith(
-            Commands.waitUntil(
-                () ->
-                    MathUtil.isNear(ElevatorPosition.L3.getPosition(), elevator.getPosition(), 1)))
+            Commands.waitUntil(() -> elevator.getPosition() >= ElevatorPosition.L3.getPosition()))
         .andThen(arm.runArmTo(ArmPosition.BARGE))
         .andThen(Commands.waitUntil(() -> elevatorAndArmAtSetpoint(elevator, arm)))
         .andThen(Commands.waitTime(SCORE_WAIT))
