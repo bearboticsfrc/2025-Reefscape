@@ -10,6 +10,7 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -21,6 +22,15 @@ public class CoralSubsystem extends SubsystemBase {
 
   private final Time SCORING_TIME = Seconds.of(0.5);
   private final double RETRACT_THRESHOLD = -0.85;
+
+  private double lastScoringTime = 0.0;
+  private int numCycles = 0;
+
+  @Logged(name = "cycleTimes", importance = Logged.Importance.INFO)
+  private double[] cycleTimes = new double[50];
+
+  @Logged(name = "Average Cycle Time", importance = Logged.Importance.INFO)
+  private double averageCycleTime = 0.0;
 
   @Logged(name = "Coral Outake Motor")
   private final SparkBase outake;
@@ -86,6 +96,10 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} running the coral intake.
    */
   private Command runOutake(MotorSpeed speed) {
+    cycleTimes[numCycles] = Timer.getMatchTime() - lastScoringTime;
+    lastScoringTime = Timer.getMatchTime();
+    numCycles++;
+    averageCycleTime = numCycles / Timer.getMatchTime();
     return Commands.runOnce(() -> outake.set(speed.getSpeed()));
   }
 
