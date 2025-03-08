@@ -11,7 +11,6 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -33,6 +32,7 @@ import frc.robot.subsystems.manipulator.CoralSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
 import frc.robot.utils.AllianceFlipUtil;
+import frc.robot.utils.AutonomousSelector;
 import java.lang.reflect.Method;
 
 public class RobotContainer {
@@ -46,6 +46,8 @@ public class RobotContainer {
       new ProcessedJoystick(driverJoystick, this::getThrottleProfile, DriveConstants.MAX_VELOCITY);
 
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+
+  private final AutonomousSelector AutonomousSelector = new AutonomousSelector();
 
   @Logged private final CoralSubsystem coral = new CoralSubsystem();
   @Logged private final AlgaeSubsystem algae = new AlgaeSubsystem();
@@ -168,12 +170,10 @@ public class RobotContainer {
     registerNamedCommands();
 
     autoChooser = AutoBuilder.buildAutoChooser();
-    SmartDashboard.putData("Auto Chooser", autoChooser);
+    // SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
-  /**
-   * Register all named commands for each subsystem.
-   */
+  /** Register all named commands for each subsystem. */
   private void registerNamedCommands() {
     SubsystemBase[] subsystems = new SubsystemBase[] {coral, elevator, arm, algae};
 
@@ -188,8 +188,7 @@ public class RobotContainer {
           "runElevatorTo" + elevatorPosition, elevator.runElevatorTo(position));
 
       NamedCommands.registerCommand(
-        elevatorPosition + "ReefScoreCommand",
-          ReefScoreCommand.get(position, elevator, coral));
+          elevatorPosition + "ReefScoreCommand", ReefScoreCommand.get(position, elevator, coral));
     }
 
     for (ArmPosition position : ArmPosition.values()) {
@@ -277,7 +276,7 @@ public class RobotContainer {
    * @return The command.
    */
   public Command getAutonomousCommand() {
-    return autoChooser.getSelected();
+    return AutonomousSelector.getSelected();
   }
 
   /**
