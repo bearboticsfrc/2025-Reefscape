@@ -19,7 +19,7 @@ public class BargeScoreCommand {
   private static final Time SCORE_WAIT = Milliseconds.of(200);
 
   /**
-   * d Creates a command sequence to perform the "raise" portion of a barge score.
+   * Creates a command sequence to perform the "raise" portion of a barge score.
    *
    * <p>This command sequence does the following:
    *

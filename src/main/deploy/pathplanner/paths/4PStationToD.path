@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.2655185368178254,
-        "y": 0.9043913244625799
+        "x": 1.562477058447875,
+        "y": 0.6829971020677295
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.751048837762611,
-        "y": 1.3312129787300653
+        "x": 2.0480073593926607,
+        "y": 1.1098187563352149
       },
       "isLocked": false,
       "linkedName": "LowPStation"
@@ -32,11 +32,11 @@
   "constraintZones": [
     {
       "name": "Constraints Zone",
-      "minWaypointRelativePos": 0.4478609625668451,
+      "minWaypointRelativePos": 0.7047619047619047,
       "maxWaypointRelativePos": 1.0,
       "constraints": {
         "maxVelocity": 5.0,
-        "maxAcceleration": 2.5,
+        "maxAcceleration": 3.0,
         "maxAngularVelocity": 540.0,
         "maxAngularAcceleration": 720.0,
         "nominalVoltage": 12.0,
@@ -64,7 +64,7 @@
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
-    "unlimited": false
+    "unlimited": true
   },
   "goalEndState": {
     "velocity": 0,
