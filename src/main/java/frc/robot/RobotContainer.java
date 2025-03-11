@@ -204,16 +204,7 @@ public class RobotContainer {
     }
 
     NamedCommands.registerCommand(
-        "intakeCoralNoWait", Commands.runOnce(() -> coral.intakeCoral().schedule()));
-
-    NamedCommands.registerCommand(
         "BargeScoreCommand", BargeScoreCommand.raise(elevator, arm, algae));
-
-    NamedCommands.registerCommand(
-        "intakeAlgae",
-        arm.runArmTo(ArmPosition.REEF)
-            .alongWith(algae.intakeAlgae())
-            .andThen(Commands.waitUntil(algae::hasAlgae)));
   }
 
   /**
@@ -249,7 +240,17 @@ public class RobotContainer {
     }
   }
 
+  /**
+   * Teleop Initialization.
+   *
+   * <p>Tares the elevator and lowers to {@code ElevatorPosition.HOME} if the arm is at {@code
+   * ArmPosition.HOME}, otherwise keep it at the same goal.
+   */
   public void teleopInit() {
+    if (arm.getPosition() == ArmPosition.HOME) {
+      elevator.set(ElevatorPosition.HOME);
+    }
+
     elevator.tareClosedLoopController();
   }
 

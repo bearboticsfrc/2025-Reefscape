@@ -53,6 +53,8 @@ public class ArmSubsystem extends SubsystemBase {
   @Logged(name = "Arm Setpoint")
   private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
+  private ArmPosition position = ArmPosition.HOME;
+
   /** Constructs a new ArmSubsystem by configuring the leader and follower motors. */
   public ArmSubsystem() {
     File directory = new File(Filesystem.getDeployDirectory(), "motors/arm");
@@ -81,6 +83,7 @@ public class ArmSubsystem extends SubsystemBase {
    * @param position The desired arm position.
    */
   private void set(ArmPosition position) {
+    this.position = position;
     goal = new TrapezoidProfile.State(position.getPosition(), 0);
   }
 
@@ -106,6 +109,15 @@ public class ArmSubsystem extends SubsystemBase {
                 getAngleRadians().magnitude(), setpoint.velocity, nextSetpoint.velocity));
 
     setpoint = nextSetpoint;
+  }
+
+  /**
+   * Get the current arm position.
+   * 
+   * @return The current position.
+   */
+  public ArmPosition getPosition() {
+    return position;
   }
 
   /**

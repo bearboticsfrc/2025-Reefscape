@@ -4,7 +4,6 @@
   "holonomicMode": true,
   "pathFolders": [
     "L4F-L4C-L4D",
-    "L4F-L4C-L4D-L4E",
     "L4G - AG - AI",
     "Teamate"
   ],
@@ -19,9 +18,9 @@
   "robotTrackwidth": 0.546,
   "driveWheelRadius": 0.048,
   "driveGearing": 6.746031746031747,
-  "maxDriveSpeed": 5.45,
+  "maxDriveSpeed": 4.3,
   "driveMotorType": "krakenX60FOC",
-  "driveCurrentLimit": 60.0,
+  "driveCurrentLimit": 70.0,
   "wheelCOF": 1.2,
   "flModuleX": 0.288,
   "flModuleY": 0.288,

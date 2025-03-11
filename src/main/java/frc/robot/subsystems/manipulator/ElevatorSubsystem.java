@@ -83,7 +83,7 @@ public class ElevatorSubsystem extends SubsystemBase {
    *
    * @param position The desired elevator position.
    */
-  private void set(ElevatorPosition position) {
+  public void set(ElevatorPosition position) {
     goal = new TrapezoidProfile.State(position.getPosition(), 0);
   }
 
@@ -141,7 +141,6 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   public void tareClosedLoopController() {
     setpoint = new TrapezoidProfile.State(encoder.getPosition(), 0);
-    set(ElevatorPosition.HOME);
   }
 
   /** Enum representing preset elevator positions. */
