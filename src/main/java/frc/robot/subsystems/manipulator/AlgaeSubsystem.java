@@ -6,6 +6,7 @@ import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -20,7 +21,7 @@ public class AlgaeSubsystem extends SubsystemBase {
   private final Time SCORING_TIME = Seconds.of(0.5);
   private final double IDLE_INTAKE_SPEED = 0.1;
 
-  @Logged(name = "Algae Motor")
+  @Logged(name = "Algae Motor", importance = Importance.CRITICAL)
   private final SparkBase motor;
 
   private final DigitalInput algaeSensor = new DigitalInput(ALGAE_SENSOR_PORT);
@@ -50,7 +51,7 @@ public class AlgaeSubsystem extends SubsystemBase {
   /**
    * @return true if the algae is blocking the sensor.
    */
-  @Logged(name = "Has Algae")
+  @Logged(name = "Has Algae", importance = Importance.CRITICAL)
   public boolean hasAlgae() {
     return !algaeSensor.get();
   }

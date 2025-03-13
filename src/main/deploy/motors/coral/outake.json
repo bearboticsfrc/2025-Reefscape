@@ -1,6 +1,6 @@
 {
     "type": "flex",
     "id": 34,
-    "inverted": false,
+    "inverted": true,
     "current_limit": 40
 }

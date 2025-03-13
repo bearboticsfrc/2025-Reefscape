@@ -10,6 +10,7 @@ import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Importance;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -47,12 +48,20 @@ public class RobotContainer {
   private final ProcessedJoystick processedJoystick =
       new ProcessedJoystick(driverJoystick, this::getThrottleProfile, DriveConstants.MAX_VELOCITY);
 
-  @Logged private final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+  @Logged(importance = Importance.CRITICAL)
+  private final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-  @Logged private final CoralSubsystem coral = new CoralSubsystem();
-  @Logged private final AlgaeSubsystem algae = new AlgaeSubsystem();
-  @Logged private final ElevatorSubsystem elevator = new ElevatorSubsystem();
-  @Logged private final ArmSubsystem arm = new ArmSubsystem();
+  @Logged(importance = Importance.CRITICAL)
+  private final CoralSubsystem coral = new CoralSubsystem();
+
+  @Logged(importance = Importance.CRITICAL)
+  private final AlgaeSubsystem algae = new AlgaeSubsystem();
+
+  @Logged(importance = Importance.CRITICAL)
+  private final ElevatorSubsystem elevator = new ElevatorSubsystem();
+
+  @Logged(importance = Importance.CRITICAL)
+  private final ArmSubsystem arm = new ArmSubsystem();
 
   private ProcessedJoystick.ThrottleProfile throttleProfile =
       ProcessedJoystick.ThrottleProfile.TURBO;
@@ -204,6 +213,9 @@ public class RobotContainer {
     }
 
     NamedCommands.registerCommand(
+        "intakeAlgae", arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()));
+
+    NamedCommands.registerCommand(
         "BargeScoreCommand", BargeScoreCommand.raise(elevator, arm, algae));
   }
 
@@ -247,10 +259,13 @@ public class RobotContainer {
    * ArmPosition.HOME}, otherwise keep it at the same goal.
    */
   public void teleopInit() {
-    if (arm.getPosition() == ArmPosition.HOME) {
+    if (MathUtil.isNear(ArmPosition.HOME.getPosition(), arm.getPosition(), 5)
+        && !algae.hasAlgae()) {
+      arm.set(ArmPosition.HOME);
       elevator.set(ElevatorPosition.HOME);
     }
 
+    arm.tareClosedLoopController();
     elevator.tareClosedLoopController();
   }
 

@@ -7,6 +7,7 @@ import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -27,10 +28,10 @@ public class ElevatorSubsystem extends SubsystemBase {
   public final double MAX_VELOCITY = 80; // was 50 on Tuesday;
 
   // Spark motor controller instance
-  @Logged(name = "Elevator Motor")
+  @Logged(name = "Elevator Motor", importance = Importance.CRITICAL)
   private final SparkBase motor;
 
-  @Logged(name = "Elevator Encoder")
+  @Logged(name = "Elevator Encoder", importance = Importance.CRITICAL)
   private final RelativeEncoder encoder;
 
   // Elevator feedforward controller
@@ -41,10 +42,10 @@ public class ElevatorSubsystem extends SubsystemBase {
       new TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
   private TrapezoidProfile trapezoidProfile = new TrapezoidProfile(trapezoidConstraints);
 
-  @Logged(name = "Elevator Goal")
+  @Logged(name = "Elevator Goal", importance = Importance.CRITICAL)
   private TrapezoidProfile.State goal = new TrapezoidProfile.State();
 
-  @Logged(name = "Elevator Setpoint")
+  @Logged(name = "Elevator Setpoint", importance = Importance.CRITICAL)
   private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
   private TunableNumber tunablePosition = new TunableNumber("Elevator Position", 0);

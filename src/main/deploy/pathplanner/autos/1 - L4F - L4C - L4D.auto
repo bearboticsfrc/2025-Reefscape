@@ -7,6 +7,12 @@
         {
           "type": "path",
           "data": {
+            "pathName": "PushF"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
             "pathName": "3StartF"
           }
         },
@@ -62,18 +68,6 @@
           "type": "named",
           "data": {
             "name": "L4ReefScoreCommand"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "fullyRunElevatorToL2"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intakeAlgae"
           }
         },
         {

@@ -5,6 +5,7 @@ import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -16,15 +17,15 @@ import java.io.IOException;
 public class CoralSubsystem extends SubsystemBase {
   private final int INTAKE_SENSOR_PORT = 1;
 
-  private final double RETRACT_THRESHOLD = -0.8;
+  private final double RETRACT_THRESHOLD = 0.8;
 
-  @Logged(name = "Coral Intake Motor")
+  @Logged(name = "Coral Intake Motor", importance = Importance.CRITICAL)
   private final SparkBase intake;
 
-  @Logged(name = "Coral Outake Motor")
+  @Logged(name = "Coral Outake Motor", importance = Importance.CRITICAL)
   private final SparkBase outake;
 
-  @Logged(name = "Coral Outake Encoder")
+  @Logged(name = "Coral Outake Encoder", importance = Importance.CRITICAL)
   private final RelativeEncoder outakeEncoder;
 
   private final DigitalInput intakeSensor = new DigitalInput(INTAKE_SENSOR_PORT);
@@ -50,7 +51,7 @@ public class CoralSubsystem extends SubsystemBase {
   /**
    * @return true if the coral is blocking the coral intake sensor.
    */
-  @Logged(name = "Has Coral")
+  @Logged(name = "Has Coral", importance = Importance.CRITICAL)
   public boolean hasCoral() {
     return !intakeSensor.get();
   }
@@ -61,11 +62,11 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} intaking the coral.
    */
   public Command intakeCoral() {
-    return runOutake(MotorSpeed.REVERSE_TENTH)
+    return runOutake(MotorSpeed.TENTH)
         .alongWith(runIntake(MotorSpeed.TENTH))
         .andThen(Commands.waitUntil(this::hasCoral))
         .andThen(Commands.runOnce(() -> outakeEncoder.setPosition(0)))
-        .andThen(Commands.waitUntil(() -> outakeEncoder.getPosition() <= RETRACT_THRESHOLD))
+        .andThen(Commands.waitUntil(() -> outakeEncoder.getPosition() >= RETRACT_THRESHOLD))
         .andThen(stop());
   }
 
@@ -75,7 +76,7 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} scoring the coral.
    */
   public Command scoreCoral() {
-    return runOutake(MotorSpeed.REVERSE_FULL)
+    return runOutake(MotorSpeed.FULL)
         .andThen(Commands.waitUntil(() -> !hasCoral()))
         .andThen(runOutake(MotorSpeed.OFF));
   }

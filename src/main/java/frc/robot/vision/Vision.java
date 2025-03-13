@@ -27,6 +27,7 @@ package frc.robot.vision;
 import static frc.robot.constants.VisionConstants.*;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import frc.robot.constants.VisionConstants;
@@ -44,7 +45,7 @@ public class Vision {
   private final List<PhotonCamera> cameras = new ArrayList<>();
   private final List<PhotonPoseEstimator> photonEstimators = new ArrayList<>();
 
-  @Logged(name = "Target Poses")
+  @Logged(name = "Target Poses", importance = Importance.CRITICAL)
   private final List<Pose2d> targetPoses = new ArrayList<>();
 
   public Vision(List<VisionCamera> visionCameras) {

@@ -3,47 +3,33 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.271610365776034,
-        "y": 5.061355671709031
+        "x": 7.137,
+        "y": 3.861
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.792269736842105,
-        "y": 6.199506578947369
+        "x": 7.426431954248951,
+        "y": 3.869267570818668
       },
       "isLocked": false,
-      "linkedName": "I"
+      "linkedName": "StartG"
     },
     {
       "anchor": {
-        "x": 8.091858552631578,
-        "y": 4.929440789473684
+        "x": 7.245,
+        "y": 3.861
       },
       "prevControl": {
-        "x": 7.414144122668298,
-        "y": 4.948820852250477
+        "x": 6.85057636677095,
+        "y": 3.8471428426403604
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "LowNet"
+      "linkedName": null
     }
   ],
   "rotationTargets": [],
-  "constraintZones": [
-    {
-      "name": "Constraints Zone",
-      "minWaypointRelativePos": 0,
-      "maxWaypointRelativePos": 0.1510695187165772,
-      "constraints": {
-        "maxVelocity": 4.0,
-        "maxAcceleration": 2.0,
-        "maxAngularVelocity": 540.0,
-        "maxAngularAcceleration": 720.0,
-        "nominalVoltage": 12.0,
-        "unlimited": false
-      }
-    }
-  ],
+  "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
@@ -62,7 +48,7 @@
   "folder": "L4G - AG - AI",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -119.99999999999999
+    "rotation": -179.93324118428797
   },
   "useDefaultConstraints": true
 }
