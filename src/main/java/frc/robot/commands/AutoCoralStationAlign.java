@@ -4,7 +4,6 @@ import static frc.robot.constants.VisionConstants.APRIL_TAG_FIELD_LAYOUT;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
-import com.ctre.phoenix6.swerve.utility.PhoenixPIDController;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -21,8 +20,8 @@ import java.util.stream.Collectors;
 public class AutoCoralStationAlign extends Command {
   private static final Set<Integer> VALID_TAG_IDS = Set.of(1, 2, 12, 13);
 
-  private static final double P = 10; 
-  private static final double I = 0; 
+  private static final double P = 10;
+  private static final double I = 0;
   private static final double D = 0;
 
   private final CommandSwerveDrivetrain drivetrain;

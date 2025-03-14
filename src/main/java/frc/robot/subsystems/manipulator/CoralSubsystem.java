@@ -15,9 +15,10 @@ import java.io.File;
 import java.io.IOException;
 
 public class CoralSubsystem extends SubsystemBase {
-  private final int INTAKE_SENSOR_PORT = 1;
+  private final int INTAKE_SENSOR_PORT = 2;
+  private final int OUTAKE_SENSOR_PORT = 1;
 
-  private final double RETRACT_THRESHOLD = 0.8;
+  private final double CORAL_HONE_SPEED = 0.03;
 
   @Logged(name = "Coral Intake Motor", importance = Importance.CRITICAL)
   private final SparkBase intake;
@@ -28,7 +29,11 @@ public class CoralSubsystem extends SubsystemBase {
   @Logged(name = "Coral Outake Encoder", importance = Importance.CRITICAL)
   private final RelativeEncoder outakeEncoder;
 
+  @Logged(name = "Intake Sensor", importance = Importance.CRITICAL)
   private final DigitalInput intakeSensor = new DigitalInput(INTAKE_SENSOR_PORT);
+
+  @Logged(name = "Outake Sensor", importance = Importance.CRITICAL)
+  private final DigitalInput outakeSensor = new DigitalInput(OUTAKE_SENSOR_PORT);
 
   /**
    * Constructs a CoralSubsystem.
@@ -51,33 +56,62 @@ public class CoralSubsystem extends SubsystemBase {
   /**
    * @return true if the coral is blocking the coral intake sensor.
    */
-  @Logged(name = "Has Coral", importance = Importance.CRITICAL)
-  public boolean hasCoral() {
-    return !intakeSensor.get();
+  @Logged(name = "Outake Has Coral", importance = Importance.CRITICAL)
+  public boolean outakeHasCoral() {
+    return !outakeSensor.get();
+  }
+
+  /**
+   * @return true if a coral is blocking the coral intake sensor.
+   */
+  @Logged(name = "Intake Has Coral", importance = Importance.CRITICAL)
+  public boolean intakeHasCoral() {
+    return !outakeSensor.get();
   }
 
   /**
    * Smart coral intake command.
    *
-   * @return A {@link Command} intaking the coral.
+   * @return A {@link Command} intaking a coral.
    */
   public Command intakeCoral() {
+    return Commands.either(coralPresentStrategy(), coralAbsentStrategy(), this::outakeHasCoral)
+        .andThen(Commands.waitUntil(this::intakeHasCoral))
+        .andThen(runOutake(CORAL_HONE_SPEED))
+        .andThen(Commands.waitUntil(() -> !intakeHasCoral()))
+        .andThen(stop());
+  }
+
+  /**
+   * Coral intake strategy when a coral is already present in the outake.
+   *
+   * @return A {@link Command} adjusting the coral.
+   */
+  private Command coralPresentStrategy() {
+    return runOutake(MotorSpeed.REVERSE_TENTH);
+  }
+
+  /**
+   * Coral intake strategy when the coral intake is empty.
+   *
+   * @return A {@link Command} intaking a coral.
+   */
+  private Command coralAbsentStrategy() {
     return runOutake(MotorSpeed.TENTH)
         .alongWith(runIntake(MotorSpeed.TENTH))
-        .andThen(Commands.waitUntil(this::hasCoral))
-        .andThen(Commands.runOnce(() -> outakeEncoder.setPosition(0)))
-        .andThen(Commands.waitUntil(() -> outakeEncoder.getPosition() >= RETRACT_THRESHOLD))
-        .andThen(stop());
+        .andThen(Commands.waitUntil(this::intakeHasCoral))
+        .andThen(Commands.waitUntil(() -> !intakeHasCoral()))
+        .andThen(runOutake(MotorSpeed.REVERSE_TENTH));
   }
 
   /**
    * Coral score command
    *
-   * @return A {@link Command} scoring the coral.
+   * @return A {@link Command} scoring a coral.
    */
   public Command scoreCoral() {
     return runOutake(MotorSpeed.FULL)
-        .andThen(Commands.waitUntil(() -> !hasCoral()))
+        .andThen(Commands.waitUntil(() -> !outakeHasCoral()))
         .andThen(runOutake(MotorSpeed.OFF));
   }
 
@@ -89,6 +123,16 @@ public class CoralSubsystem extends SubsystemBase {
    */
   private Command runOutake(MotorSpeed speed) {
     return Commands.runOnce(() -> outake.set(speed.getSpeed()));
+  }
+
+  /**
+   * Run the coral outake at the supplied speed.
+   *
+   * @param speed double describing the desired outake motor speed.
+   * @return A {@link Command} running the coral intake.
+   */
+  private Command runOutake(double speed) {
+    return Commands.runOnce(() -> outake.set(speed));
   }
 
   /**

@@ -15,6 +15,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class Robot extends TimedRobot {
+  private final Importance MINIMUM_IMPORTANCE = Importance.CRITICAL;
+
   private Command m_autonomousCommand;
 
   @Logged(importance = Importance.CRITICAL)
@@ -26,7 +28,7 @@ public class Robot extends TimedRobot {
   }
 
   public void configureLogging() {
-    Epilogue.configure(config -> config.minimumImportance = Importance.CRITICAL);
+    Epilogue.configure(config -> config.minimumImportance = this.MINIMUM_IMPORTANCE);
     DataLogManager.start();
     Epilogue.bind(this);
   }

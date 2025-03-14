@@ -37,6 +37,7 @@ import frc.robot.subsystems.manipulator.ElevatorSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
 import frc.robot.utils.AllianceFlipUtil;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 public class RobotContainer {
   private final CommandPS4Controller driverJoystick =
@@ -241,6 +242,10 @@ public class RobotContainer {
       }
 
       if (method.getParameterCount() > 0) {
+        continue;
+      }
+
+      if (Modifier.isPrivate(method.getModifiers())) {
         continue;
       }
 
