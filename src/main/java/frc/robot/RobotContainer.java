@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
 import frc.robot.commands.AutoBargeAlignCommand;
+import frc.robot.commands.AutoProccessorAlignCommand;
 import frc.robot.commands.AutoReefAlignCommand;
 import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.ReefScoreCommand;
@@ -142,6 +143,10 @@ public class RobotContainer {
                 elevator.runElevatorTo(ElevatorPosition.HOME),
                 driverJoystick.R2()::getAsBoolean));
 
+    driverJoystick
+        .povDown()
+        .whileTrue(new AutoProccessorAlignCommand(drivetrain).andThen(algae.scoreAlgae()));
+
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
   }
@@ -198,7 +203,7 @@ public class RobotContainer {
 
       NamedCommands.registerCommand(
           "runElevatorTo" + elevatorPosition,
-          Commands.waitUntil(coral::intakeHasCoral).andThen(elevator.runElevatorTo(position)));
+          Commands.waitUntil(coral::outakeHasCoral).andThen(elevator.runElevatorTo(position)));
 
       NamedCommands.registerCommand(
           "fullyRunElevatorTo" + elevatorPosition,
@@ -213,6 +218,11 @@ public class RobotContainer {
 
       NamedCommands.registerCommand("runArmTo" + armPosition, arm.runArmTo(position));
     }
+
+    NamedCommands.registerCommand("runIntake", coral.intakeCoral());
+
+    NamedCommands.registerCommand(
+        "waitUntilIntakeHasCoral", Commands.waitUntil(coral::intakeHasCoral));
 
     NamedCommands.registerCommand(
         "intakeAlgae", arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()));
@@ -270,6 +280,8 @@ public class RobotContainer {
       arm.set(ArmPosition.HOME);
       elevator.set(ElevatorPosition.HOME);
     }
+
+    coral.stop().schedule();
 
     arm.tareClosedLoopController();
     elevator.tareClosedLoopController();

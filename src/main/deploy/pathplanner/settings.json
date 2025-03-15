@@ -4,8 +4,7 @@
   "holonomicMode": true,
   "pathFolders": [
     "L4F - L4C - L4D - AC",
-    "L4G - AG - AI",
-    "Teamate"
+    "L4G - AG - AI"
   ],
   "autoFolders": [],
   "defaultMaxVel": 5.0,

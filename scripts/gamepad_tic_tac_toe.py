@@ -1,10 +1,6 @@
 from time import sleep
 
 from adafruit_itertools import count, cycle
-from adafruit_macropad import MacroPad, keypad
-
-macropad = MacroPad()
-
 
 class Team:
     RED = (255, 0, 0)
@@ -104,7 +100,7 @@ class TicTacToe:
                 return 2, 4, 6
 
 
-def main() -> None:
+def main(macropad) -> None:
     board = Gameboard()
     tictactoe = TicTacToe(board)
 
@@ -120,7 +116,7 @@ def main() -> None:
     while True:
         print("\n" * 5)
         print(f"Current Turn: {'RED' if playing[0] == 255 else 'BLUE'}")
-        key_event: keypad.Event = macropad.keys.events
+        key_event = macropad.keys.events
         while not key_event:
             if macropad.encoder_switch:
                 return

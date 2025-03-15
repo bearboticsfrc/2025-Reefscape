@@ -118,7 +118,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
               this));
 
   /* The SysId routine to test */
-  private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSteer;
+  private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineRotation;
 
   /**
    * Runs the SysId Quasistatic test in the given direction for the routine specified by {@link

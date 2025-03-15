@@ -1,13 +1,6 @@
 from __future__ import annotations
 
-from adafruit_macropad import MacroPad
-from hid_gamepad import Gamepad
-from usb_hid import devices
 from time import time
-
-
-GAMEPAD = Gamepad(devices)
-MACROPAD = MacroPad()
 
 
 class LocationMacropad:
