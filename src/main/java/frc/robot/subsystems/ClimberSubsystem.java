@@ -12,7 +12,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.io.File;
 import java.io.IOException;
@@ -45,8 +44,11 @@ public class ClimberSubsystem extends SubsystemBase {
   }
 
   public Command deploy() {
-    return Commands.runOnce(() -> servo.setAngle(DEPLOY_ANGLE.in(Degrees)))
-        .andThen(runClimberTo(ClimberPosition.DEPLOY));
+    return deployServo().andThen(runClimberTo(ClimberPosition.DEPLOY));
+  }
+
+  private Command deployServo() {
+    return runOnce(() -> servo.setAngle(DEPLOY_ANGLE.in(Degrees)));
   }
 
   /**
@@ -58,15 +60,14 @@ public class ClimberSubsystem extends SubsystemBase {
   private Command runClimberTo(ClimberPosition position) {
     SparkClosedLoopController controller = winch.getClosedLoopController();
 
-    return Commands.runOnce(
-        () -> controller.setReference(position.getPosition(), ControlType.kPosition));
+    return runOnce(() -> controller.setReference(position.getPosition(), ControlType.kPosition));
   }
 
   /**
    * @return A {@link Command} stopping the climber motor.
    */
   public Command stop() {
-    return Commands.runOnce(winch::stopMotor);
+    return runOnce(winch::stopMotor);
   }
 
   public enum ClimberPosition {

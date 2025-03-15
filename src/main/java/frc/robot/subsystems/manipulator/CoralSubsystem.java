@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.io.File;
 import java.io.IOException;
@@ -77,9 +78,10 @@ public class CoralSubsystem extends SubsystemBase {
   public Command intakeCoral() {
     return Commands.either(coralPresentStrategy(), coralAbsentStrategy(), this::outakeHasCoral)
         .andThen(Commands.waitUntil(this::intakeHasCoral))
-        .andThen(runOutake(CORAL_HONE_SPEED))
-        .andThen(Commands.waitUntil(() -> !intakeHasCoral()))
-        .andThen(stop());
+        .andThen(
+            new ScheduleCommand(runOutake(CORAL_HONE_SPEED))
+                .andThen(Commands.waitUntil(() -> !intakeHasCoral()))
+                .andThen(stop()));
   }
 
   /**
@@ -122,7 +124,7 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} running the coral intake.
    */
   private Command runOutake(MotorSpeed speed) {
-    return Commands.runOnce(() -> outake.set(speed.getSpeed()));
+    return runOnce(() -> outake.set(speed.getSpeed()));
   }
 
   /**
@@ -132,7 +134,7 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} running the coral intake.
    */
   private Command runOutake(double speed) {
-    return Commands.runOnce(() -> outake.set(speed));
+    return runOnce(() -> outake.set(speed));
   }
 
   /**
@@ -142,7 +144,7 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} running the coral intake.
    */
   private Command runIntake(MotorSpeed speed) {
-    return Commands.runOnce(() -> intake.set(speed.getSpeed()));
+    return runOnce(() -> intake.set(speed.getSpeed()));
   }
 
   /**

@@ -197,7 +197,8 @@ public class RobotContainer {
       String elevatorPosition = position.toString();
 
       NamedCommands.registerCommand(
-          "runElevatorTo" + elevatorPosition, elevator.runElevatorTo(position));
+          "runElevatorTo" + elevatorPosition,
+          Commands.waitUntil(coral::intakeHasCoral).andThen(elevator.runElevatorTo(position)));
 
       NamedCommands.registerCommand(
           "fullyRunElevatorTo" + elevatorPosition,

@@ -78,10 +78,10 @@ public class AlgaeSubsystem extends SubsystemBase {
    * @return A {@link Command} running the algae intake.
    */
   public Command run(MotorSpeed speed) {
-    return Commands.runOnce(() -> motor.set(speed.getSpeed()));
+    return runOnce(() -> motor.set(speed.getSpeed()));
   }
 
   public Command stopMotor() {
-    return Commands.runOnce(motor::stopMotor);
+    return runOnce(motor::stopMotor);
   }
 }
