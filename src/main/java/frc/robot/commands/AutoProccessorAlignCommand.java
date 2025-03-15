@@ -3,26 +3,37 @@ package frc.robot.commands;
 // import static frc.robot.constants.*;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
+import static frc.robot.constants.VisionConstants.APRIL_TAG_FIELD_LAYOUT;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.utils.AllianceFlipUtil;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AutoProccessorAlignCommand extends Command {
-  private final double TRANSLATION_P = 6;
-  private final double HEADING_P = 10;
+  private static final Set<Integer> VALID_TAG_IDS = Set.of(3, 16);
+  private static final Transform2d TAG_TO_ROBOT_TRANSFORM =
+      new Transform2d(0.5, -0.15, Rotation2d.k180deg);
 
-  private final LinearVelocity TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(6);
-  private final LinearAcceleration TRANSLATION_MAX_ACCELERATION = MetersPerSecondPerSecond.of(4);
+  private final double TRANSLATION_P = 6;
+  private final double HEADING_P = 2;
+
+  private final LinearVelocity TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(4);
+  private final LinearAcceleration TRANSLATION_MAX_ACCELERATION = MetersPerSecondPerSecond.of(2);
 
   private final TrapezoidProfile.Constraints TRANSLATION_CONSTRAINTS =
       new TrapezoidProfile.Constraints(
@@ -38,15 +49,37 @@ public class AutoProccessorAlignCommand extends Command {
 
   private final CommandSwerveDrivetrain drivetrain;
 
-  private Pose2d targetPose = new Pose2d(6, 0.5, Rotation2d.kCCW_90deg);
+  private final Map<Pose2d, Pose2d> poseToPose;
+  private final List<Pose2d> tagPoses = new ArrayList<>();
+
+  private Pose2d targetPose;
 
   public AutoProccessorAlignCommand(CommandSwerveDrivetrain drivetrain) {
     this.drivetrain = drivetrain;
+
+    this.poseToPose = generatePoseToRotation();
+    this.tagPoses.addAll(poseToPose.keySet());
+
+    addRequirements(drivetrain);
+  }
+
+  private Map<Pose2d, Pose2d> generatePoseToRotation() {
+    return APRIL_TAG_FIELD_LAYOUT.getTags().stream()
+        .filter(tag -> VALID_TAG_IDS.contains(tag.ID))
+        .collect(Collectors.toMap(this::mapKey, this::mapValue));
+  }
+
+  private Pose2d mapKey(AprilTag tag) {
+    return tag.pose.toPose2d();
+  }
+
+  private Pose2d mapValue(AprilTag tag) {
+    return tag.pose.toPose2d().plus(TAG_TO_ROBOT_TRANSFORM);
   }
 
   @Override
   public void initialize() {
-    targetPose = AllianceFlipUtil.apply(targetPose);
+    targetPose = poseToPose.get(drivetrain.getState().Pose.nearest(tagPoses));
 
     xController.setGoal(targetPose.getX());
     yController.setGoal(targetPose.getY());
