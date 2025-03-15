@@ -3,40 +3,40 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.2655185368178254,
-        "y": 0.9043913244625799
+        "x": 5.271610365776034,
+        "y": 5.061355671709031
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.751048837762611,
-        "y": 1.3312129787300653
+        "x": 5.792269736842105,
+        "y": 6.199506578947369
       },
       "isLocked": false,
-      "linkedName": "LowPStation"
+      "linkedName": "I"
     },
     {
       "anchor": {
-        "x": 3.984743896649129,
-        "y": 2.820611846067667
+        "x": 8.091858552631578,
+        "y": 4.929440789473684
       },
       "prevControl": {
-        "x": 3.158149739851308,
-        "y": 2.0967622109975856
+        "x": 7.414144122668298,
+        "y": 4.948820852250477
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "D"
+      "linkedName": "LowNet"
     }
   ],
   "rotationTargets": [],
   "constraintZones": [
     {
       "name": "Constraints Zone",
-      "minWaypointRelativePos": 0.4478609625668451,
-      "maxWaypointRelativePos": 1.0,
+      "minWaypointRelativePos": 0,
+      "maxWaypointRelativePos": 0.1510695187165772,
       "constraints": {
-        "maxVelocity": 5.0,
-        "maxAcceleration": 2.5,
+        "maxVelocity": 4.0,
+        "maxAcceleration": 2.0,
         "maxAngularVelocity": 540.0,
         "maxAngularAcceleration": 720.0,
         "nominalVoltage": 12.0,
@@ -45,22 +45,10 @@
     }
   ],
   "pointTowardsZones": [],
-  "eventMarkers": [
-    {
-      "name": "PreRunElevatorToL4",
-      "waypointRelativePos": 0.35427807486630997,
-      "endWaypointRelativePos": null,
-      "command": {
-        "type": "named",
-        "data": {
-          "name": "runElevatorToL4"
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 5.0,
-    "maxAcceleration": 4.0,
+    "maxAcceleration": 3.5,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -68,13 +56,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 59.8644717142621
+    "rotation": 180.0
   },
   "reversed": false,
-  "folder": "L4F-L4C-L4D-L4E",
+  "folder": "L4G - AG - AI",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 54.82697449321651
+    "rotation": -119.99999999999999
   },
   "useDefaultConstraints": true
 }

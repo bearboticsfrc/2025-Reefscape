@@ -27,7 +27,10 @@ package frc.robot.vision;
 import static frc.robot.constants.VisionConstants.*;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import frc.robot.constants.VisionConstants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,12 +39,13 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class Vision {
   private final List<PhotonCamera> cameras = new ArrayList<>();
   private final List<PhotonPoseEstimator> photonEstimators = new ArrayList<>();
 
-  @Logged(name = "Target Poses")
+  @Logged(name = "Target Poses", importance = Importance.CRITICAL)
   private final List<Pose2d> targetPoses = new ArrayList<>();
 
   public Vision(List<VisionCamera> visionCameras) {
@@ -106,6 +110,13 @@ public class Vision {
         continue;
       }
 
+      for (PhotonTrackedTarget trackedTarget : result.getTargets()) {
+        int fiducialId = trackedTarget.getFiducialId();
+        Pose3d tagPose = VisionConstants.APRIL_TAG_FIELD_LAYOUT.getTagPose(fiducialId).get();
+
+        targetPoses.add(tagPose.toPose2d());
+      }
+
       PhotonPoseEstimator photonEstimator = photonEstimators.get(i);
       Optional<EstimatedRobotPose> maybeEstimatedPose = photonEstimator.update(maybeResult.get());
 
@@ -115,7 +126,6 @@ public class Vision {
 
       EstimatedRobotPose estimatedPose = maybeEstimatedPose.get();
 
-      targetPoses.add(estimatedPose.estimatedPose.toPose2d());
       estimatedPoses.add(estimatedPose);
     }
 

@@ -8,6 +8,7 @@ import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Angle;
@@ -33,10 +34,10 @@ public class ArmSubsystem extends SubsystemBase {
   public final double ANGLE_DIVISOR = HORIZONTAL / (Math.PI / 2);
 
   // Spark motor controller instance
-  @Logged(name = "Arm Motor")
+  @Logged(name = "Arm Motor", importance = Importance.CRITICAL)
   private final SparkBase motor;
 
-  @Logged(name = "Arm Encoder")
+  @Logged(name = "Arm Encoder", importance = Importance.CRITICAL)
   private final RelativeEncoder encoder;
 
   // Arm feedforward controller
@@ -47,10 +48,10 @@ public class ArmSubsystem extends SubsystemBase {
       new TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
   private final TrapezoidProfile trapezoidProfile = new TrapezoidProfile(trapezoidConstraints);
 
-  @Logged(name = "Arm Goal")
+  @Logged(name = "Arm Goal", importance = Importance.CRITICAL)
   private TrapezoidProfile.State goal = new TrapezoidProfile.State();
 
-  @Logged(name = "Arm Setpoint")
+  @Logged(name = "Arm Setpoint", importance = Importance.CRITICAL)
   private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
   /** Constructs a new ArmSubsystem by configuring the leader and follower motors. */
@@ -80,12 +81,8 @@ public class ArmSubsystem extends SubsystemBase {
    *
    * @param position The desired arm position.
    */
-  private void set(ArmPosition position) {
+  public void set(ArmPosition position) {
     goal = new TrapezoidProfile.State(position.getPosition(), 0);
-  }
-
-  public void set(double speed) {
-    motor.set(speed);
   }
 
   @Override
@@ -109,6 +106,15 @@ public class ArmSubsystem extends SubsystemBase {
   }
 
   /**
+   * Get the current arm position.
+   *
+   * @return The current position.
+   */
+  public double getPosition() {
+    return encoder.getPosition();
+  }
+
+  /**
    * Creates a command to run the arm to a specified position.
    *
    * @param position The target arm position.
@@ -120,6 +126,10 @@ public class ArmSubsystem extends SubsystemBase {
 
   public Command stop() {
     return runOnce(() -> motor.stopMotor());
+  }
+
+  public void tareClosedLoopController() {
+    setpoint = new TrapezoidProfile.State(encoder.getPosition(), 0);
   }
 
   /** Enum representing preset arm positions. */

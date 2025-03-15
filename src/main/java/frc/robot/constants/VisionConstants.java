@@ -15,7 +15,7 @@ import edu.wpi.first.units.measure.Distance;
 import frc.robot.vision.VisionCamera;
 
 public class VisionConstants {
-  public static final Distance CULLING_DISTANCE = Meters.of(2);
+  public static final Distance CULLING_DISTANCE = Meters.of(2.5);
   public static final double CULLING_AMBIGUITY = 0.2;
 
   private static final String FRONT_LEFT_CAMERA_NAME = "OV9281FrontLeft";
@@ -35,7 +35,7 @@ public class VisionConstants {
   private static final Transform3d ROBOT_TO_REAR_CAMERA =
       new Transform3d(
           new Translation3d(-.019, 0.0, 0.957),
-          new Rotation3d(Radians.zero(), Degrees.of(160), Degrees.of(0)));
+          new Rotation3d(Radians.zero(), Degrees.of(-20), Degrees.of(180)));
 
   public static final VisionCamera FRONT_LEFT_CAMERA =
       new VisionCamera(FRONT_LEFT_CAMERA_NAME, ROBOT_TO_FRONT_LEFT_CAMERA);

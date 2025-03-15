@@ -15,6 +15,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentric;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -35,12 +36,12 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
  * <p>At End: stops the drivetrain
  */
 public class AutoReefAlignCommand extends Command {
-  private final double TRANSLATION_K = 6;
+  private final double TRANSLATION_K = 5;
   private final double THETA_K = 10;
 
   private final double TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(6).in(MetersPerSecond);
   private final double TRANSLATION_MAX_ACCELERATION =
-      MetersPerSecondPerSecond.of(4).in(MetersPerSecondPerSecond);
+      MetersPerSecondPerSecond.of(3).in(MetersPerSecondPerSecond);
 
   private final double THETA_MAX_VELOCITY = RadiansPerSecond.of(2 * Math.PI).in(RadiansPerSecond);
   private final double THETA_MAX_ACCELERATION =
@@ -66,7 +67,7 @@ public class AutoReefAlignCommand extends Command {
   private final CommandSwerveDrivetrain drivetrain;
   private final ReefTagPoses.ScoreSide side;
 
-  @Logged(name = "Reef Auto Align Target Pose")
+  @Logged(name = "Reef Auto Align Target Pose", importance = Importance.CRITICAL)
   private Pose2d targetPose;
 
   /**
@@ -89,7 +90,8 @@ public class AutoReefAlignCommand extends Command {
     addRequirements(drivetrain);
   }
 
-  private Pose2d getTargetPose() {
+  @Logged(importance = Importance.CRITICAL)
+  public Pose2d getTargetPose() {
     return ReefTagPoses.getNearestScoringPose(drivetrain.getState().Pose, side);
   }
 
