@@ -1,0 +1,119 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "StartF"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "L4ReefScoreCommand"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "FToPStation"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "intakeCoral"
+                }
+              },
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "waitUntilIntakeHasCoral"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "PStationToD"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "L4ReefScoreCommand"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "DToPStation"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "intakeCoral"
+                }
+              },
+              {
+                "type": "sequential",
+                "data": {
+                  "commands": [
+                    {
+                      "type": "named",
+                      "data": {
+                        "name": "waitUntilIntakeHasCoral"
+                      }
+                    },
+                    {
+                      "type": "path",
+                      "data": {
+                        "pathName": "PStationToC"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "L4ReefScoreCommand"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CToPStation"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

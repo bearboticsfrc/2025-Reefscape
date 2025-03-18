@@ -95,7 +95,8 @@ public class RobotContainer {
         .whileTrue(
             elevator
                 .runElevatorTo(this::getTargetElevatorPosition)
-                .andThen(Commands.waitUntil(elevator::isAtSetpoint)))
+                .andThen(Commands.waitUntil(elevator::isAtSetpoint))
+                .unless(coral::intakeHasCoral))
         .onFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
     driverJoystick.L2().whileTrue(algae.intakeAlgae()).onFalse(algae.stopMotor());
@@ -127,21 +128,20 @@ public class RobotContainer {
                 .runElevatorTo(this::getTargetElevatorPosition)
                 .alongWith(new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.LEFT)))
         .whileFalse(
-            Commands.either(
-                Commands.idle(),
-                elevator.runElevatorTo(ElevatorPosition.HOME),
-                driverJoystick.R2()::getAsBoolean));
+            elevator
+                .runElevatorTo(ElevatorPosition.HOME)
+                .unless(driverJoystick.R2()::getAsBoolean));
 
     driverJoystick
         .povRight()
         .whileTrue(
             new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
-                .alongWith(elevator.runElevatorTo(this::getTargetElevatorPosition)))
+                .alongWith(elevator.runElevatorTo(this::getTargetElevatorPosition))
+                .unless(coral::intakeHasCoral))
         .whileFalse(
-            Commands.either(
-                Commands.idle(),
-                elevator.runElevatorTo(ElevatorPosition.HOME),
-                driverJoystick.R2()::getAsBoolean));
+            elevator
+                .runElevatorTo(ElevatorPosition.HOME)
+                .unless(driverJoystick.R2()::getAsBoolean));
 
     driverJoystick
         .povDown()

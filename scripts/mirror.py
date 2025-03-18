@@ -13,14 +13,11 @@ def mirror_translation(x: float, y: float) -> tuple[float, float]:
 
 def get_mirrored_file_name(original: str) -> str:
     # Assuming format is '# - Auto/Path Name'
-    mutable_original = list(original.split("\\")[-1])
+    partitioned_path = original.rpartition("\\")
+    file_name = partitioned_path[-1]
 
-    if original.endswith(".auto") and (not mutable_original[0].isnumeric() or mutable_original[1] != " "):
-        raise ValueError(f"Unexpected name format! Should be '# - {original}' not {original!r}")
-    else: 
-        mutable_original[1] = "M "
+    return partitioned_path[0] + "\\M" + file_name
 
-    return "\\".join(original.split("\\")[:-1]) + "\\" + "".join(mutable_original)
 
 def get_file_json(file: Path) -> dict[Any, Any]:
     with file.open() as fp:
@@ -113,7 +110,7 @@ def main() -> None:
 
     if args.path.is_dir():
         for file in args.path.rglob("*"):
-            if not file.is_file() or file.suffix != ".auto" or file.name.startswith("M-"):
+            if not file.is_file() or file.suffix != ".auto" or "M - " in file.name:
                 continue
 
             count += 1
