@@ -4,12 +4,12 @@
     {
       "anchor": {
         "x": 5.779088541938782,
-        "y": 4.191158028610476
+        "y": 3.8607435713895244
       },
       "prevControl": null,
       "nextControl": {
         "x": 6.779088541938782,
-        "y": 4.191158028610476
+        "y": 3.8607435713895244
       },
       "isLocked": false,
       "linkedName": "G"
@@ -62,7 +62,7 @@
   "folder": "L4G - AG - AI",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -179.8755490272924
+    "rotation": 179.8755490272924
   },
   "useDefaultConstraints": true
 }
