@@ -108,7 +108,7 @@ public class RobotContainer {
                 () -> setThrottleProfile(ThrottleProfile.TURTLE),
                 () -> setThrottleProfile(ThrottleProfile.TURBO)));
 
-    driverJoystick.circle().whileTrue(algae.scoreAlgae()).onFalse(algae.stopMotor());
+    driverJoystick.circle().whileTrue(algae.scoreProcessor()).onFalse(algae.stopMotor());
     driverJoystick
         .cross()
         .whileTrue(arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()))

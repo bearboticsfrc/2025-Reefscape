@@ -16,7 +16,7 @@ import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
  * manipulator subsystems.
  */
 public class BargeScoreCommand {
-  private static final Time SCORE_WAIT = Milliseconds.of(350);
+  private static final Time SCORE_WAIT = Milliseconds.of(200);
 
   /**
    * Creates a command sequence to perform the "raise" portion of a barge score.
@@ -49,7 +49,7 @@ public class BargeScoreCommand {
         .andThen(arm.runArmTo(ArmPosition.BARGE))
         .andThen(Commands.waitUntil(() -> elevatorAndArmAtSetpoint(elevator, arm)))
         .andThen(Commands.waitTime(SCORE_WAIT))
-        .andThen(algae.scoreAlgae())
+        .andThen(algae.scoreBarge())
         .andThen(
             elevator.runElevatorTo(ElevatorPosition.HOME).alongWith(arm.runArmTo(ArmPosition.HOME)))
         .andThen(Commands.waitUntil(() -> elevatorAndArmAtSetpoint(elevator, arm)));

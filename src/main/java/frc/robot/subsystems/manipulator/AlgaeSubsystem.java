@@ -20,6 +20,7 @@ public class AlgaeSubsystem extends SubsystemBase {
   private final int ALGAE_SENSOR_PORT = 0;
   private final Time SCORING_TIME = Seconds.of(0.5);
   private final double IDLE_INTAKE_SPEED = 0.1;
+  private final double SCORE_SPEED = .35;
 
   @Logged(name = "Algae Motor", importance = Importance.CRITICAL)
   private final SparkBase motor;
@@ -65,20 +66,34 @@ public class AlgaeSubsystem extends SubsystemBase {
     return run(MotorSpeed.QUARTER);
   }
 
-  public Command scoreAlgae() {
+  public Command scoreProcessor() {
     return run(MotorSpeed.REVERSE_THREE_QUARTERS)
         .andThen(Commands.waitTime(SCORING_TIME))
         .andThen(stopMotor());
   }
 
+  public Command scoreBarge() {
+    return run(-.35).andThen(Commands.waitTime(SCORING_TIME)).andThen(stopMotor());
+  }
+
   /**
    * Run the motor at the supplied speed.
    *
-   * @param speed {@link MotorSpeed} describing the desired intake motor speed.
+   * @param speed describing the desired intake motor speed.
    * @return A {@link Command} running the algae intake.
    */
   public Command run(MotorSpeed speed) {
     return runOnce(() -> motor.set(speed.getSpeed()));
+  }
+
+  /**
+   * Run the motor at the supplied speed.
+   *
+   * @param speed describing the desired intake motor speed.
+   * @return A {@link Command} running the algae intake.
+   */
+  public Command run(double speed) {
+    return runOnce(() -> motor.set(speed));
   }
 
   public Command stopMotor() {
