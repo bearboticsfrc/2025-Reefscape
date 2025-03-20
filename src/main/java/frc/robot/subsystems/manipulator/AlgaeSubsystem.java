@@ -73,7 +73,7 @@ public class AlgaeSubsystem extends SubsystemBase {
   }
 
   public Command scoreBarge() {
-    return run(-.35).andThen(Commands.waitTime(SCORING_TIME)).andThen(stopMotor());
+    return run(-0.1).andThen(Commands.waitTime(SCORING_TIME)).andThen(stopMotor());
   }
 
   /**
