@@ -147,7 +147,7 @@ public class ElevatorSubsystem extends SubsystemBase {
   /** Enum representing preset elevator positions. */
   public enum ElevatorPosition {
     L4(39.6),
-    L3(24.2),
+    L3(23.2),
     L2(13.5),
     L1(15),
     HOME(0);
