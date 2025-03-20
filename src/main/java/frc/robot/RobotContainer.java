@@ -143,9 +143,7 @@ public class RobotContainer {
                 .runElevatorTo(ElevatorPosition.HOME)
                 .unless(driverJoystick.R2()::getAsBoolean));
 
-    driverJoystick
-        .povDown()
-        .whileTrue(new AutoProccessorAlignCommand(drivetrain).andThen(algae.scoreAlgae()));
+    driverJoystick.povDown().whileTrue(new AutoProccessorAlignCommand(drivetrain));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
@@ -179,7 +177,7 @@ public class RobotContainer {
     return DriveConstants.FIELD_CENTRIC_SWERVE_REQUEST
         .withVelocityX(processedJoystick.get(JoystickAxis.Ly))
         .withVelocityY(processedJoystick.get(JoystickAxis.Lx))
-        .withRotationalRate(processedJoystick.get(JoystickAxis.Rx));
+        .withRotationalRate(processedJoystick.get(JoystickAxis.Rx) * 1.25);
   }
 
   /** Configures the PathPlanner autobuilder for publishing on NT. */
