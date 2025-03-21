@@ -136,8 +136,7 @@ public class RobotContainer {
         .povRight()
         .whileTrue(
             new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
-                .alongWith(elevator.runElevatorTo(this::getTargetElevatorPosition))
-                .unless(coral::intakeHasCoral))
+                .alongWith(elevator.runElevatorTo(this::getTargetElevatorPosition)))
         .whileFalse(
             elevator
                 .runElevatorTo(ElevatorPosition.HOME)
