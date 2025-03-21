@@ -44,15 +44,15 @@ public class BargeScoreCommand {
   public static Command raise(ElevatorSubsystem elevator, ArmSubsystem arm, AlgaeSubsystem algae) {
     return elevator
         .runElevatorTo(ElevatorPosition.L4)
-        .andThen(Commands.waitUntil(elevator::isAtSetpoint))
+        .alongWith(
+            Commands.waitUntil(() -> elevator.getPosition() >= ElevatorPosition.L3.getPosition()))
         .andThen(arm.runArmTo(ArmPosition.BARGE))
-        .andThen(Commands.waitUntil(arm::isAtSetpoint))
+        .andThen(Commands.waitUntil(() -> elevatorAndArmAtSetpoint(elevator, arm)))
         .andThen(Commands.waitTime(SCORE_WAIT))
-        .andThen(algae.scoreAlgae())
-        .andThen(arm.runArmTo(ArmPosition.HOME))
-        .andThen(Commands.waitUntil(arm::isAtSetpoint))
-        .andThen(elevator.runElevatorTo(ElevatorPosition.HOME))
-        .andThen(Commands.waitUntil(elevator::isAtSetpoint));
+        .andThen(algae.scoreBarge())
+        .andThen(
+            elevator.runElevatorTo(ElevatorPosition.HOME).alongWith(arm.runArmTo(ArmPosition.HOME)))
+        .andThen(Commands.waitUntil(() -> elevatorAndArmAtSetpoint(elevator, arm)));
   }
 
   /**
@@ -79,5 +79,9 @@ public class BargeScoreCommand {
         .andThen(elevator.runElevatorTo(ElevatorPosition.HOME))
         .andThen(Commands.waitUntil(elevator::isAtSetpoint))
         .alongWith(algae.stopMotor());
+  }
+
+  public static boolean elevatorAndArmAtSetpoint(ElevatorSubsystem elevator, ArmSubsystem arm) {
+    return elevator.isAtSetpoint() && arm.isAtSetpoint();
   }
 }

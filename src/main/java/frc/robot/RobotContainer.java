@@ -9,6 +9,8 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -19,6 +21,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
+import frc.robot.commands.AutoBargeAlignCommand;
+import frc.robot.commands.AutoProccessorAlignCommand;
 import frc.robot.commands.AutoReefAlignCommand;
 import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.ReefScoreCommand;
@@ -34,6 +38,7 @@ import frc.robot.subsystems.manipulator.ElevatorSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
 import frc.robot.utils.AllianceFlipUtil;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 public class RobotContainer {
   private final CommandPS4Controller driverJoystick =
@@ -45,19 +50,27 @@ public class RobotContainer {
   private final ProcessedJoystick processedJoystick =
       new ProcessedJoystick(driverJoystick, this::getThrottleProfile, DriveConstants.MAX_VELOCITY);
 
+  @Logged(importance = Importance.CRITICAL)
   private final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
-  @Logged private final CoralSubsystem coral = new CoralSubsystem();
-  @Logged private final AlgaeSubsystem algae = new AlgaeSubsystem();
-  @Logged private final ElevatorSubsystem elevator = new ElevatorSubsystem();
-  @Logged private final ArmSubsystem arm = new ArmSubsystem();
+  @Logged(importance = Importance.CRITICAL)
+  private final CoralSubsystem coral = new CoralSubsystem();
+
+  @Logged(importance = Importance.CRITICAL)
+  private final AlgaeSubsystem algae = new AlgaeSubsystem();
+
+  @Logged(importance = Importance.CRITICAL)
+  private final ElevatorSubsystem elevator = new ElevatorSubsystem();
+
+  @Logged(importance = Importance.CRITICAL)
+  private final ArmSubsystem arm = new ArmSubsystem();
 
   private ProcessedJoystick.ThrottleProfile throttleProfile =
       ProcessedJoystick.ThrottleProfile.TURBO;
 
   private SendableChooser<Command> autoChooser;
 
-  @Logged(name = "Auto Start Pose")
+  @Logged(name = "Auto Start Pose", importance = Importance.CRITICAL)
   private Pose2d autoStartPose;
 
   private Command introspectedAutoCommand;
@@ -82,7 +95,8 @@ public class RobotContainer {
         .whileTrue(
             elevator
                 .runElevatorTo(this::getTargetElevatorPosition)
-                .andThen(Commands.waitUntil(elevator::isAtSetpoint)))
+                .andThen(Commands.waitUntil(elevator::isAtSetpoint))
+                .unless(coral::intakeHasCoral))
         .onFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
     driverJoystick.L2().whileTrue(algae.intakeAlgae()).onFalse(algae.stopMotor());
@@ -94,7 +108,7 @@ public class RobotContainer {
                 () -> setThrottleProfile(ThrottleProfile.TURTLE),
                 () -> setThrottleProfile(ThrottleProfile.TURBO)));
 
-    driverJoystick.circle().whileTrue(algae.scoreAlgae()).onFalse(algae.stopMotor());
+    driverJoystick.circle().whileTrue(algae.scoreProcessor()).onFalse(algae.stopMotor());
     driverJoystick
         .cross()
         .whileTrue(arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()))
@@ -102,7 +116,9 @@ public class RobotContainer {
 
     driverJoystick
         .povUp()
-        .whileTrue(BargeScoreCommand.raise(elevator, arm, algae))
+        .whileTrue(
+            new AutoBargeAlignCommand(drivetrain)
+                .andThen(BargeScoreCommand.raise(elevator, arm, algae)))
         .whileFalse(BargeScoreCommand.lower(elevator, arm, algae));
 
     driverJoystick
@@ -112,21 +128,22 @@ public class RobotContainer {
                 .runElevatorTo(this::getTargetElevatorPosition)
                 .alongWith(new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.LEFT)))
         .whileFalse(
-            Commands.either(
-                Commands.idle(),
-                elevator.runElevatorTo(ElevatorPosition.HOME),
-                driverJoystick.R2()::getAsBoolean));
+            elevator
+                .runElevatorTo(ElevatorPosition.HOME)
+                .unless(driverJoystick.R2()::getAsBoolean));
 
     driverJoystick
         .povRight()
         .whileTrue(
             new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
-                .alongWith(elevator.runElevatorTo(this::getTargetElevatorPosition)))
+                .alongWith(elevator.runElevatorTo(this::getTargetElevatorPosition))
+                .unless(coral::intakeHasCoral))
         .whileFalse(
-            Commands.either(
-                Commands.idle(),
-                elevator.runElevatorTo(ElevatorPosition.HOME),
-                driverJoystick.R2()::getAsBoolean));
+            elevator
+                .runElevatorTo(ElevatorPosition.HOME)
+                .unless(driverJoystick.R2()::getAsBoolean));
+
+    driverJoystick.povDown().whileTrue(new AutoProccessorAlignCommand(drivetrain));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
@@ -160,7 +177,7 @@ public class RobotContainer {
     return DriveConstants.FIELD_CENTRIC_SWERVE_REQUEST
         .withVelocityX(processedJoystick.get(JoystickAxis.Ly))
         .withVelocityY(processedJoystick.get(JoystickAxis.Lx))
-        .withRotationalRate(processedJoystick.get(JoystickAxis.Rx));
+        .withRotationalRate(processedJoystick.get(JoystickAxis.Rx) * 1.33);
   }
 
   /** Configures the PathPlanner autobuilder for publishing on NT. */
@@ -171,11 +188,9 @@ public class RobotContainer {
     SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
-  /**
-   * Register all named commands for each subsystem.
-   */
+  /** Register all named commands for each subsystem. */
   private void registerNamedCommands() {
-    SubsystemBase[] subsystems = new SubsystemBase[] {coral, elevator, arm, algae};
+    SubsystemBase[] subsystems = new SubsystemBase[] {coral, elevator};
 
     for (SubsystemBase subsystem : subsystems) {
       registerNamedCommandsForSubsystem(subsystem);
@@ -185,11 +200,15 @@ public class RobotContainer {
       String elevatorPosition = position.toString();
 
       NamedCommands.registerCommand(
-          "runElevatorTo" + elevatorPosition, elevator.runElevatorTo(position));
+          "runElevatorTo" + elevatorPosition,
+          Commands.waitUntil(coral::outakeHasCoral).andThen(elevator.runElevatorTo(position)));
 
       NamedCommands.registerCommand(
-        elevatorPosition + "ReefScoreCommand",
-          ReefScoreCommand.get(position, elevator, coral));
+          "fullyRunElevatorTo" + elevatorPosition,
+          elevator.runElevatorTo(position).andThen(Commands.waitUntil(elevator::isAtSetpoint)));
+
+      NamedCommands.registerCommand(
+          elevatorPosition + "ReefScoreCommand", ReefScoreCommand.get(position, elevator, coral));
     }
 
     for (ArmPosition position : ArmPosition.values()) {
@@ -197,6 +216,17 @@ public class RobotContainer {
 
       NamedCommands.registerCommand("runArmTo" + armPosition, arm.runArmTo(position));
     }
+
+    NamedCommands.registerCommand("runIntake", coral.intakeCoral());
+
+    NamedCommands.registerCommand(
+        "waitUntilIntakeHasCoral", Commands.waitUntil(coral::intakeHasCoral));
+
+    NamedCommands.registerCommand(
+        "intakeAlgae", arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()));
+
+    NamedCommands.registerCommand(
+        "BargeScoreCommand", BargeScoreCommand.raise(elevator, arm, algae));
   }
 
   /**
@@ -224,12 +254,35 @@ public class RobotContainer {
         continue;
       }
 
+      if (Modifier.isPrivate(method.getModifiers())) {
+        continue;
+      }
+
       try {
         NamedCommands.registerCommand(method.getName(), (Command) method.invoke(subsystem));
       } catch (Exception exception) {
         throw new RuntimeException(exception);
       }
     }
+  }
+
+  /**
+   * Teleop Initialization.
+   *
+   * <p>Tares the elevator and lowers to {@code ElevatorPosition.HOME} if the arm is at {@code
+   * ArmPosition.HOME}, otherwise keep it at the same goal.
+   */
+  public void teleopInit() {
+    if (MathUtil.isNear(ArmPosition.HOME.getPosition(), arm.getPosition(), 5)
+        && !algae.hasAlgae()) {
+      arm.set(ArmPosition.HOME);
+      elevator.set(ElevatorPosition.HOME);
+    }
+
+    coral.stop().schedule();
+
+    arm.tareClosedLoopController();
+    elevator.tareClosedLoopController();
   }
 
   /** Disabled periodic which updates the autonomous starting pose. */

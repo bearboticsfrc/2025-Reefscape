@@ -1,11 +1,13 @@
 package frc.robot.subsystems.manipulator;
 
 import bearlib.motor.deserializer.MotorParser;
+import bearlib.util.TunableNumber;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -26,10 +28,10 @@ public class ElevatorSubsystem extends SubsystemBase {
   public final double MAX_VELOCITY = 80; // was 50 on Tuesday;
 
   // Spark motor controller instance
-  @Logged(name = "Elevator Motor")
+  @Logged(name = "Elevator Motor", importance = Importance.CRITICAL)
   private final SparkBase motor;
 
-  @Logged(name = "Elevator Encoder")
+  @Logged(name = "Elevator Encoder", importance = Importance.CRITICAL)
   private final RelativeEncoder encoder;
 
   // Elevator feedforward controller
@@ -40,11 +42,13 @@ public class ElevatorSubsystem extends SubsystemBase {
       new TrapezoidProfile.Constraints(MAX_VELOCITY, MAX_ACCELERATION);
   private TrapezoidProfile trapezoidProfile = new TrapezoidProfile(trapezoidConstraints);
 
-  @Logged(name = "Elevator Goal")
+  @Logged(name = "Elevator Goal", importance = Importance.CRITICAL)
   private TrapezoidProfile.State goal = new TrapezoidProfile.State();
 
-  @Logged(name = "Elevator Setpoint")
+  @Logged(name = "Elevator Setpoint", importance = Importance.CRITICAL)
   private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
+
+  private TunableNumber tunablePosition = new TunableNumber("Elevator Position", 0);
 
   /** Constructs a new ElevatorSubsystem by configuring the leader and follower motors. */
   public ElevatorSubsystem() {
@@ -71,18 +75,30 @@ public class ElevatorSubsystem extends SubsystemBase {
     return trapezoidProfile.timeLeftUntil(goal.position) == 0;
   }
 
+  public double getPosition() {
+    return encoder.getPosition();
+  }
+
   /**
    * Sets the target elevator position and updates the motor controller reference.
    *
    * @param position The desired elevator position.
    */
-  private void set(ElevatorPosition position) {
+  public void set(ElevatorPosition position) {
     goal = new TrapezoidProfile.State(position.getPosition(), 0);
   }
 
   @Override
   public void periodic() {
+    if (tunablePosition.hasChanged()) {
+      goal = new TrapezoidProfile.State(tunablePosition.get(), 0);
+    }
+
     updateTrapezoidProfile();
+
+    if (isAtSetpoint() && motor.getReverseLimitSwitch().isPressed()) {
+      encoder.setPosition(0);
+    }
   }
 
   /** Update the trapezoid motion profile setpoint. */
@@ -124,12 +140,16 @@ public class ElevatorSubsystem extends SubsystemBase {
     return runOnce(() -> motor.stopMotor());
   }
 
+  public void tareClosedLoopController() {
+    setpoint = new TrapezoidProfile.State(encoder.getPosition(), 0);
+  }
+
   /** Enum representing preset elevator positions. */
   public enum ElevatorPosition {
-    L4(39.4),
+    L4(39.6),
     L3(23.2),
-    L2(12.5),
-    L1(5),
+    L2(13.5),
+    L1(15),
     HOME(0);
 
     private final double position;

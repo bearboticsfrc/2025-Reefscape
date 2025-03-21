@@ -6,6 +6,7 @@ import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -19,8 +20,9 @@ public class AlgaeSubsystem extends SubsystemBase {
   private final int ALGAE_SENSOR_PORT = 0;
   private final Time SCORING_TIME = Seconds.of(0.5);
   private final double IDLE_INTAKE_SPEED = 0.1;
+  private final double SCORE_SPEED = .35;
 
-  @Logged(name = "Algae Motor")
+  @Logged(name = "Algae Motor", importance = Importance.CRITICAL)
   private final SparkBase motor;
 
   private final DigitalInput algaeSensor = new DigitalInput(ALGAE_SENSOR_PORT);
@@ -50,7 +52,7 @@ public class AlgaeSubsystem extends SubsystemBase {
   /**
    * @return true if the algae is blocking the sensor.
    */
-  @Logged(name = "Has Algae")
+  @Logged(name = "Has Algae", importance = Importance.CRITICAL)
   public boolean hasAlgae() {
     return !algaeSensor.get();
   }
@@ -64,23 +66,37 @@ public class AlgaeSubsystem extends SubsystemBase {
     return run(MotorSpeed.QUARTER);
   }
 
-  public Command scoreAlgae() {
-    return run(MotorSpeed.REVERSE_FULL)
+  public Command scoreProcessor() {
+    return run(MotorSpeed.REVERSE_THREE_QUARTERS)
         .andThen(Commands.waitTime(SCORING_TIME))
         .andThen(stopMotor());
+  }
+
+  public Command scoreBarge() {
+    return run(-0.1).andThen(Commands.waitTime(SCORING_TIME)).andThen(stopMotor());
   }
 
   /**
    * Run the motor at the supplied speed.
    *
-   * @param speed {@link MotorSpeed} describing the desired intake motor speed.
+   * @param speed describing the desired intake motor speed.
    * @return A {@link Command} running the algae intake.
    */
   public Command run(MotorSpeed speed) {
-    return Commands.runOnce(() -> motor.set(speed.getSpeed()));
+    return runOnce(() -> motor.set(speed.getSpeed()));
+  }
+
+  /**
+   * Run the motor at the supplied speed.
+   *
+   * @param speed describing the desired intake motor speed.
+   * @return A {@link Command} running the algae intake.
+   */
+  public Command run(double speed) {
+    return runOnce(() -> motor.set(speed));
   }
 
   public Command stopMotor() {
-    return Commands.runOnce(motor::stopMotor);
+    return runOnce(motor::stopMotor);
   }
 }

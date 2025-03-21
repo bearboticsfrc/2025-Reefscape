@@ -13,6 +13,7 @@ public class ReefScoreCommand {
    * <p>The order of operations is described below:
    *
    * <ol>
+   *   <li>Wait until the outake has a coral (ensure does not raise on coral)
    *   <li>Run the elevator to {@code position}
    *   <li>Score the coral
    *   <li>Set the elevator to {@link ElevatorPosition#HOME}
@@ -28,8 +29,8 @@ public class ReefScoreCommand {
    */
   public static Command get(
       ElevatorPosition position, ElevatorSubsystem elevator, CoralSubsystem coral) {
-    return elevator
-        .runElevatorTo(position)
+    return Commands.waitUntil(coral::outakeHasCoral)
+        .andThen(elevator.runElevatorTo(position))
         .andThen(Commands.waitUntil(elevator::isAtSetpoint))
         .andThen(coral.scoreCoral())
         .andThen(elevator.runElevatorTo(ElevatorPosition.HOME));

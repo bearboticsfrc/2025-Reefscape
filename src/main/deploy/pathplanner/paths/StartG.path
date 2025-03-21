@@ -3,40 +3,40 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 7.045071765598765,
-        "y": 2.618047136620728
+        "x": 7.137,
+        "y": 3.861
       },
       "prevControl": null,
       "nextControl": {
-        "x": 6.193126626249751,
-        "y": 2.8058852312821574
+        "x": 5.965363148707495,
+        "y": 3.860277050901924
       },
       "isLocked": false,
-      "linkedName": "StartF"
+      "linkedName": "StartG"
     },
     {
       "anchor": {
-        "x": 5.272688130882617,
-        "y": 2.987
+        "x": 5.779088541938782,
+        "y": 3.8607435713895244
       },
       "prevControl": {
-        "x": 6.073328031148337,
-        "y": 2.8145217120786272
+        "x": 6.7905590024733105,
+        "y": 3.8725800476441745
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "F"
+      "linkedName": "G"
     }
   ],
   "rotationTargets": [],
   "constraintZones": [
     {
       "name": "Constraints Zone",
-      "minWaypointRelativePos": 0.30080213903743264,
+      "minWaypointRelativePos": 0.5,
       "maxWaypointRelativePos": 1.0,
       "constraints": {
-        "maxVelocity": 5.0,
-        "maxAcceleration": 2.5,
+        "maxVelocity": 4.0,
+        "maxAcceleration": 2.0,
         "maxAngularVelocity": 540.0,
         "maxAngularAcceleration": 720.0,
         "nominalVoltage": 12.0,
@@ -48,7 +48,7 @@
   "eventMarkers": [
     {
       "name": "PreRunElevatorToL4",
-      "waypointRelativePos": 0.20338983050847442,
+      "waypointRelativePos": 0.10160427807486645,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",
@@ -60,7 +60,7 @@
   ],
   "globalConstraints": {
     "maxVelocity": 5.0,
-    "maxAcceleration": 2.5,
+    "maxAcceleration": 3.5,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -68,13 +68,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 119.99999999999999
+    "rotation": 179.8755490272924
   },
   "reversed": false,
-  "folder": "L4F-L4C-L4D",
+  "folder": "L4G - AG - AI",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 119.99999999999999
+    "rotation": -179.93324118428797
   },
-  "useDefaultConstraints": false
+  "useDefaultConstraints": true
 }
