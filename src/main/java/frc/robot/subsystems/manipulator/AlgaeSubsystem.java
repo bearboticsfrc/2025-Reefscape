@@ -20,7 +20,9 @@ public class AlgaeSubsystem extends SubsystemBase {
   private final int ALGAE_SENSOR_PORT = 0;
   private final Time SCORING_TIME = Seconds.of(0.5);
   private final double IDLE_INTAKE_SPEED = 0.1;
-  private final double SCORE_SPEED = .35;
+
+  private final double BARGE_SCORE_SPEED = -.25;
+  private final MotorSpeed PROCESSOR_SCORE_SPEED = MotorSpeed.REVERSE_THREE_QUARTERS;
 
   @Logged(name = "Algae Motor", importance = Importance.CRITICAL)
   private final SparkBase motor;
@@ -67,13 +69,11 @@ public class AlgaeSubsystem extends SubsystemBase {
   }
 
   public Command scoreProcessor() {
-    return run(MotorSpeed.REVERSE_THREE_QUARTERS)
-        .andThen(Commands.waitTime(SCORING_TIME))
-        .andThen(stopMotor());
+    return run(PROCESSOR_SCORE_SPEED).andThen(Commands.waitTime(SCORING_TIME)).andThen(stopMotor());
   }
 
   public Command scoreBarge() {
-    return run(-0.1).andThen(Commands.waitTime(SCORING_TIME)).andThen(stopMotor());
+    return run(BARGE_SCORE_SPEED).andThen(Commands.waitTime(SCORING_TIME)).andThen(stopMotor());
   }
 
   /**
