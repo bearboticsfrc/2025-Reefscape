@@ -64,7 +64,7 @@ public class AutoBargeAlignCommand extends Command {
     Pose2d targetPose;
 
     if (AllianceFlipUtil.shouldFlip()) {
-      targetPose = new Pose2d(9.55, currentPose.getY(), Rotation2d.kZero);
+      targetPose = new Pose2d(9.455, currentPose.getY(), Rotation2d.kZero);
     } else {
       targetPose = new Pose2d(8.092, currentPose.getY(), Rotation2d.k180deg);
     }
