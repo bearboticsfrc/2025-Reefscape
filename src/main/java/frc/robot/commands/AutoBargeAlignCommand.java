@@ -12,11 +12,14 @@ import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.utils.AllianceFlipUtil;
@@ -44,6 +47,8 @@ public class AutoBargeAlignCommand extends Command {
 
   private final SwerveRequest.FieldCentric DRIVE_TO_POSE = new FieldCentric();
 
+  private static final Pose2d BLUE_SCORE_POSE = new Pose2d(8.092, 0, Rotation2d.k180deg);
+
   private final ProfiledPIDController xController =
       new ProfiledPIDController(TRANSLATION_P, 0, 0, TRANSLATION_CONSTRAINTS);
 
@@ -61,13 +66,7 @@ public class AutoBargeAlignCommand extends Command {
   @Override
   public void initialize() {
     Pose2d currentPose = drivetrain.getState().Pose;
-    Pose2d targetPose;
-
-    if (AllianceFlipUtil.shouldFlip()) {
-      targetPose = new Pose2d(9.455, currentPose.getY(), Rotation2d.kZero);
-    } else {
-      targetPose = new Pose2d(8.092, currentPose.getY(), Rotation2d.k180deg);
-    }
+    Pose2d targetPose = AllianceFlipUtil.apply(BLUE_SCORE_POSE).plus(new Transform2d(0, currentPose.getX(), Rotation2d.kZero));
 
     xController.setGoal(targetPose.getX());
     thetaController.setGoal(targetPose.getRotation().getRadians());
