@@ -2,5 +2,15 @@
     "type": "max",
     "id": 30,
     "current_limit": 60,
-    "idle_mode": "brake"
+    "idle_mode": "brake",
+    "hard_limits": [
+        {
+            "direction": "forward",
+            "type": "open"
+        },
+        {
+            "direction": "reverse",
+            "type": "open"
+        }
+    ]
 }
