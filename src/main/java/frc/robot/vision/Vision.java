@@ -28,8 +28,12 @@ import static frc.robot.constants.VisionConstants.*;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Importance;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import frc.robot.constants.VisionConstants;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +48,8 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 public class Vision {
   private final List<PhotonCamera> cameras = new ArrayList<>();
   private final List<PhotonPoseEstimator> photonEstimators = new ArrayList<>();
+
+  private Matrix<N3, N1> curStdDevs;
 
   @Logged(name = "Target Poses", importance = Importance.CRITICAL)
   private final List<Pose2d> targetPoses = new ArrayList<>();
@@ -66,18 +72,11 @@ public class Vision {
   }
 
   /**
-   * Get the latest photon result from the camera
-   *
-   * @return The result
+   * Returns the latest standard deviations of the estimated pose from {@link
+   * #getEstimatedGlobalPose()}, This should only be used when there are targets visible.
    */
-  public Optional<PhotonPipelineResult> getLatestResult(PhotonCamera camera) {
-    List<PhotonPipelineResult> results = camera.getAllUnreadResults();
-
-    if (results.size() < 1) {
-      return Optional.empty();
-    }
-
-    return Optional.of(results.get(0));
+  public Matrix<N3, N1> getEstimationStdDevs() {
+    return curStdDevs;
   }
 
   /**
@@ -88,48 +87,88 @@ public class Vision {
    *     used for estimation.
    */
   public List<EstimatedRobotPose> getEstimatedGlobalPoses() {
-    List<Optional<PhotonPipelineResult>> results = new ArrayList<>();
-
-    for (PhotonCamera camera : cameras) {
-      results.add(getLatestResult(camera));
-    }
-
-    List<EstimatedRobotPose> estimatedPoses = new ArrayList<>();
     targetPoses.clear();
 
-    for (int i = 0; i < photonEstimators.size(); i++) {
-      Optional<PhotonPipelineResult> maybeResult = results.get(i);
+    List<EstimatedRobotPose> visionEstimates = new ArrayList<>();
 
-      if (maybeResult.isEmpty()) {
-        continue;
+    for (PhotonCamera camera : cameras) {
+      for (PhotonPipelineResult change : camera.getAllUnreadResults()) {
+        if (isTooAmbiguous(change) || isTooFar(change)) {
+          continue;
+        }
+
+        updatedTargetPoses(change);
+
+        PhotonPoseEstimator photonPoseEstimator = photonEstimators.get(cameras.indexOf(camera));
+        Optional<EstimatedRobotPose> visionEstimation = photonPoseEstimator.update(change);
+
+        visionEstimation.ifPresent(visionEstimates::add);
+        updateEstimationStdDevs(photonPoseEstimator, visionEstimation, change.getTargets());
       }
-
-      PhotonPipelineResult result = maybeResult.get();
-
-      if (!result.hasTargets() || isTooFar(result) || isTooAmbiguous(result)) {
-        continue;
-      }
-
-      for (PhotonTrackedTarget trackedTarget : result.getTargets()) {
-        int fiducialId = trackedTarget.getFiducialId();
-        Pose3d tagPose = VisionConstants.APRIL_TAG_FIELD_LAYOUT.getTagPose(fiducialId).get();
-
-        targetPoses.add(tagPose.toPose2d());
-      }
-
-      PhotonPoseEstimator photonEstimator = photonEstimators.get(i);
-      Optional<EstimatedRobotPose> maybeEstimatedPose = photonEstimator.update(maybeResult.get());
-
-      if (maybeEstimatedPose.isEmpty()) {
-        continue;
-      }
-
-      EstimatedRobotPose estimatedPose = maybeEstimatedPose.get();
-
-      estimatedPoses.add(estimatedPose);
     }
 
-    return estimatedPoses;
+    return visionEstimates;
+  }
+
+  /**
+   * Calculates new standard deviations This algorithm is a heuristic that creates dynamic standard
+   * deviations based on number of tags, estimation strategy, and distance from the tags.
+   *
+   * @param photonEstimator The photon pose estimator to use.
+   * @param estimatedPose The estimated pose to guess standard deviations for.
+   * @param targets All targets in this camera frame
+   */
+  private void updateEstimationStdDevs(
+      PhotonPoseEstimator photonEstimator,
+      Optional<EstimatedRobotPose> estimatedPose,
+      List<PhotonTrackedTarget> targets) {
+    if (estimatedPose.isEmpty()) {
+      // No pose input. Default to single-tag std devs
+      curStdDevs = SINGLE_TAG_STD_DEVS;
+
+    } else {
+      // Pose present. Start running Heuristic
+      var estStdDevs = SINGLE_TAG_STD_DEVS;
+      int numTags = 0;
+      double avgDist = 0;
+
+      // Precalculation - see how many tags we found, and calculate an average-distance metric
+      for (var tgt : targets) {
+        var tagPose = photonEstimator.getFieldTags().getTagPose(tgt.getFiducialId());
+        if (tagPose.isEmpty()) continue;
+        numTags++;
+        avgDist +=
+            tagPose
+                .get()
+                .toPose2d()
+                .getTranslation()
+                .getDistance(estimatedPose.get().estimatedPose.toPose2d().getTranslation());
+      }
+
+      if (numTags == 0) {
+        // No tags visible. Default to single-tag std devs
+        curStdDevs = SINGLE_TAG_STD_DEVS;
+      } else {
+        // One or more tags visible, run the full heuristic.
+        avgDist /= numTags;
+        // Decrease std devs if multiple targets are visible
+        if (numTags > 1) estStdDevs = MULTI_TAG_STD_DEVS;
+        // Increase std devs based on (average) distance
+        if (numTags == 1 && avgDist > 4)
+          estStdDevs = VecBuilder.fill(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
+        else estStdDevs = estStdDevs.times(1 + (avgDist * avgDist / 30));
+        curStdDevs = estStdDevs;
+      }
+    }
+  }
+
+  private void updatedTargetPoses(PhotonPipelineResult change) {
+    for (PhotonTrackedTarget trackedTarget : change.getTargets()) {
+      int fiducialId = trackedTarget.getFiducialId();
+      Pose3d tagPose = VisionConstants.APRIL_TAG_FIELD_LAYOUT.getTagPose(fiducialId).get();
+
+      targetPoses.add(tagPose.toPose2d());
+    }
   }
 
   private boolean isTooFar(PhotonPipelineResult result) {

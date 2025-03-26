@@ -13,13 +13,11 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.utils.AllianceFlipUtil;
@@ -66,7 +64,9 @@ public class AutoBargeAlignCommand extends Command {
   @Override
   public void initialize() {
     Pose2d currentPose = drivetrain.getState().Pose;
-    Pose2d targetPose = AllianceFlipUtil.apply(BLUE_SCORE_POSE).plus(new Transform2d(0, currentPose.getX(), Rotation2d.kZero));
+    Pose2d targetPose =
+        AllianceFlipUtil.apply(BLUE_SCORE_POSE)
+            .plus(new Transform2d(0, currentPose.getX(), Rotation2d.kZero));
 
     xController.setGoal(targetPose.getX());
     thetaController.setGoal(targetPose.getRotation().getRadians());

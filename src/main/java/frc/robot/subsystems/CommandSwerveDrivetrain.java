@@ -17,9 +17,12 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Importance;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -173,7 +176,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
     List<EstimatedRobotPose> estimatedPoses = vision.getEstimatedGlobalPoses();
 
     for (EstimatedRobotPose estimatedPose : estimatedPoses) {
-      addVisionMeasurement(estimatedPose);
+      addVisionMeasurement(estimatedPose, vision.getEstimationStdDevs());
     }
   }
 
@@ -182,10 +185,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
    *
    * @param estimatedRobotPose The estimated robot pose from vision processing.
    */
-  public void addVisionMeasurement(EstimatedRobotPose estimatedRobotPose) {
+  public void addVisionMeasurement(EstimatedRobotPose estimatedRobotPose, Matrix<N3, N1> stdDevs) {
     Pose2d estPose = estimatedRobotPose.estimatedPose.toPose2d();
 
-    addVisionMeasurement(estPose, Utils.fpgaToCurrentTime(estimatedRobotPose.timestampSeconds));
+    addVisionMeasurement(
+        estPose, Utils.fpgaToCurrentTime(estimatedRobotPose.timestampSeconds), stdDevs);
   }
 
   private void configureAutoBuilder() {
