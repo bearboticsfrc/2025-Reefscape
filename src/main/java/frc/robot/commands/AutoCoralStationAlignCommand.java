@@ -10,11 +10,12 @@
 package frc.robot.commands;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.constants.VisionConstants.APRIL_TAG_FIELD_LAYOUT;
+import static frc.robot.constants.VisionConstants.CORAL_STATION_TAGS_ONLY_LAYOUT;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentric;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -89,10 +90,11 @@ public class AutoCoralStationAlignCommand extends Command {
     }
 
     List<Pose2d> tagPoses = new ArrayList<Pose2d>();
-    tagPoses.add(APRIL_TAG_FIELD_LAYOUT.getTagPose(1).get().toPose2d().plus(POSE_TRANSFORM));
-    tagPoses.add(APRIL_TAG_FIELD_LAYOUT.getTagPose(2).get().toPose2d().plus(POSE_TRANSFORM));
-    tagPoses.add(APRIL_TAG_FIELD_LAYOUT.getTagPose(12).get().toPose2d().plus(POSE_TRANSFORM));
-    tagPoses.add(APRIL_TAG_FIELD_LAYOUT.getTagPose(13).get().toPose2d().plus(POSE_TRANSFORM));
+
+    for (AprilTag tag : CORAL_STATION_TAGS_ONLY_LAYOUT.getTags()) {
+      tagPoses.add(tag.pose.toPose2d().plus(POSE_TRANSFORM));
+    }
+
     maybePoses = Optional.of(tagPoses);
     return tagPoses;
   }

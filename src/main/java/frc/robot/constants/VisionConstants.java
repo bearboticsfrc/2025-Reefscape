@@ -52,4 +52,20 @@ public class VisionConstants {
 
   public static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT =
       AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+
+  public static final AprilTagFieldLayout REEF_TAGS_ONLY_LAYOUT =
+      new AprilTagFieldLayout(
+          APRIL_TAG_FIELD_LAYOUT.getTags().stream()
+              .filter(it -> (it.ID >= 17 && it.ID <= 22) || (it.ID >= 6 && it.ID <= 11))
+              .toList(),
+          APRIL_TAG_FIELD_LAYOUT.getFieldLength(),
+          APRIL_TAG_FIELD_LAYOUT.getFieldWidth());
+
+  public static final AprilTagFieldLayout CORAL_STATION_TAGS_ONLY_LAYOUT =
+      new AprilTagFieldLayout(
+          APRIL_TAG_FIELD_LAYOUT.getTags().stream()
+              .filter(it -> (it.ID == 1 || it.ID == 2 || it.ID == 12 || it.ID == 13))
+              .toList(),
+          APRIL_TAG_FIELD_LAYOUT.getFieldLength(),
+          APRIL_TAG_FIELD_LAYOUT.getFieldWidth());
 }
