@@ -30,6 +30,7 @@ public class Robot extends TimedRobot {
   public void configureLogging() {
     Epilogue.configure(config -> config.minimumImportance = this.MINIMUM_IMPORTANCE);
     DataLogManager.start();
+    DriverStation.startDataLog(DataLogManager.getLog());
     Epilogue.bind(this);
   }
 
