@@ -93,7 +93,7 @@ public class Vision {
 
     for (PhotonCamera camera : cameras) {
       for (PhotonPipelineResult change : camera.getAllUnreadResults()) {
-        if (isTooAmbiguous(change) || isTooFar(change)) {
+        if (change.hasTargets() && (isTooAmbiguous(change) || isTooFar(change))) {
           continue;
         }
 

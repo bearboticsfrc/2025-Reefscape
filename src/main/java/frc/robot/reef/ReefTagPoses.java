@@ -6,7 +6,7 @@
 
 package frc.robot.reef;
 
-import static frc.robot.constants.VisionConstants.APRIL_TAG_FIELD_LAYOUT;
+import static frc.robot.constants.VisionConstants.REEF_TAGS_ONLY_LAYOUT;
 
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.geometry.*;
@@ -43,11 +43,7 @@ public class ReefTagPoses {
 
     Map<Pose2d, ReefScorePose> tagPoses = new HashMap<>();
 
-    for (AprilTag tag : APRIL_TAG_FIELD_LAYOUT.getTags()) {
-      if ((tag.ID < 6 || tag.ID > 11) && (tag.ID < 15 || tag.ID > 22)) {
-        continue;
-      }
-
+    for (AprilTag tag : REEF_TAGS_ONLY_LAYOUT.getTags()) {
       Pose2d tagPose = tag.pose.toPose2d();
       tagPoses.put(tagPose, new ReefScorePose(tagPose));
     }
