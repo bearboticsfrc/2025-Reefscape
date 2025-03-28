@@ -13,12 +13,13 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.constants.VisionConstants.CORAL_STATION_TAGS_ONLY_LAYOUT;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentric;
+import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentricFacingAngle;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -44,33 +45,24 @@ import java.util.Optional;
  * <p>At End: stops the drivetrain
  */
 public class AutoCoralStationAlignCommand extends Command {
-  private final double TRANSLATION_K = 5;
+  private final double TRANSLATION_K = 10;
+  private final double TRANSLATION_I = 0;
+
   private final double THETA_K = 10;
 
-  private final double TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(6).in(MetersPerSecond);
+  private final double TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(8).in(MetersPerSecond);
   private final double TRANSLATION_MAX_ACCELERATION =
-      MetersPerSecondPerSecond.of(3).in(MetersPerSecondPerSecond);
-
-  private final double THETA_MAX_VELOCITY = RadiansPerSecond.of(2 * Math.PI).in(RadiansPerSecond);
-  private final double THETA_MAX_ACCELERATION =
-      RadiansPerSecondPerSecond.of(2 * Math.PI).in(RadiansPerSecondPerSecond);
-
-  private final double POSITION_TOLERANCE = Inches.of(1).in(Meters);
-  private final double ROTATIONS_TOLERANCE = Radians.of(0.017).in(Radians);
+      MetersPerSecondPerSecond.of(5).in(MetersPerSecondPerSecond);
 
   private final TrapezoidProfile.Constraints TRANSLATION_CONSTRAINTS =
       new TrapezoidProfile.Constraints(TRANSLATION_MAX_VELOCITY, TRANSLATION_MAX_ACCELERATION);
-  private final TrapezoidProfile.Constraints THETA_CONSTRAINTS =
-      new TrapezoidProfile.Constraints(THETA_MAX_VELOCITY, THETA_MAX_ACCELERATION);
 
-  private final SwerveRequest.FieldCentric DRIVE_TO_POSE = new FieldCentric();
+  private final SwerveRequest.FieldCentricFacingAngle DRIVE_TO_POSE = new FieldCentricFacingAngle();
 
   private final ProfiledPIDController xController =
-      new ProfiledPIDController(TRANSLATION_K, 0, 0, TRANSLATION_CONSTRAINTS);
+      new ProfiledPIDController(TRANSLATION_K, TRANSLATION_I, 0, TRANSLATION_CONSTRAINTS);
   private final ProfiledPIDController yController =
-      new ProfiledPIDController(TRANSLATION_K, 0, 0, TRANSLATION_CONSTRAINTS);
-  private final ProfiledPIDController thetaController =
-      new ProfiledPIDController(THETA_K, 0, 0, THETA_CONSTRAINTS);
+      new ProfiledPIDController(TRANSLATION_K, TRANSLATION_I, 0, TRANSLATION_CONSTRAINTS);
 
   private final CommandSwerveDrivetrain drivetrain;
 
@@ -79,10 +71,12 @@ public class AutoCoralStationAlignCommand extends Command {
 
   private static Optional<List<Pose2d>> maybePoses = Optional.empty();
 
-  private static final Distance CENTER_TO_CORAL_STATION = Inches.of(18.2);
+  private static final Distance CENTER_TO_CORAL_STATION = Inches.of(16);
 
   private static final Transform2d POSE_TRANSFORM =
       new Transform2d(new Translation2d(CENTER_TO_CORAL_STATION, Inches.zero()), Rotation2d.kZero);
+
+  private static final Debouncer IS_FINISHED_DEBOUNCER = new Debouncer(0.5);
 
   public static List<Pose2d> getCoralStationPoses() {
     if (maybePoses.isPresent()) {
@@ -110,10 +104,7 @@ public class AutoCoralStationAlignCommand extends Command {
   public AutoCoralStationAlignCommand(CommandSwerveDrivetrain drivetrain) {
     this.drivetrain = drivetrain;
 
-    xController.setTolerance(POSITION_TOLERANCE);
-    yController.setTolerance(POSITION_TOLERANCE);
-    thetaController.setTolerance(ROTATIONS_TOLERANCE);
-    thetaController.enableContinuousInput(-Math.PI, Math.PI);
+    DRIVE_TO_POSE.HeadingController.setP(THETA_K);
 
     addRequirements(drivetrain);
   }
@@ -132,17 +123,15 @@ public class AutoCoralStationAlignCommand extends Command {
    */
   @Override
   public void initialize() {
-    targetPose = getTargetPose();
+    targetPose = new Pose2d(14.03, 5.87, Rotation2d.fromDegrees(-125));
 
     xController.setGoal(targetPose.getX());
     yController.setGoal(targetPose.getY());
-    thetaController.setGoal(targetPose.getRotation().getRadians());
 
     Pose2d currentPose = drivetrain.getState().Pose;
 
     xController.reset(currentPose.getX());
     yController.reset(currentPose.getY());
-    thetaController.reset(currentPose.getRotation().getRadians());
   }
 
   /**
@@ -156,14 +145,13 @@ public class AutoCoralStationAlignCommand extends Command {
 
     final double xVelocity = xController.calculate(currentPose.getX());
     final double yVelocity = yController.calculate(currentPose.getY());
-    final double thetaVelocity = thetaController.calculate(currentPose.getRotation().getRadians());
 
     drivetrain.setControl(
         DRIVE_TO_POSE
             .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance)
             .withVelocityX(xVelocity)
             .withVelocityY(yVelocity)
-            .withRotationalRate(thetaVelocity));
+            .withTargetDirection(targetPose.getRotation()));
   }
 
   /**
@@ -176,7 +164,10 @@ public class AutoCoralStationAlignCommand extends Command {
    */
   @Override
   public boolean isFinished() {
-    return xController.atGoal() && yController.atGoal() && thetaController.atGoal();
+    return IS_FINISHED_DEBOUNCER.calculate(
+        xController.atGoal()
+            && yController.atGoal()
+            && DRIVE_TO_POSE.HeadingController.atSetpoint());
   }
 
   /**

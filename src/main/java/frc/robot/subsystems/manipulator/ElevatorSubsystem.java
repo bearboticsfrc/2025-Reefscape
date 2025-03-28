@@ -1,7 +1,6 @@
 package frc.robot.subsystems.manipulator;
 
 import bearlib.motor.deserializer.MotorParser;
-import bearlib.util.TunableNumber;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
@@ -48,8 +47,6 @@ public class ElevatorSubsystem extends SubsystemBase {
   @Logged(name = "Elevator Setpoint", importance = Importance.CRITICAL)
   private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
 
-  private TunableNumber tunablePosition = new TunableNumber("Elevator Position", 0);
-
   /** Constructs a new ElevatorSubsystem by configuring the leader and follower motors. */
   public ElevatorSubsystem() {
     File directory = new File(Filesystem.getDeployDirectory(), "motors/elevator");
@@ -90,10 +87,6 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    if (tunablePosition.hasChanged()) {
-      goal = new TrapezoidProfile.State(tunablePosition.get(), 0);
-    }
-
     updateTrapezoidProfile();
 
     if (isAtSetpoint() && motor.getReverseLimitSwitch().isPressed()) {
@@ -146,9 +139,9 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   /** Enum representing preset elevator positions. */
   public enum ElevatorPosition {
-    L4(39.6),
+    L4(39.55),
     L3(23.2),
-    L2(13.5),
+    L2(12.75),
     L1(15),
     HOME(0);
 

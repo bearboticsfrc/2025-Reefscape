@@ -10,6 +10,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentric;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -55,6 +56,8 @@ public class AutoBargeAlignCommand extends Command {
 
   private final CommandSwerveDrivetrain drivetrain;
 
+  private final Debouncer isFinishedDebouncer = new Debouncer(0.25);
+
   public AutoBargeAlignCommand(CommandSwerveDrivetrain drivetrain) {
     this.drivetrain = drivetrain;
 
@@ -91,7 +94,7 @@ public class AutoBargeAlignCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    return xController.atGoal() && thetaController.atGoal();
+    return isFinishedDebouncer.calculate(xController.atGoal() && thetaController.atGoal());
   }
 
   /**

@@ -22,7 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
 import frc.robot.commands.AutoBargeAlignCommand;
-import frc.robot.commands.AutoProccessorAlignCommand;
+import frc.robot.commands.AutoCoralStationAlignCommand;
 import frc.robot.commands.AutoReefAlignCommand;
 import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.ReefScoreCommand;
@@ -142,7 +142,7 @@ public class RobotContainer {
                 .runElevatorTo(ElevatorPosition.HOME)
                 .unless(driverJoystick.R2()::getAsBoolean));
 
-    driverJoystick.povDown().whileTrue(new AutoProccessorAlignCommand(drivetrain));
+    driverJoystick.povDown().whileTrue(new AutoCoralStationAlignCommand(drivetrain));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
