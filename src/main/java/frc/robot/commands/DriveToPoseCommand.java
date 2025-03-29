@@ -9,10 +9,12 @@
 
 package frc.robot.commands;
 
+import static edu.wpi.first.units.Units.Centimeters;
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
-import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Seconds;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
@@ -32,68 +34,97 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 import java.util.function.Supplier;
 
 /**
- * This command, when executed, instructs the drivetrain subsystem to drive to the specified pose in
- * a straight line using profiled PID controllers for translation and a standard PID controller for
+ * Drives the robot in a straight line to a specified target pose using PID controllers.
+ *
+ * <p>This command utilizes {@link ProfiledPIDController}s for independent control of the X and Y
+ * translation components and the heading controller built into the {@link SwerveRequest} for
+ * rotational control. The robot moves towards the target position while rotating to the target
  * heading.
  *
- * <p>This command is intended for short, precise movements during teleoperated control or
- * autonomous routines where a simple straight path is sufficient.
+ * <p><b>Requirements:</b>
  *
- * <p>Requires: the Drivetrain subsystem.
+ * <ul>
+ *   <li>{@link CommandSwerveDrivetrain} subsystem
+ * </ul>
  *
- * <p>Finished When: the robot is at the specified pose (within the defined tolerances of the
- * controllers) for a duration defined by the finish debouncer.
+ * <p><b>Finish Condition:</b>
  *
- * <p>At End: stops the drivetrain.
+ * <ul>
+ *   <li>The robot reaches the target pose (within the specified translation and heading tolerances)
+ *       and remains there for the duration defined by {@link #IS_FINISHED_DEBOUNCE_TIME}.
+ * </ul>
+ *
+ * <p><b>End Behavior:</b>
+ *
+ * <ul>
+ *   <li>Stops the drivetrain by sending a {@link SwerveRequest.Idle}.
+ * </ul>
  */
 public class DriveToPoseCommand extends Command {
+  /** Default Proportional gain for the translation PID controllers. */
+  private static final double DEFAULT_TRANSLATION_P = 2.5;
 
-  // --- Constants for Default Behavior ---
-  private static final double DEFAULT_TRANSLATION_P = 10.0;
+  /** Default Integral gain for the translation PID controllers. */
   private static final double DEFAULT_TRANSLATION_I = 0.0;
-  private static final double DEFAULT_TRANSLATION_D = 0.0; // Added D for completeness, though 0
 
-  private static final double DEFAULT_THETA_P = 10.0;
-  private static final double DEFAULT_THETA_I = 0.0;
-  private static final double DEFAULT_THETA_D = 0.0;
+  /** Default Derivative gain for the translation PID controllers. */
+  private static final double DEFAULT_TRANSLATION_D = 0.0;
 
-  private static final LinearVelocity DEFAULT_MAX_LINEAR_VELOCITY = MetersPerSecond.of(8.0);
+  /** Default Proportional gain for the heading PID controller (derived from SysId). */
+  private static final double DEFAULT_HEADING_P =
+      6.469; // Derived from SysID - SwerveRequest.SysIdSwerveRotation
+
+  /** Default Integral gain for the heading PID controller. */
+  private static final double DEFAULT_HEADING_I = 0.0;
+
+  /** Default Derivative gain for the heading PID controller. */
+  private static final double DEFAULT_HEADING_D = 0.0;
+
+  /** Default acceptable error for the heading controller. */
+  private static final Angle DEFAULT_HEADING_TOLERANCE = Degrees.of(0.25);
+
+  /** Default acceptable error for the translation controllers. */
+  private static final Distance DEFAULT_TRANSLATION_TOLERANCE = Centimeters.of(1);
+
+  /** Default maximum linear velocity for the trapezoidal motion profile. */
+  private static final LinearVelocity DEFAULT_MAX_LINEAR_VELOCITY = MetersPerSecond.of(4.49);
+
+  /** Default maximum linear acceleration for the trapezoidal motion profile. */
   private static final LinearAcceleration DEFAULT_MAX_LINEAR_ACCELERATION =
-      MetersPerSecondPerSecond.of(5.0);
+      MetersPerSecondPerSecond.of(3.0);
 
+  /** Default constraints for the translational trapezoidal motion profile. */
   private static final TrapezoidProfile.Constraints DEFAULT_TRANSLATION_CONSTRAINTS =
       new TrapezoidProfile.Constraints(
           DEFAULT_MAX_LINEAR_VELOCITY.in(MetersPerSecond),
           DEFAULT_MAX_LINEAR_ACCELERATION.in(MetersPerSecondPerSecond));
 
+  /** Time the robot must be within tolerances before the command finishes. */
   private static final Time IS_FINISHED_DEBOUNCE_TIME = Seconds.of(0.2);
 
   private final CommandSwerveDrivetrain drivetrain;
   private final Supplier<Pose2d> poseSupplier;
-
-  private final SwerveRequest.FieldCentricFacingAngle driveRequest =
-      new FieldCentricFacingAngle().withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
-
   private final ProfiledPIDController xTranslationController;
   private final ProfiledPIDController yTranslationController;
+  private final Debouncer isFinishedDebouncer;
+  private final SwerveRequest.FieldCentricFacingAngle driveRequest;
 
-  private final Debouncer isFinishedDebouncer =
-      new Debouncer(IS_FINISHED_DEBOUNCE_TIME.in(Seconds));
-
-  private Pose2d targetPose;
+  private Pose2d targetPose; // The target pose fetched during initialization
 
   /**
-   * Constructs a new DriveToPose command that drives the robot in a straight line to the specified
-   * pose. A pose supplier is specified instead of a pose since the target pose may not be known
-   * when this command is created. Uses default PID and constraint values.
+   * Constructs a new {@code DriveToPoseCommand} that drives the robot towards the specified pose.
+   * Uses default PID gains, constraints, tolerances, and debounce time. The target pose is provided
+   * by a {@link Supplier}, allowing the target to be determined dynamically when the command is
+   * scheduled.
    *
-   * @param drivetrain the drivetrain subsystem required by this command
-   * @param poseSupplier a supplier that returns the target pose to drive to
+   * @param drivetrain The drivetrain subsystem required by this command.
+   * @param poseSupplier A supplier that returns the target {@link Pose2d} to drive to.
    */
   public DriveToPoseCommand(CommandSwerveDrivetrain drivetrain, Supplier<Pose2d> poseSupplier) {
     this.drivetrain = drivetrain;
     this.poseSupplier = poseSupplier;
 
+    // Initialize translation PID controllers with default values
     this.xTranslationController =
         new ProfiledPIDController(
             DEFAULT_TRANSLATION_P,
@@ -107,98 +138,137 @@ public class DriveToPoseCommand extends Command {
             DEFAULT_TRANSLATION_D,
             DEFAULT_TRANSLATION_CONSTRAINTS);
 
-    this.xTranslationController.setTolerance(0);
-    this.yTranslationController.setTolerance(0);
+    // Set default tolerances for translation controllers
+    this.xTranslationController.setTolerance(DEFAULT_TRANSLATION_TOLERANCE.in(Meters));
+    this.yTranslationController.setTolerance(DEFAULT_TRANSLATION_TOLERANCE.in(Meters));
 
-    this.driveRequest.HeadingController.setPID(DEFAULT_THETA_P, DEFAULT_THETA_I, DEFAULT_THETA_D);
-    this.driveRequest.HeadingController.setTolerance(0);
+    // Initialize the SwerveRequest for field-centric control facing a target angle
+    this.driveRequest =
+        new FieldCentricFacingAngle()
+            .withForwardPerspective(
+                ForwardPerspectiveValue.BlueAlliance); // Set perspective (adjust if needed)
 
+    // Configure the built-in heading controller within the SwerveRequest
+    this.driveRequest.HeadingController.setPID(
+        DEFAULT_HEADING_P, DEFAULT_HEADING_I, DEFAULT_HEADING_D);
+    // Set default tolerance using Radians (consistent with internal PID math)
+    this.driveRequest.HeadingController.setTolerance(DEFAULT_HEADING_TOLERANCE.in(Radians));
+
+    // Initialize the debouncer for the isFinished condition
+    this.isFinishedDebouncer = new Debouncer(IS_FINISHED_DEBOUNCE_TIME.in(Seconds));
+
+    // Declare subsystem requirements
     addRequirements(drivetrain);
   }
 
   /**
-   * This method is invoked once when this command is scheduled. It resets all the PID controllers,
-   * retrieves the target pose from the supplier, and initializes the controllers with the current
-   * and target poses. It also resets the finish debouncer.
+   * Called once when the command is initially scheduled.
+   *
+   * <p>Retrieves the target pose from the supplier, resets the PID controllers with the current
+   * robot pose and the target pose, and resets the finish condition debouncer.
    */
   @Override
   public void initialize() {
     final Pose2d currentPose = drivetrain.getState().Pose;
-    targetPose = poseSupplier.get(); // Get the latest target pose
+    targetPose = poseSupplier.get(); // Fetch the target pose dynamically
 
-    // Reset and configure translation controllers
+    // Reset translation controllers with current position and set target goal
     xTranslationController.reset(currentPose.getX());
     xTranslationController.setGoal(targetPose.getX());
 
     yTranslationController.reset(currentPose.getY());
     yTranslationController.setGoal(targetPose.getY());
 
-    // Reset and configure heading controller (part of the SwerveRequest)
-    // Current heading is implicitly handled by the Swerve Drivetrain/Request system
+    // Reset the heading controller (within the SwerveRequest)
+    // The current heading is handled internally by the SwerveRequest system
     driveRequest.HeadingController.reset();
 
-    // Reset the debouncer
+    // Reset the debouncer, indicating the robot has not yet reached the target state
     isFinishedDebouncer.calculate(false);
+
+    // Reset drivetrain debug flags
+    drivetrain.xTranslationAtSetpoint = false;
+    drivetrain.yTranslationAtSetpoint = false;
+    drivetrain.headingAtSetpoint = false;
   }
 
   /**
-   * This method is invoked periodically while this command is scheduled. It calculates the required
-   * field-relative X and Y velocities based on the profiled PID controllers and the current robot
-   * pose. It then instructs the drivetrain to drive using these velocities and to face the target
-   * pose's rotation.
+   * Called repeatedly when this Command is scheduled.
+   *
+   * <p>Calculates the required field-relative X and Y velocities using the {@link
+   * ProfiledPIDController}s based on the current robot pose. It potentially modifies these
+   * velocities based on the selected {@link TranslationStrategy} (e.g., prioritizing one axis
+   * before allowing the other). It then constructs and sends a {@link SwerveRequest} to the
+   * drivetrain, commanding it to move with the calculated velocities and face the target pose's
+   * rotation.
    */
   @Override
   public void execute() {
     final Pose2d currentPose = drivetrain.getState().Pose;
 
-    // Calculate translational velocities using profiled PID
-    final double xVelocityOutput = xTranslationController.calculate(currentPose.getX());
-    final double yVelocityOutput = yTranslationController.calculate(currentPose.getY());
+    // Calculate field-relative X and Y velocity outputs using profiled PID controllers
+    double xVelocityOutput = xTranslationController.calculate(currentPose.getX());
+    double yVelocityOutput = yTranslationController.calculate(currentPose.getY());
 
-    // Update the swerve request and send it to the drivetrain
-    // The heading controller inside driveRequest calculates its own output based on the target
+    // Send the potentially modified velocities and target heading to the drivetrain
+    // The heading controller within driveRequest calculates the necessary rotational velocity
+    // based on the current heading and the target rotation.
     drivetrain.setControl(
         driveRequest
-            .withVelocityX(xVelocityOutput) // Field-relative X velocity
-            .withVelocityY(yVelocityOutput) // Field-relative Y velocity
-            .withTargetDirection(targetPose.getRotation())); // Target orientation
+            .withVelocityX(xVelocityOutput) // Set field-relative X velocity
+            .withVelocityY(yVelocityOutput) // Set field-relative Y velocity
+            .withTargetDirection(targetPose.getRotation())); // Set target orientation
   }
 
   /**
-   * This method returns true if the command has finished. It is invoked periodically while this
-   * command is scheduled (after execute is invoked).
+   * Called repeatedly when this Command is scheduled to determine if the command is finished.
    *
-   * @return true if the robot has reached the target translational position and heading orientation
-   *     (within controller tolerances) for the debouncer duration.
+   * @return {@code true} if both the translation and heading controllers are within their
+   *     respective tolerances ({@code atGoal()} for translation, {@code atSetpoint()} for heading)
+   *     and have remained so for the duration specified by the debouncer; {@code false} otherwise.
    */
   @Override
   public boolean isFinished() {
-    // Check if controllers are at their goal/setpoint
+    // Check if the translation controllers have reached their goal (position and velocity=0)
     boolean translationReached = xTranslationController.atGoal() && yTranslationController.atGoal();
+
+    // Check if the heading controller has reached its setpoint (angle)
     boolean rotationReached = driveRequest.HeadingController.atSetpoint();
 
-    // Use the debouncer to ensure the robot stays at the target pose
+    // Update drivetrain status flags (useful for logging/debugging)
+    // Note: atSetpoint() checks position only, atGoal() checks position and velocity
+    drivetrain.xTranslationAtSetpoint = xTranslationController.atSetpoint();
+    drivetrain.yTranslationAtSetpoint = yTranslationController.atSetpoint();
+    drivetrain.headingAtSetpoint = rotationReached;
+
+    // Use the debouncer to ensure the robot has settled at the target pose
     return isFinishedDebouncer.calculate(translationReached && rotationReached);
   }
 
   /**
-   * This method will be invoked when this command finishes or is interrupted. It stops the motion
-   * of the drivetrain by sending an idle request.
+   * Called once when the command ends or is interrupted.
    *
-   * @param interrupted true if the command was interrupted by another command being scheduled.
+   * <p>Stops the drivetrain by sending an idle request.
+   *
+   * @param interrupted {@code true} if the command was interrupted, {@code false} if it finished
+   *     normally.
    */
   @Override
   public void end(boolean interrupted) {
     drivetrain.setControl(new SwerveRequest.Idle());
+
+    drivetrain.xTranslationAtSetpoint = false;
+    drivetrain.yTranslationAtSetpoint = false;
+    drivetrain.headingAtSetpoint = false;
   }
 
   /**
-   * Sets the PID constants for the translation controllers.
+   * Sets the PID constants for the translation (X and Y) controllers.
    *
-   * @param p Proportional gain
-   * @param i Integral gain
-   * @param d Derivative gain
-   * @return This command instance for chaining.
+   * @param p Proportional gain.
+   * @param i Integral gain.
+   * @param d Derivative gain.
+   * @return This command instance for method chaining.
    */
   public DriveToPoseCommand withTranslationPID(double p, double i, double d) {
     xTranslationController.setPID(p, i, d);
@@ -207,25 +277,44 @@ public class DriveToPoseCommand extends Command {
   }
 
   /**
-   * Sets the PID constants for the heading controller.
+   * Sets the PID constants and I-Zone for the translation (X and Y) controllers. The I-Zone defines
+   * the range around the setpoint where the integral term is active.
    *
-   * @param p Proportional gain
-   * @param i Integral gain
-   * @param d Derivative gain
-   * @return This command instance for chaining.
+   * @param p Proportional gain.
+   * @param i Integral gain.
+   * @param d Derivative gain.
+   * @param iZone The range around the setpoint where the integral term accumulates.
+   * @return This command instance for method chaining.
    */
-  public DriveToPoseCommand withHeadingPID(double p, double i, double d) {
-    driveRequest.HeadingController.setPID(p, i, d);
+  public DriveToPoseCommand withTranslationPID(double p, double i, double d, Distance iZone) {
+    xTranslationController.setPID(p, i, d);
+    xTranslationController.setIZone(iZone.in(Meters));
+
+    yTranslationController.setPID(p, i, d);
+    yTranslationController.setIZone(iZone.in(Meters));
 
     return this;
   }
 
   /**
-   * Sets the motion profile constraints for the translation controllers.
+   * Sets the PID constants for the heading controller.
+   *
+   * @param p Proportional gain.
+   * @param i Integral gain.
+   * @param d Derivative gain.
+   * @return This command instance for method chaining.
+   */
+  public DriveToPoseCommand withHeadingPID(double p, double i, double d) {
+    driveRequest.HeadingController.setPID(p, i, d);
+    return this;
+  }
+
+  /**
+   * Sets the motion profile constraints for the translation (X and Y) controllers.
    *
    * @param maxLinearVelocity Maximum linear velocity.
    * @param maxLinearAcceleration Maximum linear acceleration.
-   * @return This command instance for chaining.
+   * @return This command instance for method chaining.
    */
   public DriveToPoseCommand withTranslationConstraints(
       LinearVelocity maxLinearVelocity, LinearAcceleration maxLinearAcceleration) {
@@ -240,6 +329,12 @@ public class DriveToPoseCommand extends Command {
     return this;
   }
 
+  /**
+   * Sets the tolerance for the translation (X and Y) controllers.
+   *
+   * @param tolerance The acceptable position error.
+   * @return This command instance for method chaining.
+   */
   public DriveToPoseCommand withTranslationTolerance(Distance tolerance) {
     this.xTranslationController.setTolerance(tolerance.in(Meters));
     this.yTranslationController.setTolerance(tolerance.in(Meters));
@@ -247,15 +342,26 @@ public class DriveToPoseCommand extends Command {
     return this;
   }
 
-  public DriveToPoseCommand withThetaTolerance(Angle tolerance) {
-    this.driveRequest.HeadingController.setTolerance(tolerance.in(Rotations));
-
+  /**
+   * Sets the tolerance for the heading controller.
+   *
+   * @param tolerance The acceptable angle error.
+   * @return This command instance for method chaining.
+   */
+  public DriveToPoseCommand withHeadingTolerance(Angle tolerance) {
+    this.driveRequest.HeadingController.setTolerance(tolerance.in(Radians));
     return this;
   }
 
+  /**
+   * Sets the duration the robot must be within tolerances before the command is considered
+   * finished.
+   *
+   * @param duration The debounce time duration.
+   * @return This command instance for method chaining.
+   */
   public DriveToPoseCommand withDebounceDuration(Time duration) {
     this.isFinishedDebouncer.setDebounceTime(duration.in(Seconds));
-
     return this;
   }
 }

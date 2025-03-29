@@ -142,7 +142,7 @@ public class ElevatorSubsystem extends SubsystemBase {
     L4(39.55),
     L3(23.2),
     L2(12.75),
-    L1(15),
+    L1(8),
     HOME(0);
 
     private final double position;

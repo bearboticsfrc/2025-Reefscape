@@ -89,7 +89,7 @@ public class RobotContainer {
   private void configureDriverBindings() {
     driverJoystick.L1().whileTrue(coral.intakeCoral()).onFalse(coral.stop());
 
-    driverJoystick.R1().onTrue(coral.scoreCoral()).onFalse(coral.stop());
+    driverJoystick.R1().onTrue(coral.teleopScoreCore()).onFalse(coral.stop());
 
     driverJoystick
         .R2()
@@ -102,7 +102,8 @@ public class RobotContainer {
 
     driverJoystick
         .L2()
-        .whileTrue(AutoCoralStationAlignCommand.get(drivetrain).alongWith(coral.intakeCoral()));
+        .whileTrue(AutoCoralStationAlignCommand.get(drivetrain).alongWith(coral.intakeCoral()))
+        .onFalse(coral.stop());
 
     driverJoystick
         .L3()
@@ -111,7 +112,10 @@ public class RobotContainer {
                 () -> setThrottleProfile(ThrottleProfile.TURTLE),
                 () -> setThrottleProfile(ThrottleProfile.TURBO)));
 
-    driverJoystick.circle().whileTrue(algae.scoreProcessor()).onFalse(algae.stopMotor());
+    driverJoystick
+        .circle()
+        .whileTrue(arm.runArmTo(ArmPosition.HOME).andThen(algae.scoreProcessor()))
+        .onFalse(algae.stopMotor());
     driverJoystick.cross().whileTrue(AutoAlgaePickupCommand.get(drivetrain, algae, arm, elevator));
 
     driverJoystick
@@ -141,8 +145,6 @@ public class RobotContainer {
             elevator
                 .runElevatorTo(ElevatorPosition.HOME)
                 .unless(driverJoystick.R2()::getAsBoolean));
-
-    driverJoystick.povDown().whileTrue(AutoCoralStationAlignCommand.get(drivetrain));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));

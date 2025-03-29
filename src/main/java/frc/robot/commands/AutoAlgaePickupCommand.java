@@ -29,12 +29,12 @@ public class AutoAlgaePickupCommand {
       ArmSubsystem arm,
       ElevatorSubsystem elevator) {
     return AutoReefAlignCommand.get(drivetrain, ScoreSide.LEFT)
-        .andThen(elevatorRaiseCommand(drivetrain, elevator))
+        .alongWith(elevatorRaiseCommand(drivetrain, elevator))
         .andThen(waitUntilElevatorAtSetpoint(elevator))
         .andThen(arm.runArmTo(ArmPosition.REEF).alongWith(algae.intakeAlgae()))
         .andThen(Commands.waitUntil(algae::hasAlgae))
-        .andThen(driveBackwards(drivetrain))
-        .andThen(elevator.runElevatorTo(ElevatorPosition.L2))
+        .andThen(driveBackwards(drivetrain).alongWith(algae.stopMotor()))
+        .andThen(elevator.runElevatorTo(ElevatorPosition.HOME))
         .andThen(waitUntilElevatorAtSetpoint(elevator));
   }
 

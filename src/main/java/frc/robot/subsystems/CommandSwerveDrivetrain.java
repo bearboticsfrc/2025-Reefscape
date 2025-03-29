@@ -69,6 +69,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
               VisionConstants.FRONT_RIGHT_CAMERA,
               VisionConstants.REAR_CAMERA));
 
+  @Logged(importance = Importance.CRITICAL)
+  public boolean xTranslationAtSetpoint;
+
+  @Logged(importance = Importance.CRITICAL)
+  public boolean yTranslationAtSetpoint;
+
+  @Logged(importance = Importance.CRITICAL)
+  public boolean headingAtSetpoint;
+
   /* Swerve requests to apply during SysId characterization */
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
       new SwerveRequest.SysIdSwerveTranslation();

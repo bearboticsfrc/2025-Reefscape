@@ -32,8 +32,7 @@ public class AutoCoralStationAlignCommand extends Command {
 
   private static final Distance CENTER_TO_CORAL_STATION = Inches.of(16);
   private static final Transform2d POSE_TRANSFORM =
-      new Transform2d(
-          new Translation2d(CENTER_TO_CORAL_STATION, Feet.of(2).unaryMinus()), Rotation2d.kZero);
+      new Transform2d(new Translation2d(CENTER_TO_CORAL_STATION, Inches.of(0)), Rotation2d.kZero);
 
   private static final LinearVelocity TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(12);
   private static final LinearAcceleration TRANSLATION_MAX_ACCELERATION =
@@ -49,7 +48,7 @@ public class AutoCoralStationAlignCommand extends Command {
         .withTranslationPID(5, 0, 0)
         .withDebounceDuration(Seconds.of(0))
         .withTranslationTolerance(TRANSLATION_TOLERANCE)
-        .withThetaTolerance(HEADING_TOLERANCE);
+        .withHeadingTolerance(HEADING_TOLERANCE);
   }
 
   public static List<Pose2d> getCoralStationPoses() {

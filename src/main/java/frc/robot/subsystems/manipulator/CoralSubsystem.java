@@ -138,6 +138,15 @@ public class CoralSubsystem extends SubsystemBase {
   }
 
   /**
+   * Coral score command
+   *
+   * @return A {@link Command} scoring a coral.
+   */
+  public Command teleopScoreCore() {
+    return runOutake(MotorSpeed.QUARTER);
+  }
+
+  /**
    * Run the coral outake at the supplied speed.
    *
    * @param speed {@link MotorSpeed} describing the desired outake motor speed.
