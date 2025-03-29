@@ -52,6 +52,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
   private final SwerveRequest.ApplyRobotSpeeds pathApplyRobotSpeeds =
       new SwerveRequest.ApplyRobotSpeeds();
 
+  @Logged(importance = Importance.CRITICAL)
+  public Pose2d reefAlignPose;
+
+  @Logged(importance = Importance.CRITICAL)
+  public Pose2d bargeAlignPose;
+
   /** Notifier for updating pose based on vision measurements. */
   private final Notifier poseEstimationNotifier = new Notifier(this::poseEstimationPeriodic);
 

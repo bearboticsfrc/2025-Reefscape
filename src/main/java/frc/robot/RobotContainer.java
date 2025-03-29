@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
+import frc.robot.commands.AutoAlgaePickupCommand;
 import frc.robot.commands.AutoBargeAlignCommand;
 import frc.robot.commands.AutoCoralStationAlignCommand;
 import frc.robot.commands.AutoReefAlignCommand;
@@ -99,7 +100,9 @@ public class RobotContainer {
                 .unless(coral::intakeHasCoral))
         .onFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
-    driverJoystick.L2().whileTrue(algae.intakeAlgae()).onFalse(algae.stopMotor());
+    driverJoystick
+        .L2()
+        .whileTrue(AutoCoralStationAlignCommand.get(drivetrain).alongWith(coral.intakeCoral()));
 
     driverJoystick
         .L3()
@@ -109,15 +112,12 @@ public class RobotContainer {
                 () -> setThrottleProfile(ThrottleProfile.TURBO)));
 
     driverJoystick.circle().whileTrue(algae.scoreProcessor()).onFalse(algae.stopMotor());
-    driverJoystick
-        .cross()
-        .whileTrue(arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()))
-        .onFalse(arm.runArmTo(ArmPosition.HOME).andThen(algae.stopMotor()));
+    driverJoystick.cross().whileTrue(AutoAlgaePickupCommand.get(drivetrain, algae, arm, elevator));
 
     driverJoystick
         .povUp()
         .whileTrue(
-            new AutoBargeAlignCommand(drivetrain)
+            AutoBargeAlignCommand.get(drivetrain)
                 .andThen(BargeScoreCommand.raise(elevator, arm, algae)))
         .whileFalse(BargeScoreCommand.lower(elevator, arm, algae));
 
@@ -126,7 +126,7 @@ public class RobotContainer {
         .whileTrue(
             elevator
                 .runElevatorTo(this::getTargetElevatorPosition)
-                .alongWith(new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.LEFT)))
+                .alongWith(AutoReefAlignCommand.get(drivetrain, ReefTagPoses.ScoreSide.LEFT)))
         .whileFalse(
             elevator
                 .runElevatorTo(ElevatorPosition.HOME)
@@ -135,14 +135,14 @@ public class RobotContainer {
     driverJoystick
         .povRight()
         .whileTrue(
-            new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
+            AutoReefAlignCommand.get(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
                 .alongWith(elevator.runElevatorTo(this::getTargetElevatorPosition)))
         .whileFalse(
             elevator
                 .runElevatorTo(ElevatorPosition.HOME)
                 .unless(driverJoystick.R2()::getAsBoolean));
 
-    driverJoystick.povDown().whileTrue(new AutoCoralStationAlignCommand(drivetrain));
+    driverJoystick.povDown().whileTrue(AutoCoralStationAlignCommand.get(drivetrain));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));

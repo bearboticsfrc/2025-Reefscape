@@ -1,11 +1,15 @@
 package frc.robot.subsystems.manipulator;
 
+import static edu.wpi.first.units.Units.Seconds;
+
 import bearlib.motor.MotorSpeed;
 import bearlib.motor.deserializer.MotorParser;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkBase.ControlType;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Importance;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -19,6 +23,7 @@ public class CoralSubsystem extends SubsystemBase {
   private final int OUTAKE_SENSOR_PORT = 1;
 
   private final double CORAL_HONE_SPEED = 0.03;
+  private final Time SCORE_WAIT_TIME = Seconds.of(0.1);
 
   @Logged(name = "Coral Intake Motor", importance = Importance.CRITICAL)
   private final SparkBase intake;
@@ -45,7 +50,11 @@ public class CoralSubsystem extends SubsystemBase {
 
     try {
       intake = new MotorParser(directory).withMotor("intake.json").configureAsync();
-      outake = new MotorParser(directory).withMotor("outake.json").configureAsync();
+      outake =
+          new MotorParser(directory)
+              .withMotor("outake.json")
+              .withPidf("pidf.json")
+              .configureAsync();
     } catch (IOException exception) {
       throw new RuntimeException("Failed to configure coral motor(s)!", exception);
     }
@@ -124,6 +133,7 @@ public class CoralSubsystem extends SubsystemBase {
   public Command scoreCoral() {
     return runOutake(MotorSpeed.FULL)
         .andThen(Commands.waitUntil(() -> !outakeHasCoral()))
+        .andThen(Commands.waitTime(SCORE_WAIT_TIME))
         .andThen(runOutake(MotorSpeed.OFF));
   }
 
@@ -161,6 +171,12 @@ public class CoralSubsystem extends SubsystemBase {
    * @return A {@link Command} stopping both the intake and outake motors.
    */
   public Command stop() {
-    return Commands.runOnce(outake::stopMotor).alongWith(Commands.runOnce(intake::stopMotor));
+    return Commands.runOnce(this::stopOutake).alongWith(Commands.runOnce(intake::stopMotor));
+  }
+
+  public void stopOutake() {
+    outake
+        .getClosedLoopController()
+        .setReference(outakeEncoder.getPosition(), ControlType.kPosition);
   }
 }
