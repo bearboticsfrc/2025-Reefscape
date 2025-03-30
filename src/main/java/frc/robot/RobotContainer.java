@@ -102,7 +102,7 @@ public class RobotContainer {
 
     driverJoystick
         .L2()
-        .whileTrue(AutoCoralStationAlignCommand.get(drivetrain).alongWith(coral.intakeCoral()))
+        .whileTrue(new AutoCoralStationAlignCommand(drivetrain).alongWith(coral.intakeCoral()))
         .onFalse(coral.stop());
 
     driverJoystick
@@ -116,12 +116,12 @@ public class RobotContainer {
         .circle()
         .whileTrue(arm.runArmTo(ArmPosition.HOME).andThen(algae.scoreProcessor()))
         .onFalse(algae.stopMotor());
-    driverJoystick.cross().whileTrue(AutoAlgaePickupCommand.get(drivetrain, algae, arm, elevator));
+    driverJoystick.cross().whileTrue(new AutoAlgaePickupCommand(drivetrain, algae, arm, elevator));
 
     driverJoystick
         .povUp()
         .whileTrue(
-            AutoBargeAlignCommand.get(drivetrain)
+            new AutoBargeAlignCommand(drivetrain)
                 .andThen(BargeScoreCommand.raise(elevator, arm, algae)))
         .whileFalse(BargeScoreCommand.lower(elevator, arm, algae));
 
@@ -130,7 +130,7 @@ public class RobotContainer {
         .whileTrue(
             elevator
                 .runElevatorTo(this::getTargetElevatorPosition)
-                .alongWith(AutoReefAlignCommand.get(drivetrain, ReefTagPoses.ScoreSide.LEFT)))
+                .alongWith(new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.LEFT)))
         .whileFalse(
             elevator
                 .runElevatorTo(ElevatorPosition.HOME)
@@ -139,7 +139,7 @@ public class RobotContainer {
     driverJoystick
         .povRight()
         .whileTrue(
-            AutoReefAlignCommand.get(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
+            new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
                 .alongWith(elevator.runElevatorTo(this::getTargetElevatorPosition)))
         .whileFalse(
             elevator
@@ -209,7 +209,7 @@ public class RobotContainer {
           elevator.runElevatorTo(position).andThen(Commands.waitUntil(elevator::isAtSetpoint)));
 
       NamedCommands.registerCommand(
-          elevatorPosition + "ReefScoreCommand", ReefScoreCommand.get(position, elevator, coral));
+          elevatorPosition + "ReefScoreCommand", new ReefScoreCommand(position, elevator, coral));
     }
 
     for (ArmPosition position : ArmPosition.values()) {

@@ -103,12 +103,12 @@ public class DriveToPoseCommand extends Command {
   private static final Time IS_FINISHED_DEBOUNCE_TIME = Seconds.of(0.2);
 
   private final CommandSwerveDrivetrain drivetrain;
-  private final Supplier<Pose2d> poseSupplier;
   private final ProfiledPIDController xTranslationController;
   private final ProfiledPIDController yTranslationController;
   private final Debouncer isFinishedDebouncer;
   private final SwerveRequest.FieldCentricFacingAngle driveRequest;
 
+  private Supplier<Pose2d> poseSupplier;
   private Pose2d targetPose; // The target pose fetched during initialization
 
   /**
@@ -362,6 +362,17 @@ public class DriveToPoseCommand extends Command {
    */
   public DriveToPoseCommand withDebounceDuration(Time duration) {
     this.isFinishedDebouncer.setDebounceTime(duration.in(Seconds));
+    return this;
+  }
+
+  /**
+   * Sets the target pose supplier that the robot will align to.
+   *
+   * @param poseSupplier A supplier for the target {@link Pose2d}.
+   * @return This command instance for method chaining.
+   */
+  public DriveToPoseCommand withPoseSupplier(Supplier<Pose2d> poseSupplier) {
+    this.poseSupplier = poseSupplier;
     return this;
   }
 }
