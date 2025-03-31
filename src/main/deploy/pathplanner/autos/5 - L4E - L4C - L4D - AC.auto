@@ -7,13 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "MPushF"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "MStartF"
+            "pathName": "StartE"
           }
         },
         {
@@ -25,7 +19,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "MFToPStation"
+            "pathName": "EToPStation"
           }
         },
         {
@@ -51,7 +45,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "MPStationToC"
+                        "pathName": "PStationToD"
                       }
                     }
                   ]
@@ -69,7 +63,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "MCToPStation"
+            "pathName": "DToPStation"
           }
         },
         {
@@ -95,7 +89,7 @@
                     {
                       "type": "path",
                       "data": {
-                        "pathName": "MPStationToD"
+                        "pathName": "PStationToC"
                       }
                     }
                   ]
@@ -111,9 +105,21 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "fullyRunElevatorToL2"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "intakeAlgae"
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "MDToPStation"
+            "pathName": "CToPStation"
           }
         }
       ]

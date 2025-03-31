@@ -117,7 +117,11 @@ def main() -> None:
             mirror_auto(file)
     else:
         count += 1
-        mirror_auto(args.path)
+
+        if args.path.name.endswith(".path"):
+            mirror_path(args.path)
+        elif args.path.name.endswith(".auto"):
+            mirror_auto(args.path)
 
     if count:
         print(f"\nFinished mirroring {count} {'auto' if count == 1 else 'autos'} in {time.perf_counter() - start:.02f}s.")
