@@ -52,6 +52,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
   private final SwerveRequest.ApplyRobotSpeeds pathApplyRobotSpeeds =
       new SwerveRequest.ApplyRobotSpeeds();
 
+  @Logged(importance = Importance.CRITICAL)
+  public Pose2d reefAlignPose;
+
+  @Logged(importance = Importance.CRITICAL)
+  public Pose2d bargeAlignPose;
+
   /** Notifier for updating pose based on vision measurements. */
   private final Notifier poseEstimationNotifier = new Notifier(this::poseEstimationPeriodic);
 
@@ -62,6 +68,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain
               VisionConstants.FRONT_LEFT_CAMERA,
               VisionConstants.FRONT_RIGHT_CAMERA,
               VisionConstants.REAR_CAMERA));
+
+  @Logged(importance = Importance.CRITICAL)
+  public boolean xTranslationAtSetpoint;
+
+  @Logged(importance = Importance.CRITICAL)
+  public boolean yTranslationAtSetpoint;
+
+  @Logged(importance = Importance.CRITICAL)
+  public boolean headingAtSetpoint;
 
   /* Swerve requests to apply during SysId characterization */
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =

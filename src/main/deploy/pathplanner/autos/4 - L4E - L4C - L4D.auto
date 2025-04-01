@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "StartF"
+            "pathName": "StartE"
           }
         },
         {
@@ -19,7 +19,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "FToPStation"
+            "pathName": "EToPStation"
           }
         },
         {
@@ -102,18 +102,6 @@
           "type": "named",
           "data": {
             "name": "L4ReefScoreCommand"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "fullyRunElevatorToL2"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "intakeAlgae"
           }
         },
         {

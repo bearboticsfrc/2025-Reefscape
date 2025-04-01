@@ -59,7 +59,9 @@ def mirror_path(file: Path) -> None:
 
             path["waypoints"][i]["nextControl"]["x"] = x
             path["waypoints"][i]["nextControl"]["y"] = y
-
+            
+        path["waypoints"][i]["linkedName"] = "M" + path["waypoints"][i]["linkedName"]
+    
     for i, rotation_target in enumerate(path["rotationTargets"]):
         rotation = rotation_target["rotationDegrees"]
 
@@ -117,7 +119,11 @@ def main() -> None:
             mirror_auto(file)
     else:
         count += 1
-        mirror_auto(args.path)
+
+        if args.path.name.endswith(".path"):
+            mirror_path(args.path)
+        elif args.path.name.endswith(".auto"):
+            mirror_auto(args.path)
 
     if count:
         print(f"\nFinished mirroring {count} {'auto' if count == 1 else 'autos'} in {time.perf_counter() - start:.02f}s.")

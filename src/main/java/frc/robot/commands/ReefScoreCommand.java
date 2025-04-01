@@ -1,38 +1,56 @@
 package frc.robot.commands;
 
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.subsystems.manipulator.CoralSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem;
 import frc.robot.subsystems.manipulator.ElevatorSubsystem.ElevatorPosition;
 
-public class ReefScoreCommand {
+/**
+ * A command group that scores a coral piece onto the reef at a specified elevator position.
+ *
+ * <p>This command orchestrates the elevator and coral subsystems to perform the scoring sequence.
+ */
+public class ReefScoreCommand extends SequentialCommandGroup {
+
   /**
-   * Returns a command which scores coral on {@code position} position of the reef.
+   * Creates a command sequence to score a coral piece onto the reef at the specified height.
    *
-   * <p>The order of operations is described below:
+   * <p>The sequence performs the following actions:
    *
    * <ol>
-   *   <li>Wait until the outake has a coral (ensure does not raise on coral)
-   *   <li>Run the elevator to {@code position}
-   *   <li>Score the coral
-   *   <li>Set the elevator to {@link ElevatorPosition#HOME}
+   *   <li>Waits until the {@link CoralSubsystem} confirms it is holding a coral piece ready for
+   *       scoring (via {@code coral.outakeHasCoral()}).
+   *   <li>Commands the {@link ElevatorSubsystem} to move to the target scoring {@code position}.
+   *   <li>Waits until the {@link ElevatorSubsystem} reports being at the desired setpoint (via
+   *       {@code elevator.isAtSetpoint()}).
+   *   <li>Commands the {@link CoralSubsystem} to execute its scoring action (via {@code
+   *       coral.scoreCoral()}).
+   *   <li>Commands the {@link ElevatorSubsystem} to start moving to the {@link
+   *       ElevatorPosition#HOME} position.
    * </ol>
    *
-   * <p>Note: While the command WILL wait for the elevator to reach {@code position}, it will NOT
-   * wait for the elevator to home.
+   * <p><b>Important Note:</b> While this command sequence waits for the elevator to reach the
+   * target scoring {@code position} before scoring, it does <i>not</i> wait for the elevator to
+   * finish returning to the {@link ElevatorPosition#HOME} position. The command group completes
+   * once the homing movement is initiated.
    *
-   * @param position The elevator position to score at.
-   * @param elevator A reference to the elevator subsystem.
-   * @param coral A reference to the coral subsystem.
-   * @return The command.
+   * @param position The target {@link ElevatorPosition} for scoring.
+   * @param elevator The {@link ElevatorSubsystem} instance.
+   * @param coral The {@link CoralSubsystem} instance.
    */
-  public static Command get(
-      ElevatorPosition position, ElevatorSubsystem elevator, CoralSubsystem coral) {
-    return Commands.waitUntil(coral::outakeHasCoral)
-        .andThen(elevator.runElevatorTo(position))
-        .andThen(Commands.waitUntil(elevator::isAtSetpoint))
-        .andThen(coral.scoreCoral())
-        .andThen(elevator.runElevatorTo(ElevatorPosition.HOME));
+  public ReefScoreCommand(
+      final ElevatorPosition position,
+      final ElevatorSubsystem elevator,
+      final CoralSubsystem coral) {
+
+    addCommands(
+        Commands.waitUntil(coral::outakeHasCoral),
+        elevator.runElevatorTo(position),
+        Commands.waitUntil(elevator::isAtSetpoint),
+        coral.scoreCoral(),
+        elevator.runElevatorTo(ElevatorPosition.HOME));
+
+    setName("ReefScore(" + position.name() + ")");
   }
 }

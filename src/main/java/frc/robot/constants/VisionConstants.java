@@ -16,6 +16,7 @@ import frc.robot.vision.VisionCamera;
 
 public class VisionConstants {
   public static final Distance CULLING_DISTANCE = Meters.of(2.5);
+
   public static final double CULLING_AMBIGUITY = 0.2;
 
   private static final String FRONT_LEFT_CAMERA_NAME = "OV9281FrontLeft";
@@ -35,7 +36,7 @@ public class VisionConstants {
   private static final Transform3d ROBOT_TO_REAR_CAMERA =
       new Transform3d(
           new Translation3d(-.019, 0.0, 0.957),
-          new Rotation3d(Radians.zero(), Degrees.of(-20), Degrees.of(180)));
+          new Rotation3d(Radians.zero(), Degrees.of(-27), Degrees.of(180)));
 
   public static final VisionCamera FRONT_LEFT_CAMERA =
       new VisionCamera(FRONT_LEFT_CAMERA_NAME, ROBOT_TO_FRONT_LEFT_CAMERA);
@@ -52,4 +53,20 @@ public class VisionConstants {
 
   public static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT =
       AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+
+  public static final AprilTagFieldLayout REEF_TAGS_ONLY_LAYOUT =
+      new AprilTagFieldLayout(
+          APRIL_TAG_FIELD_LAYOUT.getTags().stream()
+              .filter(it -> (it.ID >= 17 && it.ID <= 22) || (it.ID >= 6 && it.ID <= 11))
+              .toList(),
+          APRIL_TAG_FIELD_LAYOUT.getFieldLength(),
+          APRIL_TAG_FIELD_LAYOUT.getFieldWidth());
+
+  public static final AprilTagFieldLayout CORAL_STATION_TAGS_ONLY_LAYOUT =
+      new AprilTagFieldLayout(
+          APRIL_TAG_FIELD_LAYOUT.getTags().stream()
+              .filter(it -> (it.ID == 1 || it.ID == 2 || it.ID == 12 || it.ID == 13))
+              .toList(),
+          APRIL_TAG_FIELD_LAYOUT.getFieldLength(),
+          APRIL_TAG_FIELD_LAYOUT.getFieldWidth());
 }

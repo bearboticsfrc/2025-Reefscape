@@ -10,7 +10,7 @@ import edu.wpi.first.units.measure.Distance;
 
 public class ReefScorePose {
   private final Distance CENTER_TO_BRANCH_Y = Inches.of(6.469);
-  private final Distance CENTER_TO_REEF = Inches.of(18.2);
+  private final Distance CENTER_TO_REEF = Inches.of(16.5);
 
   private final Transform2d LEFT_POSE_TRANSFORM =
       new Transform2d(

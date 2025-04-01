@@ -21,8 +21,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
+import frc.robot.commands.AutoAlgaePickupCommand;
 import frc.robot.commands.AutoBargeAlignCommand;
-import frc.robot.commands.AutoProccessorAlignCommand;
+import frc.robot.commands.AutoCoralStationAlignCommand;
 import frc.robot.commands.AutoReefAlignCommand;
 import frc.robot.commands.BargeScoreCommand;
 import frc.robot.commands.ReefScoreCommand;
@@ -88,7 +89,7 @@ public class RobotContainer {
   private void configureDriverBindings() {
     driverJoystick.L1().whileTrue(coral.intakeCoral()).onFalse(coral.stop());
 
-    driverJoystick.R1().onTrue(coral.scoreCoral()).onFalse(coral.stop());
+    driverJoystick.R1().onTrue(coral.teleopScoreCore()).onFalse(coral.stop());
 
     driverJoystick
         .R2()
@@ -99,7 +100,10 @@ public class RobotContainer {
                 .unless(coral::intakeHasCoral))
         .onFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
 
-    driverJoystick.L2().whileTrue(algae.intakeAlgae()).onFalse(algae.stopMotor());
+    driverJoystick
+        .L2()
+        .whileTrue(new AutoCoralStationAlignCommand(drivetrain).alongWith(coral.intakeCoral()))
+        .onFalse(coral.stop());
 
     driverJoystick
         .L3()
@@ -108,11 +112,15 @@ public class RobotContainer {
                 () -> setThrottleProfile(ThrottleProfile.TURTLE),
                 () -> setThrottleProfile(ThrottleProfile.TURBO)));
 
-    driverJoystick.circle().whileTrue(algae.scoreProcessor()).onFalse(algae.stopMotor());
     driverJoystick
-        .cross()
-        .whileTrue(arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()))
-        .onFalse(arm.runArmTo(ArmPosition.HOME).andThen(algae.stopMotor()));
+        .circle()
+        .whileTrue(
+            arm.runArmTo(ArmPosition.HOME)
+                .andThen(Commands.waitUntil(arm::isAtSetpoint))
+                .andThen(Commands.waitSeconds(0.5))
+                .andThen(algae.scoreProcessor()))
+        .onFalse(algae.stopMotor());
+    driverJoystick.cross().whileTrue(new AutoAlgaePickupCommand(drivetrain, algae, arm, elevator));
 
     driverJoystick
         .povUp()
@@ -141,8 +149,6 @@ public class RobotContainer {
             elevator
                 .runElevatorTo(ElevatorPosition.HOME)
                 .unless(driverJoystick.R2()::getAsBoolean));
-
-    driverJoystick.povDown().whileTrue(new AutoProccessorAlignCommand(drivetrain));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
@@ -207,7 +213,7 @@ public class RobotContainer {
           elevator.runElevatorTo(position).andThen(Commands.waitUntil(elevator::isAtSetpoint)));
 
       NamedCommands.registerCommand(
-          elevatorPosition + "ReefScoreCommand", ReefScoreCommand.get(position, elevator, coral));
+          elevatorPosition + "ReefScoreCommand", new ReefScoreCommand(position, elevator, coral));
     }
 
     for (ArmPosition position : ArmPosition.values()) {

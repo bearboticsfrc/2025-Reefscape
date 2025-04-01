@@ -1,107 +1,79 @@
 package frc.robot.commands;
 
-// import static frc.robot.constants.*;
+import static edu.wpi.first.units.Units.Centimeters;
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 
-import com.ctre.phoenix6.swerve.SwerveRequest;
-import com.ctre.phoenix6.swerve.SwerveRequest.FieldCentric;
-import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.units.measure.AngularAcceleration;
-import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.utils.AllianceFlipUtil;
 
-public class AutoBargeAlignCommand extends Command {
-  private final double TRANSLATION_P = 6;
-  private final double THETA_P = 10;
+/**
+ * A command to drive the robot to align with the barge scoring position. The target X and Rotation
+ * are fixed (relative to alliance), while the target Y is based on the robot's current Y position
+ * when the command starts.
+ */
+public class AutoBargeAlignCommand extends DriveToPoseCommand {
 
-  private final LinearVelocity TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(6);
-  private final LinearAcceleration TRANSLATION_MAX_ACCELERATION = MetersPerSecondPerSecond.of(4);
+  private static final double TRANSLATION_P = 7;
+  private static final double TRANSLATION_D = 0;
+  private static final double TRANSLATION_I = 0;
 
-  private final AngularVelocity THETA_MAX_VELOCITY = RadiansPerSecond.of(2 * Math.PI);
-  private final AngularAcceleration THETA_MAX_ACCELERATION =
-      RadiansPerSecondPerSecond.of(2 * Math.PI);
+  private static final LinearVelocity TRANSLATION_MAX_VELOCITY = MetersPerSecond.of(4);
+  private static final LinearAcceleration TRANSLATION_MAX_ACCELERATION =
+      MetersPerSecondPerSecond.of(4);
 
-  private final TrapezoidProfile.Constraints TRANSLATION_CONSTRAINTS =
-      new TrapezoidProfile.Constraints(
-          TRANSLATION_MAX_VELOCITY.in(MetersPerSecond),
-          TRANSLATION_MAX_ACCELERATION.in(MetersPerSecondPerSecond));
+  private static final Distance TRANSLATION_TOLERANCE = Centimeters.of(2);
+  private static final Angle HEADING_TOLERANCE = Degrees.of(3);
 
-  private final TrapezoidProfile.Constraints THETA_CONSTRAINTS =
-      new TrapezoidProfile.Constraints(
-          THETA_MAX_VELOCITY.in(RadiansPerSecond),
-          THETA_MAX_ACCELERATION.in(RadiansPerSecondPerSecond));
-
-  private final SwerveRequest.FieldCentric DRIVE_TO_POSE = new FieldCentric();
-
-  private static final Pose2d BLUE_SCORE_POSE = new Pose2d(8.092, 0, Rotation2d.k180deg);
-
-  private final ProfiledPIDController xController =
-      new ProfiledPIDController(TRANSLATION_P, 0, 0, TRANSLATION_CONSTRAINTS);
-
-  private final ProfiledPIDController thetaController =
-      new ProfiledPIDController(THETA_P, 0, 0, THETA_CONSTRAINTS);
+  // Define the target pose for the Blue alliance side
+  private static final Pose2d BLUE_SCORE_POSE = new Pose2d(8.092, 0, Rotation2d.fromDegrees(180));
 
   private final CommandSwerveDrivetrain drivetrain;
 
+  /**
+   * Creates a new AutoBargeAlignCommand. This command drives the robot to a specific X coordinate
+   * and rotation suitable for scoring on the barge, while maintaining the robot's current Y
+   * coordinate at the start of the command.
+   *
+   * @param drivetrain The drivetrain subsystem used for accessing robot pose and controlling
+   *     movement.
+   */
   public AutoBargeAlignCommand(CommandSwerveDrivetrain drivetrain) {
+    super(drivetrain, () -> drivetrain.getState().Pose); // Temporary supplier, overridden below
     this.drivetrain = drivetrain;
 
-    thetaController.enableContinuousInput(-Math.PI, Math.PI);
-  }
-
-  @Override
-  public void initialize() {
-    Pose2d currentPose = drivetrain.getState().Pose;
-    Pose2d targetPose =
-        AllianceFlipUtil.apply(BLUE_SCORE_POSE)
-            .plus(new Transform2d(0, currentPose.getX(), Rotation2d.kZero));
-
-    xController.setGoal(targetPose.getX());
-    thetaController.setGoal(targetPose.getRotation().getRadians());
-
-    xController.reset(currentPose.getX());
-    thetaController.reset(currentPose.getRotation().getRadians());
-  }
-
-  @Override
-  public void execute() {
-    Pose2d currentPose = drivetrain.getState().Pose;
-
-    double xVelocity = xController.calculate(currentPose.getX());
-    double thetaVelocity = thetaController.calculate(currentPose.getRotation().getRadians());
-
-    drivetrain.setControl(
-        DRIVE_TO_POSE
-            .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance)
-            .withVelocityX(xVelocity)
-            .withRotationalRate(thetaVelocity));
-  }
-
-  @Override
-  public boolean isFinished() {
-    return xController.atGoal() && thetaController.atGoal();
+    // Configure DriveToPoseCommand settings
+    this.withTranslationPID(TRANSLATION_P, TRANSLATION_I, TRANSLATION_D)
+        .withTranslationConstraints(TRANSLATION_MAX_VELOCITY, TRANSLATION_MAX_ACCELERATION)
+        .withTranslationTolerance(TRANSLATION_TOLERANCE)
+        .withHeadingTolerance(HEADING_TOLERANCE)
+        .withPoseSupplier(
+            this::getTargetPose); // Override the pose supplier to use our dynamic target
   }
 
   /**
-   * This method will be invoked when this command finishes or is interrupted. It stops the motion
-   * of the drivetrain.
+   * Calculates the target pose for barge alignment. This method retrieves the robot's current pose,
+   * determines the alliance-specific target X and Rotation based on {@link #BLUE_SCORE_POSE}, and
+   * combines these with the robot's current Y coordinate to create the final target pose.
    *
-   * @param interrupted true if the command was interrupted by another command being scheduled
+   * @return The calculated {@link Pose2d} representing the desired alignment position and
+   *     orientation for scoring on the barge.
    */
-  @Override
-  public void end(boolean interrupted) {
-    drivetrain.setControl(new SwerveRequest.Idle());
+  public Pose2d getTargetPose() {
+    final Pose2d currentPose = drivetrain.getState().Pose;
+    // Flip the blue target pose if we are on the red alliance
+    final Pose2d allianceTargetPose = AllianceFlipUtil.apply(BLUE_SCORE_POSE);
+
+    // Create the final target pose using the alliance-specific X and Rotation,
+    // but keep the robot's current Y position.
+    return new Pose2d(
+        allianceTargetPose.getX(), currentPose.getY(), allianceTargetPose.getRotation());
   }
 }
