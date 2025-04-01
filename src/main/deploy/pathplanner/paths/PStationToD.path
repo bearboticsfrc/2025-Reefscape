@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.1870291095890402,
-        "y": 0.9522474315068495
+        "x": 1.1572472897176476,
+        "y": 0.9450934107721696
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.6725594105338257,
-        "y": 1.3790690857743348
+        "x": 1.6427775906624331,
+        "y": 1.371915065039655
       },
       "isLocked": false,
       "linkedName": "LowPStation"
@@ -60,7 +60,7 @@
   "folder": "L4F - L4C - L4D - AC",
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 54.82697449321651
+    "rotation": 54.0
   },
   "useDefaultConstraints": false
 }
