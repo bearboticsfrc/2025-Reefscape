@@ -59,7 +59,9 @@ def mirror_path(file: Path) -> None:
 
             path["waypoints"][i]["nextControl"]["x"] = x
             path["waypoints"][i]["nextControl"]["y"] = y
-
+            
+        path["waypoints"][i]["anchor"]["linkName"] = "M" + path["waypoints"][i]["anchor"]["linkName"]
+    
     for i, rotation_target in enumerate(path["rotationTargets"]):
         rotation = rotation_target["rotationDegrees"]
 
