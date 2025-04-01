@@ -114,7 +114,10 @@ public class RobotContainer {
 
     driverJoystick
         .circle()
-        .whileTrue(arm.runArmTo(ArmPosition.HOME).andThen(algae.scoreProcessor()))
+        .whileTrue(
+            arm.runArmTo(ArmPosition.HOME)
+                .andThen(Commands.waitUntil(arm::isAtSetpoint))
+                .andThen(algae.scoreProcessor()))
         .onFalse(algae.stopMotor());
     driverJoystick.cross().whileTrue(new AutoAlgaePickupCommand(drivetrain, algae, arm, elevator));
 

@@ -16,12 +16,12 @@
     },
     {
       "anchor": {
-        "x": 1.4728968274521765,
-        "y": 0.7520545555341402
+        "x": 1.1870291095890402,
+        "y": 0.9522474315068495
       },
       "prevControl": {
-        "x": 2.3410136429918866,
-        "y": 1.6621916206110416
+        "x": 2.05514592512875,
+        "y": 1.8623844965837508
       },
       "nextControl": null,
       "isLocked": false,
@@ -31,19 +31,7 @@
   "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [
-    {
-      "name": "PreIntakeCoral",
-      "waypointRelativePos": 0.4948805460750847,
-      "endWaypointRelativePos": null,
-      "command": {
-        "type": "named",
-        "data": {
-          "name": "runIntake"
-        }
-      }
-    }
-  ],
+  "eventMarkers": [],
   "globalConstraints": {
     "maxVelocity": 5.0,
     "maxAcceleration": 3.5,
