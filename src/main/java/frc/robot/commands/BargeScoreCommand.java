@@ -52,7 +52,8 @@ public class BargeScoreCommand {
         .andThen(algae.scoreBarge())
         .andThen(
             elevator.runElevatorTo(ElevatorPosition.HOME).alongWith(arm.runArmTo(ArmPosition.HOME)))
-        .andThen(Commands.waitUntil(() -> elevatorAndArmAtSetpoint(elevator, arm)));
+        .andThen(
+            Commands.waitUntil(() -> elevator.getPosition() <= ElevatorPosition.L3.getPosition()));
   }
 
   /**

@@ -14,6 +14,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -26,10 +27,12 @@ import frc.robot.commands.AutoBargeAlignCommand;
 import frc.robot.commands.AutoCoralStationAlignCommand;
 import frc.robot.commands.AutoReefAlignCommand;
 import frc.robot.commands.BargeScoreCommand;
+import frc.robot.commands.ProccessorScoreCommand;
 import frc.robot.commands.ReefScoreCommand;
 import frc.robot.constants.DriveConstants;
 import frc.robot.generated.TunerConstants;
 import frc.robot.reef.ReefTagPoses;
+import frc.robot.subsystems.CANdleSubsystem;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.manipulator.AlgaeSubsystem;
 import frc.robot.subsystems.manipulator.ArmSubsystem;
@@ -66,6 +69,8 @@ public class RobotContainer {
   @Logged(importance = Importance.CRITICAL)
   private final ArmSubsystem arm = new ArmSubsystem();
 
+  private final CANdleSubsystem CANdleSubsystem = new CANdleSubsystem();
+
   private ProcessedJoystick.ThrottleProfile throttleProfile =
       ProcessedJoystick.ThrottleProfile.TURBO;
 
@@ -76,13 +81,15 @@ public class RobotContainer {
 
   private Command introspectedAutoCommand;
 
-  @Logged(name = "Target Elevator Position")
+  @Logged(name = "Target Elevator Position", importance = Importance.CRITICAL)
   private ElevatorPosition targetElevatorPosition = ElevatorPosition.HOME;
 
   public RobotContainer() {
     configureDriverBindings();
     configureOperatorBindings();
     configureAutoBuilder();
+
+    robotInit();
   }
 
   /** Configure the driver control bindings. */
@@ -92,7 +99,7 @@ public class RobotContainer {
     driverJoystick.R1().onTrue(coral.teleopScoreCore()).onFalse(coral.stop());
 
     driverJoystick
-        .R2()
+        .povDown()
         .whileTrue(
             elevator
                 .runElevatorTo(this::getTargetElevatorPosition)
@@ -114,19 +121,17 @@ public class RobotContainer {
 
     driverJoystick
         .circle()
-        .onTrue(
-            arm.runArmTo(ArmPosition.HOME)
-                .andThen(Commands.waitUntil(arm::isAtSetpoint))
-                .andThen(Commands.waitSeconds(0.5))
-                .andThen(algae.scoreProcessor())
-                .andThen(algae.stopMotor()));
-    driverJoystick.cross().whileTrue(new AutoAlgaePickupCommand(drivetrain, algae, arm, elevator));
+        .onTrue(new ProccessorScoreCommand(algae, arm).unless(driverJoystick.R2()::getAsBoolean));
+
+    driverJoystick
+        .cross()
+        .whileTrue(
+            new AutoAlgaePickupCommand(drivetrain, algae, arm, elevator)
+                .unless(driverJoystick.R2()::getAsBoolean));
 
     driverJoystick
         .povUp()
-        .whileTrue(
-            new AutoBargeAlignCommand(drivetrain)
-                .andThen(BargeScoreCommand.raise(elevator, arm, algae)))
+        .whileTrue(bargeAlignCommand().andThen(BargeScoreCommand.raise(elevator, arm, algae)))
         .whileFalse(BargeScoreCommand.lower(elevator, arm, algae));
 
     driverJoystick
@@ -149,6 +154,24 @@ public class RobotContainer {
             elevator
                 .runElevatorTo(ElevatorPosition.HOME)
                 .unless(driverJoystick.R2()::getAsBoolean));
+
+    driverJoystick
+        .R2()
+        .and(driverJoystick.triangle())
+        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L4)))
+        .onTrue(CANdleSubsystem.setColor(Color.kHoneydew));
+
+    driverJoystick
+        .R2()
+        .and(driverJoystick.circle())
+        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L3)))
+        .onTrue(CANdleSubsystem.setColor(Color.kBrown));
+
+    driverJoystick
+        .R2()
+        .and(driverJoystick.cross())
+        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L2)))
+        .onTrue(CANdleSubsystem.setColor(Color.kGreen));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
@@ -195,14 +218,14 @@ public class RobotContainer {
 
   /** Register all named commands for each subsystem. */
   private void registerNamedCommands() {
-    SubsystemBase[] subsystems = new SubsystemBase[] {coral, elevator};
+    final SubsystemBase[] subsystems = new SubsystemBase[] {coral, elevator};
 
     for (SubsystemBase subsystem : subsystems) {
       registerNamedCommandsForSubsystem(subsystem);
     }
 
     for (ElevatorPosition position : ElevatorPosition.values()) {
-      String elevatorPosition = position.toString();
+      final String elevatorPosition = position.toString();
 
       NamedCommands.registerCommand(
           "runElevatorTo" + elevatorPosition,
@@ -217,7 +240,7 @@ public class RobotContainer {
     }
 
     for (ArmPosition position : ArmPosition.values()) {
-      String armPosition = position.toString();
+      final String armPosition = position.toString();
 
       NamedCommands.registerCommand("runArmTo" + armPosition, arm.runArmTo(position));
     }
@@ -231,7 +254,9 @@ public class RobotContainer {
         "intakeAlgae", arm.runArmTo(ArmPosition.REEF).andThen(algae.intakeAlgae()));
 
     NamedCommands.registerCommand(
-        "BargeScoreCommand", BargeScoreCommand.raise(elevator, arm, algae));
+        "BargeScoreCommand",
+        BargeScoreCommand.raise(elevator, arm, algae)
+            .andThen(elevator.runElevatorTo(ElevatorPosition.L2)));
   }
 
   /**
@@ -278,13 +303,16 @@ public class RobotContainer {
    * ArmPosition.HOME}, otherwise keep it at the same goal.
    */
   public void teleopInit() {
-    if (MathUtil.isNear(ArmPosition.HOME.getPosition(), arm.getPosition(), 5)
-        && !algae.hasAlgae()) {
+    final boolean isArmPositionNearHome =
+        MathUtil.isNear(ArmPosition.HOME.getPosition(), arm.getPosition(), 5);
+
+    if (isArmPositionNearHome && !algae.hasAlgae()) {
       arm.set(ArmPosition.HOME);
       elevator.set(ElevatorPosition.HOME);
     }
 
     coral.stop().schedule();
+    algae.stopMotor().schedule();
 
     arm.tareClosedLoopController();
     elevator.tareClosedLoopController();
@@ -300,6 +328,18 @@ public class RobotContainer {
           AllianceFlipUtil.apply(((PathPlannerAuto) selectedAutoCommand).getStartingPose());
       introspectedAutoCommand = selectedAutoCommand;
     }
+  }
+
+  private Command bargeAlignCommand() {
+    final Command elevatorRaiseCommand =
+        elevator
+            .runElevatorTo(ElevatorPosition.L2)
+            .onlyIf(() -> elevator.getPosition() == ElevatorPosition.HOME.getPosition());
+
+    return new AutoBargeAlignCommand(drivetrain)
+        .alongWith(
+            Commands.waitUntil(() -> AutoBargeAlignCommand.isNearBarge(drivetrain.getState().Pose))
+                .andThen(elevatorRaiseCommand));
   }
 
   /**
@@ -337,6 +377,8 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     return autoChooser.getSelected();
   }
+
+  public void robotInit() {}
 
   /**
    * Get the target elevator position.

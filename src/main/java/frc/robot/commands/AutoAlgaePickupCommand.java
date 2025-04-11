@@ -1,11 +1,13 @@
 package frc.robot.commands;
 
+import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.Seconds;
 import static frc.robot.constants.VisionConstants.REEF_TAGS_ONLY_LAYOUT;
 
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -25,10 +27,10 @@ import frc.robot.utils.FieldUtils;
  * the drivetrain, algae, arm, and elevator subsystems.
  */
 public class AutoAlgaePickupCommand extends SequentialCommandGroup {
-
+  private static final Distance TRANSLATION_TOLERANCE = Centimeters.of(5);
   private static final Time DRIVE_BACKWARDS_DURATION = Seconds.of(0.5);
   // Note: Velocity is positive, the command negates it for backwards movement.
-  private static final LinearVelocity DRIVE_BACKWARDS_VELOCITY = MetersPerSecond.of(1);
+  private static final LinearVelocity DRIVE_BACKWARDS_VELOCITY = MetersPerSecond.of(2);
 
   private final CommandSwerveDrivetrain drivetrain;
   private final ElevatorSubsystem elevator;
@@ -50,8 +52,12 @@ public class AutoAlgaePickupCommand extends SequentialCommandGroup {
     this.drivetrain = drivetrain;
     this.elevator = elevator;
 
+    final Command reefAlign =
+        new AutoReefAlignCommand(drivetrain, ScoreSide.LEFT)
+            .withTranslationTolerance(TRANSLATION_TOLERANCE);
+
     addCommands(
-        new AutoReefAlignCommand(drivetrain, ScoreSide.LEFT).alongWith(elevatorRaiseCommand()),
+        reefAlign.alongWith(elevatorRaiseCommand()),
         waitUntilElevatorAtSetpoint(),
         arm.runArmTo(ArmPosition.REEF).alongWith(algae.intakeAlgae()),
         Commands.waitUntil(algae::hasAlgae),
@@ -90,14 +96,21 @@ public class AutoAlgaePickupCommand extends SequentialCommandGroup {
   /** Creates a command to drive the robot backwards for a fixed duration and velocity. */
   private Command driveBackwards() {
     // Use RobotCentric request for simple backwards movement
-    SwerveRequest.RobotCentric request =
+    SwerveRequest.RobotCentric firstRequest =
         new SwerveRequest.RobotCentric()
             .withVelocityX(
                 -DRIVE_BACKWARDS_VELOCITY.in(MetersPerSecond)); // Negative X is backwards
 
+    SwerveRequest.RobotCentric secondRequest =
+        new SwerveRequest.RobotCentric()
+            .withVelocityX(
+                -DRIVE_BACKWARDS_VELOCITY.in(MetersPerSecond) / 2); // Negative X is backwards
+
     return drivetrain
-        .runOnce(() -> drivetrain.setControl(request)) // Start driving backwards
-        .andThen(Commands.waitTime(DRIVE_BACKWARDS_DURATION)) // Wait
+        .runOnce(() -> drivetrain.setControl(firstRequest)) // Start driving backwards
+        .andThen(Commands.waitSeconds(DRIVE_BACKWARDS_DURATION.in(Seconds) / 2)) // Naive profile
+        .andThen(drivetrain.runOnce(() -> drivetrain.setControl(secondRequest)))
+        .andThen(Commands.waitSeconds(DRIVE_BACKWARDS_DURATION.in(Seconds) / 2))
         .andThen(drivetrain.runOnce(() -> drivetrain.setControl(new SwerveRequest.Idle()))); // Stop
   }
 }

@@ -2,11 +2,13 @@ package frc.robot.commands;
 
 import static edu.wpi.first.units.Units.Centimeters;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.DistanceUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearAcceleration;
@@ -34,6 +36,9 @@ public class AutoBargeAlignCommand extends DriveToPoseCommand {
 
   // Define the target pose for the Blue alliance side
   private static final Pose2d BLUE_SCORE_POSE = new Pose2d(8.092, 0, Rotation2d.fromDegrees(180));
+
+  private static final Distance BARGE_X = Meters.of(8.775);
+  private static final Distance BARGE_NEAR_TOLERANCE = Meters.of(3);
 
   private final CommandSwerveDrivetrain drivetrain;
 
@@ -75,5 +80,18 @@ public class AutoBargeAlignCommand extends DriveToPoseCommand {
     // but keep the robot's current Y position.
     return new Pose2d(
         allianceTargetPose.getX(), currentPose.getY(), allianceTargetPose.getRotation());
+  }
+
+  /**
+   * Whether the supplied pose X position is within {@code BARGE_NEAR_TOLERANCE} of the barge.
+   *
+   * @param pose The pose to compare against.
+   * @return Whether or not the pose is near the barge,
+   */
+  public static boolean isNearBarge(Pose2d pose) {
+    final DistanceUnit unit = Meters;
+    final double bargeXDelta = pose.getMeasureX().minus(BARGE_X).abs(unit);
+
+    return bargeXDelta < BARGE_NEAR_TOLERANCE.in(unit);
   }
 }
