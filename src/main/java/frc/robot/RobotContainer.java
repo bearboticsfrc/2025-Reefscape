@@ -14,12 +14,12 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
 import frc.robot.commands.AutoAlgaePickupCommand;
@@ -69,8 +69,6 @@ public class RobotContainer {
   @Logged(importance = Importance.CRITICAL)
   private final ArmSubsystem arm = new ArmSubsystem();
 
-  private final CANdleSubsystem CANdleSubsystem = new CANdleSubsystem();
-
   private ProcessedJoystick.ThrottleProfile throttleProfile =
       ProcessedJoystick.ThrottleProfile.TURBO;
 
@@ -84,12 +82,13 @@ public class RobotContainer {
   @Logged(name = "Target Elevator Position", importance = Importance.CRITICAL)
   private ElevatorPosition targetElevatorPosition = ElevatorPosition.HOME;
 
+  private final CANdleSubsystem CANdle =
+      new CANdleSubsystem(elevator, () -> targetElevatorPosition);
+
   public RobotContainer() {
     configureDriverBindings();
     configureOperatorBindings();
     configureAutoBuilder();
-
-    robotInit();
   }
 
   /** Configure the driver control bindings. */
@@ -121,10 +120,12 @@ public class RobotContainer {
 
     driverJoystick
         .circle()
+        .debounce(0.15)
         .onTrue(new ProccessorScoreCommand(algae, arm).unless(driverJoystick.R2()::getAsBoolean));
 
     driverJoystick
         .cross()
+        .debounce(0.15)
         .whileTrue(
             new AutoAlgaePickupCommand(drivetrain, algae, arm, elevator)
                 .unless(driverJoystick.R2()::getAsBoolean));
@@ -159,19 +160,25 @@ public class RobotContainer {
         .R2()
         .and(driverJoystick.triangle())
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L4)))
-        .onTrue(CANdleSubsystem.setColor(Color.kHoneydew));
+        .onTrue(Commands.runOnce(() -> CANdle.resetToElevatorPosition(targetElevatorPosition)));
 
     driverJoystick
         .R2()
         .and(driverJoystick.circle())
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L3)))
-        .onTrue(CANdleSubsystem.setColor(Color.kBrown));
+        .onTrue(Commands.runOnce(() -> CANdle.resetToElevatorPosition(targetElevatorPosition)));
 
     driverJoystick
         .R2()
         .and(driverJoystick.cross())
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L2)))
-        .onTrue(CANdleSubsystem.setColor(Color.kGreen));
+        .onTrue(Commands.runOnce(() -> CANdle.resetToElevatorPosition(targetElevatorPosition)));
+
+    new Trigger(coral::intakeHasCoral)
+        .negate()
+        .and(new Trigger(coral::outakeHasCoral))
+        .and(driverJoystick.L1().or(driverJoystick.L2()))
+        .onTrue(CANdle.setCoralStrobeCommand(() -> targetElevatorPosition));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
@@ -378,7 +385,9 @@ public class RobotContainer {
     return autoChooser.getSelected();
   }
 
-  public void robotInit() {}
+  public void robotInit() {
+    CANdle.resetToElevatorPosition(targetElevatorPosition);
+  }
 
   /**
    * Get the target elevator position.

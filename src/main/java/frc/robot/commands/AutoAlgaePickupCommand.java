@@ -28,9 +28,9 @@ import frc.robot.utils.FieldUtils;
  */
 public class AutoAlgaePickupCommand extends SequentialCommandGroup {
   private static final Distance TRANSLATION_TOLERANCE = Centimeters.of(5);
-  private static final Time DRIVE_BACKWARDS_DURATION = Seconds.of(0.5);
+  private static final Time DRIVE_BACKWARDS_DURATION = Seconds.of(0.25);
   // Note: Velocity is positive, the command negates it for backwards movement.
-  private static final LinearVelocity DRIVE_BACKWARDS_VELOCITY = MetersPerSecond.of(2);
+  private static final LinearVelocity DRIVE_BACKWARDS_VELOCITY = MetersPerSecond.of(1.75);
 
   private final CommandSwerveDrivetrain drivetrain;
   private final ElevatorSubsystem elevator;
@@ -107,10 +107,8 @@ public class AutoAlgaePickupCommand extends SequentialCommandGroup {
                 -DRIVE_BACKWARDS_VELOCITY.in(MetersPerSecond) / 2); // Negative X is backwards
 
     return drivetrain
-        .runOnce(() -> drivetrain.setControl(firstRequest)) // Start driving backwards
-        .andThen(Commands.waitSeconds(DRIVE_BACKWARDS_DURATION.in(Seconds) / 2)) // Naive profile
-        .andThen(drivetrain.runOnce(() -> drivetrain.setControl(secondRequest)))
-        .andThen(Commands.waitSeconds(DRIVE_BACKWARDS_DURATION.in(Seconds) / 2))
+        .runOnce(() -> drivetrain.setControl(firstRequest))
+        .andThen(Commands.waitTime(DRIVE_BACKWARDS_DURATION))
         .andThen(drivetrain.runOnce(() -> drivetrain.setControl(new SwerveRequest.Idle()))); // Stop
   }
 }
