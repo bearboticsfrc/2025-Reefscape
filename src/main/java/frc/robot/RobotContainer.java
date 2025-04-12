@@ -88,6 +88,8 @@ public class RobotContainer {
   public RobotContainer() {
     configureDriverBindings();
     configureOperatorBindings();
+    configureTriggers();
+
     configureAutoBuilder();
   }
 
@@ -160,25 +162,19 @@ public class RobotContainer {
         .R2()
         .and(driverJoystick.triangle())
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L4)))
-        .onTrue(Commands.runOnce(() -> CANdle.resetToElevatorPosition(targetElevatorPosition)));
+        .onTrue(Commands.runOnce(CANdle::reset));
 
     driverJoystick
         .R2()
         .and(driverJoystick.circle())
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L3)))
-        .onTrue(Commands.runOnce(() -> CANdle.resetToElevatorPosition(targetElevatorPosition)));
+        .onTrue(Commands.runOnce(CANdle::reset));
 
     driverJoystick
         .R2()
         .and(driverJoystick.cross())
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L2)))
-        .onTrue(Commands.runOnce(() -> CANdle.resetToElevatorPosition(targetElevatorPosition)));
-
-    new Trigger(coral::intakeHasCoral)
-        .negate()
-        .and(new Trigger(coral::outakeHasCoral))
-        .and(driverJoystick.L1().or(driverJoystick.L2()))
-        .onTrue(CANdle.setCoralStrobeCommand(() -> targetElevatorPosition));
+        .onTrue(Commands.runOnce(CANdle::reset));
 
     drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
     drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
@@ -188,19 +184,27 @@ public class RobotContainer {
   private void configureOperatorBindings() {
     operatorGamepad
         .button(1)
-        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L1)));
+        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L1)))
+        .onTrue(Commands.runOnce(CANdle::reset));
 
     operatorGamepad
         .button(2)
-        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L2)));
+        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L2)))
+        .onTrue(Commands.runOnce(CANdle::reset));
 
     operatorGamepad
         .button(3)
-        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L3)));
+        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L3)))
+        .onTrue(Commands.runOnce(CANdle::reset));
 
     operatorGamepad
         .button(4)
-        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L4)));
+        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L4)))
+        .onTrue(Commands.runOnce(CANdle::reset));
+  }
+
+  private void configureTriggers() {
+    new Trigger(coral::hasCoral).and(coral::isIntakeActive).onTrue(CANdle.setCoralStrobeCommand());
   }
 
   /**
@@ -325,6 +329,15 @@ public class RobotContainer {
     elevator.tareClosedLoopController();
   }
 
+  /**
+   * Robot Initialization.
+   *
+   * <p>Resets the LEDs.
+   */
+  public void robotInit() {
+    CANdle.reset();
+  }
+
   /** Disabled periodic which updates the autonomous starting pose. */
   public void disabledPeriodic() {
     Command selectedAutoCommand = autoChooser.getSelected();
@@ -383,10 +396,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return autoChooser.getSelected();
-  }
-
-  public void robotInit() {
-    CANdle.resetToElevatorPosition(targetElevatorPosition);
   }
 
   /**

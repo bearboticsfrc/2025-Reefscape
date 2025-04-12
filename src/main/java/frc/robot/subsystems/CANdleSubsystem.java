@@ -31,7 +31,7 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
   private static final int CENTER_SCAN_LED_COUNT = 19;
 
   private static final int STATIC_WHITE_SECTION_LEFT_START = 8;
-  private static final int STATIC_WHITE_SECTION_LEFT_COUNT = 22;
+  private static final int STATIC_WHITE_SECTION_LEFT_COUNT = 12;
   private static final int STATIC_WHITE_SECTION_RIGHT_START = 42;
   private static final int STATIC_WHITE_SECTION_RIGHT_COUNT = 14;
 
@@ -128,7 +128,7 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
    *
    * @return a command that runs once to set the strobe
    */
-  public Command setCoralStrobeCommand(Supplier<ElevatorPosition> elevatorPosition) {
+  public Command setCoralStrobeCommand() {
     final StrobeAnimation animation =
         new StrobeAnimation(
             (int) (COLOR_CORAL_STROBE.red * 255),
@@ -139,7 +139,7 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
 
     return setAnimationCommand(animation)
         .andThen(Commands.waitSeconds(1))
-        .andThen(runOnce(() -> resetToElevatorPosition(elevatorPosition.get())))
+        .andThen(runOnce(this::reset))
         .withName("SetCandleCoralStrobe");
   }
 
@@ -150,11 +150,14 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
    *
    * @param elevatorPosition the current elevator state
    */
-  public void resetToElevatorPosition(ElevatorPosition elevatorPosition) {
-    clearAllAnimations();
+  public void reset() {
     setColor(Color.kBlack);
+    clearAllAnimations();
+
     startCenterScanAnimation();
     setStaticWhiteIndicators();
+
+    final ElevatorPosition elevatorPosition = elevatorPositionSupplier.get();
 
     if (elevatorPosition != ElevatorPosition.HOME) {
       setAllianceElevatorIndicators(elevatorPosition);
@@ -183,6 +186,7 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
             BounceMode.Center,
             4,
             CENTER_SCAN_START_INDEX);
+
     setAnimation(animation, 0);
   }
 
@@ -283,7 +287,7 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
   public void periodic() {
     if (MathUtil.isNear(ElevatorPosition.HOME.getPosition(), elevator.getPosition(), 2)) {
       if (!hasReset) {
-        resetToElevatorPosition(elevatorPositionSupplier.get());
+        reset();
         hasReset = true;
       }
       return;
@@ -295,6 +299,7 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
   }
 
   private void applyElevatorHeightBarcode() {
+    // 3.25 found from `Elevator Encoder At L4 / LED Pixel Count`
     final int count = (int) Math.round(elevator.getPosition() / 3.25); // LED per elevator encoder
     final boolean doneAnimating = count == barcodeCount;
 
@@ -315,6 +320,6 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
 
   @Override
   public void updateAlliance(Alliance alliance) {
-    startCenterScanAnimation();
+    reset();
   }
 }

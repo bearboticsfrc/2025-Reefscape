@@ -79,6 +79,21 @@ public class CoralSubsystem extends SubsystemBase {
   }
 
   /**
+   * @return true if the coral is fully intaked.
+   */
+  @Logged(name = "Has Coral", importance = Importance.CRITICAL)
+  public boolean hasCoral() {
+    return !intakeHasCoral() && outakeHasCoral();
+  }
+
+  /**
+   * @return true if the intake is active.
+   */
+  public boolean isIntakeActive() {
+    return intake.get() != 0;
+  }
+
+  /**
    * Smart coral intake command.
    *
    * @return A {@link Command} intaking a coral.
@@ -94,6 +109,7 @@ public class CoralSubsystem extends SubsystemBase {
    */
   private Command coralPresentStrategy() {
     return runOutake(MotorSpeed.TENTH)
+        .alongWith(runIntake(MotorSpeed.TENTH))
         .andThen(Commands.waitUntil(() -> !intakeHasCoral()))
         .andThen(runOutake(MotorSpeed.REVERSE_TENTH))
         .andThen(honeCoral());
