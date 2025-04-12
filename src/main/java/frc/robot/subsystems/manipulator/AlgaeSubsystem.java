@@ -21,7 +21,7 @@ public class AlgaeSubsystem extends SubsystemBase {
   private final Time SCORING_TIME = Seconds.of(0.5);
   private final double IDLE_INTAKE_SPEED = 0.15;
 
-  private final double BARGE_SCORE_SPEED = -.2;
+  private final double BARGE_SCORE_SPEED = -.15;
   private final MotorSpeed PROCESSOR_SCORE_SPEED = MotorSpeed.REVERSE_THREE_QUARTERS;
 
   @Logged(name = "Algae Motor", importance = Importance.CRITICAL)

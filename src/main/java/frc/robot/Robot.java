@@ -11,6 +11,7 @@ import edu.wpi.first.epilogue.Logged.Importance;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -28,9 +29,12 @@ public class Robot extends TimedRobot {
   }
 
   public void configureLogging() {
-    Epilogue.configure(config -> config.minimumImportance = this.MINIMUM_IMPORTANCE);
-    DataLogManager.start();
+    Shuffleboard.stopRecording();
+
+    DataLogManager.start("", "", 0.1);
     DriverStation.startDataLog(DataLogManager.getLog());
+
+    Epilogue.configure(config -> config.minimumImportance = this.MINIMUM_IMPORTANCE);
     Epilogue.bind(this);
   }
 
@@ -38,6 +42,11 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
     DriverStation.getAlliance().ifPresent(AllianceColor::setAllianceColor);
     CommandScheduler.getInstance().run();
+  }
+
+  @Override
+  public void robotInit() {
+    m_robotContainer.robotInit();
   }
 
   @Override

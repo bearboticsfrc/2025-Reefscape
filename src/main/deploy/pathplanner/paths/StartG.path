@@ -48,7 +48,7 @@
   "eventMarkers": [
     {
       "name": "PreRunElevatorToL4",
-      "waypointRelativePos": 0.10160427807486645,
+      "waypointRelativePos": 0.0,
       "endWaypointRelativePos": null,
       "command": {
         "type": "named",

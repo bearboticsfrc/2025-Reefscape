@@ -3,16 +3,16 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 8.091858552631578,
-        "y": 4.929440789473684
+        "x": 8.092,
+        "y": 5.257106164383561
       },
       "prevControl": null,
       "nextControl": {
-        "x": 8.76020196625004,
-        "y": 4.856457177855049
+        "x": 6.340839041095892,
+        "y": 6.263932363013698
       },
       "isLocked": false,
-      "linkedName": "LowNet"
+      "linkedName": "GNet"
     },
     {
       "anchor": {
@@ -20,12 +20,12 @@
         "y": 5.061355671709031
       },
       "prevControl": {
-        "x": 4.963457133339135,
-        "y": 5.051931737340463
+        "x": 5.574529109589041,
+        "y": 5.505029965753424
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": "I"
+      "linkedName": null
     }
   ],
   "rotationTargets": [],
@@ -53,13 +53,13 @@
       "command": {
         "type": "named",
         "data": {
-          "name": "runElevatorToL3"
+          "name": "fullyRunElevatorToL3"
         }
       }
     }
   ],
   "globalConstraints": {
-    "maxVelocity": 5.0,
+    "maxVelocity": 6.0,
     "maxAcceleration": 3.5,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
@@ -76,5 +76,5 @@
     "velocity": 0,
     "rotation": 180.0
   },
-  "useDefaultConstraints": true
+  "useDefaultConstraints": false
 }
