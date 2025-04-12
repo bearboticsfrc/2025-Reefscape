@@ -126,7 +126,7 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
   /**
    * Returns a command that activates a coral-colored strobe effect across the LED strip.
    *
-   * @return a command that runs once to set the strobe
+   * @return a command that runs once to set the strobe, wait one second, and reset.
    */
   public Command setCoralStrobeCommand() {
     final StrobeAnimation animation =
@@ -243,9 +243,9 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
   }
 
   /**
-   * Determines the current alliance color and returns a matching WPILib {@link Color}.
+   * Determines the current alliance color and returns a respective WPILib {@link Color}.
    *
-   * @return {@code Color.kRed} or {@code Color.kBlue}, defaulting to blue
+   * @return {@link Color.kRed} or {@link Color.kBlue}, defaulting to {@link Color.kWhite}
    */
   private Color getAllianceColor() {
     Alliance alliance = AllianceColor.getAlliance();
@@ -254,11 +254,7 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
       return Color.kWhite;
     }
 
-    if (alliance == Alliance.Red) {
-      return Color.kRed;
-    }
-
-    return Color.kBlue;
+    return alliance == Alliance.Red ? Color.kRed : Color.kBlue;
   }
 
   /**
@@ -283,21 +279,26 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
     candle.setLEDs(rgb[0], rgb[1], rgb[2], 0, startIndex, count);
   }
 
+  /** Update the side LEDs based on elevator height. */
   @Override
   public void periodic() {
-    if (MathUtil.isNear(ElevatorPosition.HOME.getPosition(), elevator.getPosition(), 2)) {
+    boolean isAtHome =
+        MathUtil.isNear(ElevatorPosition.HOME.getPosition(), elevator.getPosition(), 2);
+
+    if (isAtHome) {
       if (!hasReset) {
         reset();
         hasReset = true;
       }
       return;
-    } else {
-      hasReset = false;
     }
 
+    // Elevator is not at home, so allow future resets and update LED barcodes
+    hasReset = false;
     applyElevatorHeightBarcode();
   }
 
+  /** Fill in the side LEDs based on the current elevator height. */
   private void applyElevatorHeightBarcode() {
     // 3.25 found from `Elevator Encoder At L4 / LED Pixel Count`
     final int count = (int) Math.round(elevator.getPosition() / 3.25); // LED per elevator encoder
@@ -318,6 +319,7 @@ public class CANdleSubsystem extends SubsystemBase implements AllianceReadyListe
     setLedRange(getAllianceColor(), STATIC_WHITE_SECTION_RIGHT_START, count);
   }
 
+  /** Reset the colors to the current alliance color. */
   @Override
   public void updateAlliance(Alliance alliance) {
     reset();
