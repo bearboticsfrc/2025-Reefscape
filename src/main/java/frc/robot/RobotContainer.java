@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.ProcessedJoystick.JoystickAxis;
 import frc.robot.ProcessedJoystick.ThrottleProfile;
@@ -45,8 +46,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 public class RobotContainer {
-  private final CommandPS4Controller driverJoystick =
-      new CommandPS4Controller(DriveConstants.DRIVER_JOYSTICK_PORT);
+  private final CommandXboxController driverJoystick =
+      new CommandXboxController(DriveConstants.DRIVER_JOYSTICK_PORT);
 
   private final CommandGenericHID operatorGamepad =
       new CommandGenericHID(DriveConstants.OPERATOR_GAMEPAD_PORT);
@@ -86,7 +87,7 @@ public class RobotContainer {
       new CANdleSubsystem(elevator, () -> targetElevatorPosition);
 
   public RobotContainer() {
-    configureDriverBindings();
+    configureDriverXboxBindings();
     configureOperatorBindings();
     configureTriggers();
 
@@ -94,7 +95,7 @@ public class RobotContainer {
   }
 
   /** Configure the driver control bindings. */
-  private void configureDriverBindings() {
+  private void configureDriverPS4Bindings(CommandPS4Controller driverJoystick) {
     driverJoystick.L1().whileTrue(coral.intakeCoral()).onFalse(coral.stop());
 
     driverJoystick.R1().onTrue(coral.teleopScoreCore()).onFalse(coral.stop());
@@ -173,6 +174,94 @@ public class RobotContainer {
     driverJoystick
         .R2()
         .and(driverJoystick.cross())
+        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L2)))
+        .onTrue(Commands.runOnce(CANdle::reset));
+
+    drivetrain.registerTelemetry(DriveConstants.TELEMETRY::telemeterize);
+    drivetrain.setDefaultCommand(drivetrain.applyRequest(this::getDefaultDriveRequest));
+  }
+
+  private void configureDriverXboxBindings() {
+    driverJoystick.leftBumper().whileTrue(coral.intakeCoral()).onFalse(coral.stop());
+
+    driverJoystick.rightBumper().onTrue(coral.teleopScoreCore()).onFalse(coral.stop());
+
+    driverJoystick
+        .povDown()
+        .whileTrue(
+            elevator
+                .runElevatorTo(this::getTargetElevatorPosition)
+                .andThen(Commands.waitUntil(elevator::isAtSetpoint))
+                .unless(coral::intakeHasCoral))
+        .onFalse(elevator.runElevatorTo(ElevatorPosition.HOME));
+
+    driverJoystick
+        .leftTrigger()
+        .whileTrue(new AutoCoralStationAlignCommand(drivetrain).alongWith(coral.intakeCoral()))
+        .onFalse(coral.stop());
+
+    driverJoystick
+        .leftStick()
+        .toggleOnTrue(
+            Commands.startEnd(
+                () -> setThrottleProfile(ThrottleProfile.TURTLE),
+                () -> setThrottleProfile(ThrottleProfile.TURBO)));
+
+    driverJoystick
+        .b()
+        .debounce(0.15)
+        .onTrue(
+            new ProccessorScoreCommand(algae, arm)
+                .unless(driverJoystick.rightTrigger()::getAsBoolean));
+
+    driverJoystick
+        .a()
+        .debounce(0.15)
+        .whileTrue(
+            new AutoAlgaePickupCommand(drivetrain, algae, arm, elevator)
+                .unless(driverJoystick.rightTrigger()::getAsBoolean));
+
+    driverJoystick
+        .povUp()
+        .whileTrue(bargeAlignCommand().andThen(BargeScoreCommand.raise(elevator, arm, algae)))
+        .whileFalse(BargeScoreCommand.lower(elevator, arm, algae));
+
+    driverJoystick
+        .povLeft()
+        .whileTrue(
+            elevator
+                .runElevatorTo(this::getTargetElevatorPosition)
+                .alongWith(new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.LEFT)))
+        .whileFalse(
+            elevator
+                .runElevatorTo(ElevatorPosition.HOME)
+                .unless(driverJoystick.rightTrigger()::getAsBoolean));
+
+    driverJoystick
+        .povRight()
+        .whileTrue(
+            new AutoReefAlignCommand(drivetrain, ReefTagPoses.ScoreSide.RIGHT)
+                .alongWith(elevator.runElevatorTo(this::getTargetElevatorPosition)))
+        .whileFalse(
+            elevator
+                .runElevatorTo(ElevatorPosition.HOME)
+                .unless(driverJoystick.rightTrigger()::getAsBoolean));
+
+    driverJoystick
+        .rightTrigger()
+        .and(driverJoystick.y())
+        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L4)))
+        .onTrue(Commands.runOnce(CANdle::reset));
+
+    driverJoystick
+        .rightTrigger()
+        .and(driverJoystick.b())
+        .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L3)))
+        .onTrue(Commands.runOnce(CANdle::reset));
+
+    driverJoystick
+        .rightTrigger()
+        .and(driverJoystick.a())
         .onTrue(Commands.runOnce(() -> setTargetElevatorPosition(ElevatorPosition.L2)))
         .onTrue(Commands.runOnce(CANdle::reset));
 
