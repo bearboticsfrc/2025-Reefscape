@@ -397,6 +397,15 @@ public class RobotContainer {
   }
 
   /**
+   * Autonomous Initialization
+   *
+   * <p>Holds the coral in the current position.
+   */
+  public void autonomousInit() {
+    coral.stop().schedule();
+  }
+
+  /**
    * Teleop Initialization.
    *
    * <p>Tares the elevator and lowers to {@code ElevatorPosition.HOME} if the arm is at {@code
