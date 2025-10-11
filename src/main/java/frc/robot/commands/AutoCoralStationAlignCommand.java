@@ -25,7 +25,7 @@ public class AutoCoralStationAlignCommand extends DriveToPoseCommand {
   private static final double TRANSLATION_D = 0;
   private static final double TRANSLATION_I = 0;
 
-  private static final Distance CENTER_TO_CORAL_STATION = Inches.of(16);
+  private static final Distance CENTER_TO_CORAL_STATION = Inches.of(15);
   private static final Transform2d POSE_TRANSFORM =
       new Transform2d(new Translation2d(CENTER_TO_CORAL_STATION, Inches.zero()), Rotation2d.kZero);
 
