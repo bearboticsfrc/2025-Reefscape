@@ -81,7 +81,7 @@ public class RobotContainer {
   private Command introspectedAutoCommand;
 
   @Logged(name = "Target Elevator Position", importance = Importance.CRITICAL)
-  private ElevatorPosition targetElevatorPosition = ElevatorPosition.HOME;
+  private ElevatorPosition targetElevatorPosition = ElevatorPosition.L3;
 
   private final CANdleSubsystem CANdle =
       new CANdleSubsystem(elevator, () -> targetElevatorPosition);

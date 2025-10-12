@@ -52,7 +52,7 @@ public class VisionConstants {
       VecBuilder.fill(0.1, 0.1, Math.toRadians(20));
 
   public static final AprilTagFieldLayout APRIL_TAG_FIELD_LAYOUT =
-      AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+      AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
 
   public static final AprilTagFieldLayout REEF_TAGS_ONLY_LAYOUT =
       new AprilTagFieldLayout(
